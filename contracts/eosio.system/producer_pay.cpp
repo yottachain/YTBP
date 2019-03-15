@@ -16,7 +16,7 @@ namespace eosiosystem {
    const int64_t block_initial_timestamp = 1551369600ll;  // epoch year 2019.03.01    unix timestamp 1551369600s
    //yta seo total= yta_seo_year[i] * YTA_SEO_BASE
    const uint32_t YTA_SEO_BASE = 10'0000;
-   const std::vector<int> yta_seo_year = {
+   const int yta_seo_year[62] = {
             1000, 900, 800, 700,
             600, 600, 500, 500,
             400, 400, 300, 300,
@@ -93,19 +93,27 @@ namespace eosiosystem {
         */
       auto ct = current_time();
 
-      eosio_assert( ct - prod.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
+      //eosio_assert( ct - prod.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
 
       const asset token_supply   = token( N(eosio.token)).get_supply(symbol_type(system_token_symbol).name() );
       const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
-      int idx_year = (int)((now()-block_initial_timestamp) / seconds_per_year);
 
-      print("idx_year: ", idx_year, "\n");
-
+	  print("usecs_since_last_fill", usecs_since_last_fill, "\n");   
+	  print("_gstate.last_pervote_bucket_fill", _gstate.last_pervote_bucket_fill, "\n");
+	  
+	  print("now(): ", now(), "\n");
+      print("block_initial_timestamp: ", block_initial_timestamp, "\n");
+       
+      int idx_year = (int)((now()- block_initial_timestamp) / seconds_per_year);
       auto seo_token = yta_seo_year[idx_year] * YTA_SEO_BASE;
-
+       
+      print("idx_year: ", idx_year, "\n");
+      print("yta_seo_year[idx_year]: ", yta_seo_year[idx_year], "\n");
       print( "token_supply: ", token_supply, "\n");
       print("seo_token: ", seo_token, "\n");
-
+	  auto new_tokens = static_cast<int64_t>(seo_token * double(usecs_since_last_fill)/double(useconds_per_year));
+	  print("new_token: ", new_tokens, "\n");
+		 
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
          auto new_tokens = static_cast<int64_t>(seo_token * double(usecs_since_last_fill)/double(useconds_per_year));
          print("new_token: ", new_tokens, "\n");
