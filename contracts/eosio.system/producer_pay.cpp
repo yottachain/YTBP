@@ -88,9 +88,9 @@ namespace eosiosystem {
       const auto& prod = _producers.get( owner );
       eosio_assert( prod.active(), "producer does not have an active key" );
 
-      /* eosio_assert( _gstate.total_activated_stake >= min_activated_stake,
+      eosio_assert( _gstate.total_activated_stake >= min_activated_stake,
                     "cannot claim rewards until the chain is activated (at least 15% of all tokens participate in voting)" );
-        */
+      
       auto ct = current_time();
 
       //eosio_assert( ct - prod.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
@@ -98,10 +98,10 @@ namespace eosiosystem {
       const asset token_supply   = token( N(eosio.token)).get_supply(symbol_type(system_token_symbol).name() );
       const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
 
-	  print("usecs_since_last_fill", usecs_since_last_fill, "\n");   
-	  print("_gstate.last_pervote_bucket_fill", _gstate.last_pervote_bucket_fill, "\n");
+      print("usecs_since_last_fill: ", usecs_since_last_fill, "\n");   
+      print("_gstate.last_pervote_bucket_fill: ", _gstate.last_pervote_bucket_fill, "\n");
 	  
-	  print("now(): ", now(), "\n");
+      print("now(): ", now(), "\n");
       print("block_initial_timestamp: ", block_initial_timestamp, "\n");
        
       int idx_year = (int)((now()- block_initial_timestamp) / seconds_per_year);
@@ -111,8 +111,6 @@ namespace eosiosystem {
       print("yta_seo_year[idx_year]: ", yta_seo_year[idx_year], "\n");
       print( "token_supply: ", token_supply, "\n");
       print("seo_token: ", seo_token, "\n");
-	  auto new_tokens = static_cast<int64_t>(seo_token * double(usecs_since_last_fill)/double(useconds_per_year));
-	  print("new_token: ", new_tokens, "\n");
 		 
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
          auto new_tokens = static_cast<int64_t>(seo_token * double(usecs_since_last_fill)/double(useconds_per_year));
