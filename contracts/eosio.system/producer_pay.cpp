@@ -16,7 +16,8 @@ namespace eosiosystem {
    const int64_t block_initial_timestamp = 1551369600ll;  // epoch year 2019.03.01    unix timestamp 1551369600s
    //yta seo total= yta_seo_year[i] * YTA_SEO_BASE
    const uint32_t YTA_SEO_BASE = 10'0000;
-   const int yta_seo_year[62] = {
+   const double YTA_PRECISION =10000.0000;
+   const uint32_t yta_seo_year[62] = {
             1000, 900, 800, 700,
             600, 600, 500, 500,
             400, 400, 300, 300,
@@ -100,9 +101,7 @@ namespace eosiosystem {
 
       print("usecs_since_last_fill: ", usecs_since_last_fill, "\n");   
       print("_gstate.last_pervote_bucket_fill: ", _gstate.last_pervote_bucket_fill, "\n");
-	  
       print("now(): ", now(), "\n");
-      print("block_initial_timestamp: ", block_initial_timestamp, "\n");
        
       int idx_year = (int)((now()- block_initial_timestamp) / seconds_per_year);
       auto seo_token = yta_seo_year[idx_year] * YTA_SEO_BASE;
@@ -113,7 +112,7 @@ namespace eosiosystem {
       print("seo_token: ", seo_token, "\n");
 		 
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
-         auto new_tokens = static_cast<int64_t>(seo_token * double(usecs_since_last_fill)/double(useconds_per_year));
+         auto new_tokens = static_cast<int64_t>(seo_token * YTA_PRECISION * double(usecs_since_last_fill)/double(useconds_per_year));
          print("new_token: ", new_tokens, "\n");
          auto to_producers       = new_tokens;
          auto to_per_block_pay   = to_producers / 4;
