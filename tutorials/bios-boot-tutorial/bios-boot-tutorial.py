@@ -296,7 +296,7 @@ def stepSetSystemContract():
     sleep(1)
     run(args.cleos + 'push action eosio setpriv' + jsonArg(['eosio.msig', 1]) + '-p eosio@active')
 def stepInitSystemContract():
-    run(args.cleos + 'push action eosio init' + jsonArg(['0', '4,SYS']) + '-p eosio@active')
+    run(args.cleos + 'push action eosio init' + jsonArg(['0', '4,YTA']) + '-p eosio@active')
     sleep(1)
 def stepCreateStakedAccounts():
     createStakedAccounts(0, len(accounts))
@@ -336,7 +336,7 @@ commands = [
     ('c', 'contracts',          stepInstallSystemContracts, True,    "Install system contracts (token, msig)"),
     ('t', 'tokens',             stepCreateTokens,           True,    "Create tokens"),
     ('S', 'sys-contract',       stepSetSystemContract,      True,    "Set system contract"),
-    ('I', 'init-sys-contract',  stepInitSystemContract,     True,    "Initialiaze system contract"),
+    #('I', 'init-sys-contract',  stepInitSystemContract,     True,    "Initialiaze system contract"),
     ('T', 'stake',              stepCreateStakedAccounts,   True,    "Create staked accounts"),
     ('p', 'reg-prod',           stepRegProducers,           True,    "Register producers"),
     ('P', 'start-prod',         stepStartProducers,         True,    "Start producers"),
@@ -359,7 +359,7 @@ parser.add_argument('--nodes-dir', metavar='', help="Path to nodes directory", d
 parser.add_argument('--genesis', metavar='', help="Path to genesis.json", default="./genesis.json")
 parser.add_argument('--wallet-dir', metavar='', help="Path to wallet directory", default='./wallet/')
 parser.add_argument('--log-path', metavar='', help="Path to log file", default='./output.log')
-parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='SYS')
+parser.add_argument('--symbol', metavar='', help="The eosio.system symbol", default='YTA')
 parser.add_argument('--user-limit', metavar='', help="Max number of users. (0 = no limit)", type=int, default=3000)
 parser.add_argument('--max-user-keys', metavar='', help="Maximum user keys to import into wallet", type=int, default=10)
 parser.add_argument('--ram-funds', metavar='', help="How much funds for each user to spend on ram", type=float, default=0.1)
