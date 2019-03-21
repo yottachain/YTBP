@@ -100,23 +100,6 @@ namespace hdd {
         add_balance( to, quantity, from );
     }
 
-    void token::stransfer( account_name from, account_name to, asset quantity, string memo ) {
-        eosio_assert( from != to, "cannot transfer to self" );
-        require_auth( from );
-        eosio_assert( is_account( to ), "to account does not exist");
-        auto sym = quantity.symbol.name();
-        stats statstable( _self, sym );
-        const auto& st = statstable.get( sym );
-
-        eosio_assert( quantity.is_valid(), "invalid quantity" );
-        eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
-        eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
-        eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
-
-        sub_balance( from, quantity );
-        add_balance( to, quantity, from );
-    }
-
     void token::sub_balance( account_name owner, asset value ) {
         accounts from_acnts( _self, owner );
 
@@ -149,4 +132,4 @@ namespace hdd {
 
 }
 
-EOSIO_ABI( hdd::token, (create)(claim)(signup)(issue)(transfer)(stransfer) )
+EOSIO_ABI( hdd::token, (create)(claim)(signup)(issue)(transfer) )

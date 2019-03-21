@@ -28,11 +28,6 @@ namespace hdd {
                        asset        quantity,
                        string       memo );
 
-        void stransfer( account_name from,
-                       account_name to,
-                       asset        quantity,
-                       string       memo );
-
         inline asset get_supply( symbol_name sym )const;
 
         inline asset get_balance( account_name owner, symbol_name sym )const;
@@ -59,8 +54,6 @@ namespace hdd {
 
         void sub_balance( account_name owner, asset value );
         void add_balance( account_name owner, asset value, account_name ram_payer );
-
-    public:
 
     };
 

@@ -78,25 +78,7 @@
           "type": "string"
         }
       ]
-    },{
-      "name": "stransfer",
-      "base": "",
-      "fields": [{
-          "name": "from",
-          "type": "name"
-        },{
-          "name": "to",
-          "type": "name"
-        },{
-          "name": "quantity",
-          "type": "asset"
-        },{
-          "name": "memo",
-          "type": "string"
-        }
-      ]
-    }
-  ],
+    }],
   "actions": [{
       "name": "create",
       "type": "create",
@@ -117,12 +99,7 @@
       "name": "transfer",
       "type": "transfer",
       "ricardian_contract": ""
-    },{
-      "name": "stransfer",
-      "type": "stransfer",
-      "ricardian_contract": ""
-    }
-  ],
+    }],
   "tables": [{
       "name": "accounts",
       "index_type": "i64",
