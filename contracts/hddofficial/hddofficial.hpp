@@ -9,7 +9,7 @@ namespace hdd {
     using std::string;
 
     static uint64_t     SYMBOL = string_to_symbol(4, "HDD");
-    static int64_t      MAX_SUPPLY = 10'000'000'000'0000;
+    static int64_t      MAX_SUPPLY = 1024*1024*1024*1024;     // 2^40 1T
 
     class token : public contract {
     public:
