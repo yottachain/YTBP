@@ -37,21 +37,13 @@ CONTRACT hdddata : public contract
 
     ACTION sub_hdd_space(name owner, name hddaccount, uint64_t space);
 
-	
-    private:
-		
-	hddbalance_table                             t_hddbalance;
-	mining_account_table                       t_miningaccount;
-	producer_table                                  t_producer;
-	
-	
 	private:	
 	TABLE  hddbalance {
 		name                  owner;
 		uint64_t              last_hdd_balance=0;
 		uint64_t              hdd_per_cycle_fee=0;
 		uint64_t              hdd_per_cycle_profit=0;
-		uint64_t              hdd_spacel=0;
+		uint64_t              hdd_space=0;
 		time_point_sec   last_hdd_time;
 		uint64_t              primary_key() const { return owner.value; }
 		uint64_t              get_last_hdd_balance() const { return last_hdd_balance; }
@@ -66,7 +58,7 @@ CONTRACT hdddata : public contract
         indexed_by<"byspace"_n, const_mem_fun<hddbalance, uint64_t, &hddbalance::get_hdd_space>>>
         hddbalance_table;
 	
-     TABLE mining_account {
+     TABLE mining {
         uint64_t ming_id;
         name owner;
 
@@ -74,9 +66,9 @@ CONTRACT hdddata : public contract
         uint64_t get_owner() const { return owner.value; }
     };
    
-    typedef multi_index<"mining_account"_n, mining_account,
-        indexed_by<"byowner"_n, const_mem_fun<mining_account, uint64_t, &mining_account::get_owner>>>
-        mining_account_table;
+    typedef multi_index<"mining"_n, mining,
+        indexed_by<"byowner"_n, const_mem_fun<mining, uint64_t, &mining::get_owner>>>
+        mining_table;
 	
 		TABLE producer {
 			name                       owner;
@@ -117,5 +109,12 @@ CONTRACT hdddata : public contract
 	
 	//comment old style declaration 
 	typedef multi_index<"hddmarket"_n, exchange_state> _hddmarket;	
+	
+	
+	private:
+		
+	hddbalance_table                             t_hddbalance;
+	mining_table                       t_miningaccount;
+	producer_table                                  t_producer;
 
  };
