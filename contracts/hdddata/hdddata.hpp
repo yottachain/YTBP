@@ -8,11 +8,43 @@ typedef double real_type;
 
 CONTRACT hdddata : public contract
 {
+	private:
+	//todo copy from eosio.system 
+	/**
+	*  Uses Bancor math to create a 50/50 relay between two asset types. The state of the
+	*  bancor exchange is entirely contained within this struct. There are no external
+	*  side effects associated with using this API.
+	*/
+	struct  [[eosio::table, eosio::contract("eosio.system")]] exchange_state {
+	  asset    supply;
+
+	  struct connector {
+		 asset balance;
+		 double weight = .5;
+
+		 EOSLIB_SERIALIZE( connector, (balance)(weight) )
+	  };
+
+	  connector base;
+	  connector quote;
+
+	  uint64_t primary_key()const { return supply.symbol.raw(); }
+
+	  asset convert_to_exchange( connector& c, asset in ); 
+	  asset convert_from_exchange( connector& c, asset in );
+	  asset convert( asset from, const symbol& to );
+
+	  EOSLIB_SERIALIZE( exchange_state, (supply)(base)(quote) )
+	};
+	
+	//comment old style declaration 
+	typedef multi_index<"hddmarket"_n, exchange_state> hddmarket_table;
+	
     public:
 		
     using contract::contract;
 	
-	hdddata( name n );
+	hdddata( );
 	
     ~hdddata();
 
@@ -37,7 +69,29 @@ CONTRACT hdddata : public contract
 
     ACTION sub_hdd_space(name owner, name hddaccount, uint64_t space);
 
+	static constexpr symbol hddcore_symbol = symbol(symbol_code("HDDCORE"), 4);
+	static constexpr symbol hdd_symbol     = symbol(symbol_code("HDD"), 0);
+	static constexpr symbol yta_symbol     = symbol(symbol_code("YTA"), 4);
+    static constexpr eosio::name token_account{"eosio.token"_n};
+	static constexpr eosio::name hdd_account{"eosio.hdd"_n};
+	static constexpr eosio::name hddfee_account{"eosio.hddfee"_n};
+	
+	static symbol get_core_symbol( name system_account = "hddofficial"_n ) {
+	hddmarket_table rm(system_account, system_account.value);
+	const static auto sym = get_core_symbol( rm );
+	return sym;
+ }
 	private:	
+	 // Implementation details:
+
+	 static symbol get_core_symbol( const hddmarket_table& hdd ) {
+		auto itr = hdd.find(hddcore_symbol.raw());
+		check(itr != hdd.end(), "system contract must first be initialized");
+		return itr->quote.balance.symbol;
+	 }
+	 
+	 symbol core_symbol()const;
+	 
 	TABLE  hddbalance {
 		name                  owner;
 		uint64_t              last_hdd_balance=0;
@@ -79,42 +133,10 @@ CONTRACT hdddata : public contract
 		
     typedef multi_index<"producer"_n, producer> producer_table;
 	
-    //todo copy from eosio.system 
-	/**
-	*  Uses Bancor math to create a 50/50 relay between two asset types. The state of the
-	*  bancor exchange is entirely contained within this struct. There are no external
-	*  side effects associated with using this API.
-	*/
-	struct exchange_state {
-	  asset    supply;
-
-	  struct connector {
-		 asset balance;
-		 double weight = .5;
-
-		 EOSLIB_SERIALIZE( connector, (balance)(weight) )
-	  };
-
-	  connector base;
-	  connector quote;
-
-	  uint64_t primary_key()const { return supply.symbol; }
-
-	  asset convert_to_exchange( connector& c, asset in ); 
-	  asset convert_from_exchange( connector& c, asset in );
-	  asset convert( asset from, symbol_type to );
-
-	  EOSLIB_SERIALIZE( exchange_state, (supply)(base)(quote) )
-	};
-	
-	//comment old style declaration 
-	typedef multi_index<"hddmarket"_n, exchange_state> _hddmarket;	
-	
-	
-	private:
+    private:
 		
 	hddbalance_table                             t_hddbalance;
-	mining_table                       t_miningaccount;
+	mining_table                                     t_miningaccount;
 	producer_table                                  t_producer;
-
+    hddmarket_table                               t_hddmarket;
  };

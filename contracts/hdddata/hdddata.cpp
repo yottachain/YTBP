@@ -8,14 +8,14 @@ const uint32_t seconds_in_one_year = seconds_in_one_day * 365;
 const name HDD_ACCOUNT = "hddofficial"_n;
 
 // constructor
-hdddata::hdddata( name n )
+hdddata::hdddata( )
  : t_hddbalance(_self, _self.value),
    t_miningaccount(_self, _self.value),
    t_hddmarket(_self, _self.value),
    t_producer(_self, _self.value)  {
 	//todo initialize produers ?
 	   
-	auto hddbalance_itr = t_hddbalance.get(HDD_ACCOUNT.value);
+	auto hddbalance_itr = t_hddbalance.find(HDD_ACCOUNT.value);
 	if(hddbalance_itr == t_hddbalance.end()) {
 		t_hddbalance.emplace(_self, [&](auto &row) {
 			//todo check the 1st time insert
@@ -27,17 +27,19 @@ hdddata::hdddata( name n )
 		});
 	}
 	
-	auto itr = t_hddmarket.find(S(4,HDDCORE));
+	auto itr = t_hddmarket.find(hddcore_symbol.raw());
     if( itr == t_hddmarket.end() ) {
-        auto system_token_supply   = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(system_token_symbol).name()).amount;
-        if( system_token_supply > 0 ) {
+        //auto system_token_supply   = eosio::token(token_account).get_supply(eosio::symbol_type(system_token_symbol).name()).amount;
+       //auto system_token_supply   = eosio::token::get_supply(token_account, yta_symbol.code() );
+		auto system_token_supply = 0;
+	   if( system_token_supply > 0 ) {
             itr = t_hddmarket.emplace( _self, [&]( auto& m ) {
                m.supply.amount = 100000000000000ll;
-               m.supply.symbol = S(4,HDDCORE);
-               m.base.balance.amount = int64_t(_gstate.free_ram());
-               m.base.balance.symbol = S(0,HDD);
-               m.quote.balance.amount = system_token_supply / 1000;
-               m.quote.balance.symbol = YTA;
+               m.supply.symbol = hddcore_symbol;
+               //m.base.balance.amount = int64_t(_gstate.free_ram());
+               m.base.balance.symbol = hdd_symbol;
+               //m.quote.balance.amount = system_token_supply.amount / 1000;
+               m.quote.balance.symbol = yta_symbol;
             });
          }
       } else {
@@ -47,13 +49,17 @@ hdddata::hdddata( name n )
 	
 }
 
-
+ symbol hdddata::core_symbol()const {
+      const static auto sym = get_core_symbol( t_hddmarket );
+      return sym;
+   }
+   
 //@abi action
 void hdddata::get_hdd_balance(name owner) {
 	//	当前余额=上次余额+(当前时间-上次余额时间)*（每周期收益-每周期费用）
 	require_auth(owner);	
 	//hddbalance_table  t_hddbalance(_self, _self.value);
-	auto hddbalance_itr = t_hddbalance.get(owner.value);
+	auto hddbalance_itr = t_hddbalance.find(owner.value);
 	if(hddbalance_itr == t_hddbalance.end()) {
 		t_hddbalance.emplace(owner, [&](auto &row) {
 			//todo check the 1st time insert
@@ -61,14 +67,15 @@ void hdddata::get_hdd_balance(name owner) {
 			row.hdd_per_cycle_fee=0;
 			row.hdd_per_cycle_profit=0;
 			row.hdd_space=0;
-			row.ast_hdd_time = now();
+			row.last_hdd_time = now();
 		});
 	} else {
-		t_hddbalance.modify(owner, [&](auto &row) {
+		t_hddbalance.modify(hddbalance_itr, _self, [&](auto &row) {
 			//todo  check overflow and time cycle 
 			row.last_hdd_balance=
-				hddbalance_itr.get_last_hdd_balance() + 
-				( now()-*hddbalance_itr.last_hdd_time )*( hddbalance_itr.get_hdd_per_cycle_profit()-hddbalance_itr.get_hdd_per_cycle_fee() );
+				hddbalance_itr->get_last_hdd_balance() + 
+				//( now() - (hddbalance_itr->last_hdd_time) )
+				10 * ( hddbalance_itr->get_hdd_per_cycle_profit()-hddbalance_itr->get_hdd_per_cycle_fee() );
 			row.last_hdd_time = now();
 		});
 	}
@@ -78,14 +85,15 @@ void hdddata::get_hdd_balance(name owner) {
 void hdddata::get_hdd_sum_balance() {
 	require_auth(_self);
 	
-	auto hddbalance_itr = t_hddbalance.get(HDD_ACCOUNT.value);
+	auto hddbalance_itr = t_hddbalance.find(HDD_ACCOUNT.value);
 	if(hddbalance_itr != t_hddbalance.end()) {
 		//todo check the 1st time insert
-		t_hddbalance.modify(_self, [&](auto &row) {
+		t_hddbalance.modify(hddbalance_itr, _self, [&](auto &row) {
 		//todo  check overflow and time cycle 
 		row.last_hdd_balance=
-			hddbalance_itr.get_last_hdd_balance() + 
-			( now()-*hddbalance_itr.last_hdd_time )*( hddbalance_itr.get_hdd_per_cycle_profit()-hddbalance_itr.get_hdd_per_cycle_fee() );
+			hddbalance_itr->get_last_hdd_balance() + 
+			// todo ((uint64_t)( now()-hddbalance_itr->last_hdd_time ))
+			10 *( hddbalance_itr->get_hdd_per_cycle_profit()-hddbalance_itr->get_hdd_per_cycle_fee() );
 		row.last_hdd_time = now();
 		});
 	}
@@ -98,8 +106,8 @@ void hdddata::set_hdd_per_cycle_fee(name owner, uint64_t fee) {
 	auto hddbalance_itr = t_hddbalance.find(owner.value);
 	if(hddbalance_itr != t_hddbalance.end()) {
 		//每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
-		eos_assert( xxx, "");
-		t_hddbalance.modify(owner, [&](auto &row) {
+		//eos_assert( xxx, "");
+		t_hddbalance.modify(hddbalance_itr, owner, [&](auto &row) {
 			//todo check overflow
 			row.hdd_per_cycle_fee -=fee;
 		});
@@ -114,7 +122,7 @@ void hdddata::sub_hdd_balance(name owner,  uint64_t balance){
 	//hddbalance_table  t_hddbalance(owner, owner.value);
 	auto hddbalance_itr = t_hddbalance.find(owner.value);
 	if(hddbalance_itr != t_hddbalance.end()) {
-		t_hddbalance.modify(owner, [&](auto &row) {
+		t_hddbalance.modify(hddbalance_itr, owner, [&](auto &row) {
 			//todo check overflow
 			row.balance -=balance;
 		});
@@ -128,7 +136,7 @@ void hdddata::add_hdd_space(name owner, name hddaccount, uint64_t space){
 	//hddbalance_table  t_hddbalance(_self, _self.value);
 	auto hddbalance_itr = t_hddbalance.find(hddaccount.value);
 	if(hddbalance_itr != t_hddbalance.end()) {
-		t_hddbalance.modify(hddaccount, [&](auto &row) {
+		t_hddbalance.modify(hddbalance_itr, hddaccount, [&](auto &row) {
 			//todo check overflow
 			row.hdd_space +=space;
 		});
@@ -142,7 +150,7 @@ void hdddata::sub_hdd_space(name owner, name hddaccount, uint64_t space){
 	//hddbalance_table  t_hddbalance(_self, _self.value);
 	auto hddbalance_itr = t_hddbalance.find(hddaccount.value);
 	if(hddbalance_itr != t_hddbalance.end()) {
-		t_hddbalance.modify(hddaccount, [&](auto &row) {
+		t_hddbalance.modify(hddbalance_itr, hddaccount, [&](auto &row) {
 			//todo check overflow
 			row.hdd_space -=space;
 		});
@@ -153,9 +161,9 @@ void hdddata::sub_hdd_space(name owner, name hddaccount, uint64_t space){
 void hdddata::create_mining_account(name mining_name, name owner) {
 	require_auth(mining_name);
 	//mining_account t_miningaccount(_self, _self.value);
-	auto mining_account_itr = t_miningaccount.get(mining_name.value, "Mining Id does not exist");
+	auto mining_account_itr = t_miningaccount.find(mining_name.value);
 	if(mining_account_itr == t_miningaccount.end()) {
-		t_miningaccount.emplace(mining_account, [&](auto &row) {
+		t_miningaccount.emplace(mining_name, [&](auto &row) {
 			row.mining_name = mining_name;
 			row.owner = owner;
 		 });
@@ -165,7 +173,7 @@ void hdddata::create_mining_account(name mining_name, name owner) {
 	
 	require_auth(owner);
 	//hddbalance_table  t_hddbalance(_self, _self.value);
-	auto hddbalance_itr = t_hddbalance.get(owner.value);
+	auto hddbalance_itr = t_hddbalance.find(owner.value);
 	if(hddbalance_itr == t_hddbalance.end()) {
 	t_hddbalance.emplace(owner, [&](auto &row) {
 		//todo check the 1st time insert
@@ -181,13 +189,13 @@ void hdddata::add_mining_profit(name mining_name, uint64_t space){
 	//mining_account t_miningaccount(_self, _self.value);
 	auto mining_account_itr = t_miningaccount.get(mining_name.value, "Mining Id does not exist");
 	auto owner_id = mining_account_itr.get_owner();
-	if( owner_id != mining_account.end()) {
+	if( owner_id != t_miningaccount.end()) {
 	//hddbalance_table  t_hddbalance(_self, _self.value);
-	auto hddbalance_itr = t_hddbalance.get(owner_id);
+	auto hddbalance_itr = t_hddbalance.find(owner_id);
 	if(hddbalance_itr == t_hddbalance.end()) {
-		t_hddbalance.emplace(owner, [&](auto &row) {
+		t_hddbalance.emplace(_self, [&](auto &row) {
 			//todo check the 1st time insert
-			row.owner = owner;
+			//row.owner = owner;
 			row.hdd_space=space;
 		});
 	} else {
@@ -198,7 +206,7 @@ void hdddata::add_mining_profit(name mining_name, uint64_t space){
 }
 	
 //@abi action
-void hdddata::buyhdd(name buyer, name receiver, asset quant){
+void hdddata::buyhdd(name buyer, name receiver, asset quant) {
 	require_auth(buyer);
 	eosio_assert( quant.amount > 0, "must purchase a positive amount" );
 
@@ -219,9 +227,9 @@ void hdddata::buyhdd(name buyer, name receiver, asset quant){
 
 	int64_t bytes_out;
 
-	const auto& market = t_hddmarket.get(S(4,HDDCORE), "hdd market does not exist");
+	const auto& market = t_hddmarket.get(hdd_core_symbol "hdd market does not exist");
 	t_hddmarket.modify( market, 0, [&]( auto& es ) {
-		bytes_out = es.convert( quant_after_fee,  S(0,HDD) ).amount;
+		//bytes_out = es.convert( quant_after_fee,  S(0,HDD) ).amount;
 	});
 
 	eosio_assert( bytes_out > 0, "must reserve a positive amount" );
