@@ -1,20 +1,21 @@
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/asset.hpp>
 #include <eosiolib/time.hpp>
+#include <eosiolib/singleton.hpp>
 
 using namespace eosio;
+typedef double real_type;
 
 CONTRACT hdddata : public contract
 {
     public:
+		
     using contract::contract;
-    struct hdd_parameter {
-		uint64_t              last_hdd_balance=0,
-		uint64_t              hdd_per_cycle_fee=0,
-		uint64_t              hdd_per_cycle_profit=0,
-		uint64_t              hdd_spacel=0,
-		time_point_sec   last_hdd_time
-    };
+	
+	hdddata( name n );
+	
+    ~hdddata();
+
 
     ACTION get_hdd_balance(name owner);
 	
@@ -36,8 +37,15 @@ CONTRACT hdddata : public contract
 
     ACTION sub_hdd_space(name owner, name hddaccount, uint64_t space);
 
+	
     private:
-
+		
+	hddbalance_table                             t_hddbalance;
+	mining_account_table                       t_miningaccount;
+	producer_table                                  t_producer;
+	
+	
+	private:	
 	TABLE  hddbalance {
 		name                  owner;
 		uint64_t              last_hdd_balance=0;
@@ -58,7 +66,7 @@ CONTRACT hdddata : public contract
         indexed_by<"byspace"_n, const_mem_fun<hddbalance, uint64_t, &hddbalance::get_hdd_space>>>
         hddbalance_table;
 	
-    TABLE mining_account {
+     TABLE mining_account {
         uint64_t ming_id;
         name owner;
 
@@ -72,11 +80,42 @@ CONTRACT hdddata : public contract
 	
 		TABLE producer {
 			name                       owner;
-			eosio::public_key     producer_key;
+			eosio::public_key      producer_key;
 			
 			uint64_t primary_key() const { return owner.value;   }
 		};
 		
-		typedef multi_index<"producer"_n, producer> producer_table;
+    typedef multi_index<"producer"_n, producer> producer_table;
+	
+    //todo copy from eosio.system 
+	/**
+	*  Uses Bancor math to create a 50/50 relay between two asset types. The state of the
+	*  bancor exchange is entirely contained within this struct. There are no external
+	*  side effects associated with using this API.
+	*/
+	struct exchange_state {
+	  asset    supply;
+
+	  struct connector {
+		 asset balance;
+		 double weight = .5;
+
+		 EOSLIB_SERIALIZE( connector, (balance)(weight) )
+	  };
+
+	  connector base;
+	  connector quote;
+
+	  uint64_t primary_key()const { return supply.symbol; }
+
+	  asset convert_to_exchange( connector& c, asset in ); 
+	  asset convert_from_exchange( connector& c, asset in );
+	  asset convert( asset from, symbol_type to );
+
+	  EOSLIB_SERIALIZE( exchange_state, (supply)(base)(quote) )
+	};
+	
+	//comment old style declaration 
+	typedef multi_index<"hddmarket"_n, exchange_state> _hddmarket;	
 
  };
