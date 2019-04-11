@@ -4,10 +4,24 @@
 #include <eosiolib/singleton.hpp>
 
 using namespace eosio;
+using eosio::name;
+using eosio::asset;
+using eosio::symbol;
+using eosio::symbol_code;
+using eosio::indexed_by;
+using eosio::const_mem_fun;
+using eosio::microseconds;
+using eosio::datastream;
 typedef double real_type;
 
 CONTRACT hdddata : public contract
 {
+	using contract::contract;
+	
+	hdddata( name s, name code, datastream<const char*> ds);
+	
+    ~hdddata();
+	
 	private:
 	//todo copy from eosio.system 
 	/**
@@ -41,15 +55,7 @@ CONTRACT hdddata : public contract
 	typedef multi_index<"hddmarket"_n, exchange_state> hddmarket_table;
 	
     public:
-		
-    using contract::contract;
-	
-	hdddata( );
-	
-    ~hdddata();
-
-
-    ACTION get_hdd_balance(name owner);
+	ACTION get_hdd_balance(name owner);
 	
 	ACTION get_hdd_sum_balance();
 	
@@ -75,12 +81,12 @@ CONTRACT hdddata : public contract
     static constexpr eosio::name token_account{"eosio.token"_n};
 	static constexpr eosio::name hdd_account{"eosio.hdd"_n};
 	static constexpr eosio::name hddfee_account{"eosio.hddfee"_n};
-	
+	static constexpr eosio::name active_permission{"active"_n};
 	static symbol get_core_symbol( name system_account = "hddofficial"_n ) {
-	hddmarket_table rm(system_account, system_account.value);
-	const static auto sym = get_core_symbol( rm );
-	return sym;
- }
+		hddmarket_table rm(system_account, system_account.value);
+		const static auto sym = get_core_symbol( rm );
+		return sym;
+    }
 	private:	
 	 // Implementation details:
 
@@ -98,7 +104,7 @@ CONTRACT hdddata : public contract
 		uint64_t              hdd_per_cycle_fee=0;
 		uint64_t              hdd_per_cycle_profit=0;
 		uint64_t              hdd_space=0;
-		time_point_sec   last_hdd_time;
+		uint64_t              last_hdd_time;
 		uint64_t              primary_key() const { return owner.value; }
 		uint64_t              get_last_hdd_balance() const { return last_hdd_balance; }
 		uint64_t              get_hdd_per_cycle_fee() const { return hdd_per_cycle_fee; }
@@ -114,7 +120,7 @@ CONTRACT hdddata : public contract
 	
      TABLE mining {
         uint64_t ming_id;
-        name owner;
+        name     owner;
 
         uint64_t primary_key() const { return ming_id; }
         uint64_t get_owner() const { return owner.value; }
