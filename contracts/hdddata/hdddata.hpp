@@ -16,11 +16,7 @@ typedef double real_type;
 
 CONTRACT hdddata : public contract
 {
-	using contract::contract;
-	
-	hdddata( name s, name code, datastream<const char*> ds);
-	
-    ~hdddata();
+
 	
 	private:
 	//todo copy from eosio.system 
@@ -29,7 +25,7 @@ CONTRACT hdddata : public contract
 	*  bancor exchange is entirely contained within this struct. There are no external
 	*  side effects associated with using this API.
 	*/
-	struct  [[eosio::table, eosio::contract("eosio.system")]] exchange_state {
+	struct exchange_state {
 	  asset    supply;
 
 	  struct connector {
@@ -52,18 +48,24 @@ CONTRACT hdddata : public contract
 	};
 	
 	//comment old style declaration 
-	typedef multi_index<"hddmarket"_n, exchange_state> hddmarket_table;
+	typedef multi_index<"hmarket"_n, exchange_state> hmarket_table;
 	
     public:
+	using contract::contract;
+	
+	hdddata( name s, name code, datastream<const char*> ds);
+	
+    ~hdddata();
+	
 	ACTION gethbalance(name owner);
 	
 	ACTION gethsum();
 	
-    ACTION setcyclefee(name owner, uint64_t fee);
+    ACTION sethfee(name owner, uint64_t fee);
 
-    ACTION newmaccount(name mining_name, name owner);
+    ACTION newmaccount(name mname, name owner);
 
-    ACTION addmprofit(name mining_name, uint64_t space);
+    ACTION addmprofit(name mname, uint64_t space);
 
     ACTION subhbalance(name owner, uint64_t balance);
 
@@ -83,14 +85,14 @@ CONTRACT hdddata : public contract
 	static constexpr eosio::name hddfee_account{"eosio.hddfee"_n};
 	static constexpr eosio::name active_permission{"active"_n};
 	static symbol get_core_symbol( name system_account = "hddofficial"_n ) {
-		hddmarket_table rm(system_account, system_account.value);
+		hmarket_table rm(system_account, system_account.value);
 		const static auto sym = get_core_symbol( rm );
 		return sym;
     }
 	private:	
 	 // Implementation details:
 
-	 static symbol get_core_symbol( const hddmarket_table& hdd ) {
+	 static symbol get_core_symbol( const hmarket_table& hdd ) {
 		auto itr = hdd.find(hddcore_symbol.raw());
 		check(itr != hdd.end(), "system contract must first be initialized");
 		return itr->quote.balance.symbol;
@@ -98,7 +100,7 @@ CONTRACT hdddata : public contract
 	 
 	 symbol core_symbol()const;
 	 
-	TABLE  hddbalance {
+	TABLE  hbalance {
 		name                  owner;
 		uint64_t              last_hdd_balance=0;
 		uint64_t              hdd_per_cycle_fee=0;
@@ -111,14 +113,15 @@ CONTRACT hdddata : public contract
         uint64_t              get_hdd_per_cycle_profit() const { return hdd_per_cycle_profit; }
 		uint64_t              get_hdd_space() const { return hdd_space; }
  	};
-	typedef multi_index<"hddbalance"_n, hddbalance,
-		indexed_by<"bybalance"_n, const_mem_fun<hddbalance, uint64_t, &hddbalance::get_last_hdd_balance>>,
-		indexed_by<"byfee"_n, const_mem_fun<hddbalance, uint64_t, &hddbalance::get_hdd_per_cycle_fee>>,
-        indexed_by<"byprofit"_n, const_mem_fun<hddbalance, uint64_t, &hddbalance::get_hdd_per_cycle_profit>>,
-        indexed_by<"byspace"_n, const_mem_fun<hddbalance, uint64_t, &hddbalance::get_hdd_space>>>
-        hddbalance_table;
+	typedef multi_index<"hbalance"_n, hbalance,
+		indexed_by<"bybalance"_n, const_mem_fun<hbalance, uint64_t, &hbalance::get_last_hdd_balance>>,
+		indexed_by<"byfee"_n, const_mem_fun<hbalance, uint64_t, &hbalance::get_hdd_per_cycle_fee>>,
+        indexed_by<"byprofit"_n, const_mem_fun<hbalance, uint64_t, &hbalance::get_hdd_per_cycle_profit>>,
+        indexed_by<"byspace"_n, const_mem_fun<hbalance, uint64_t, &hbalance::get_hdd_space>>>
+        hbalance_table;
 	
-     TABLE mining {
+	 // ming account 
+     TABLE maccount {
         uint64_t ming_id;
         name     owner;
 
@@ -126,9 +129,9 @@ CONTRACT hdddata : public contract
         uint64_t get_owner() const { return owner.value; }
     };
    
-    typedef multi_index<"mining"_n, mining,
-        indexed_by<"byowner"_n, const_mem_fun<mining, uint64_t, &mining::get_owner>>>
-        mining_table;
+    typedef multi_index<"maccount"_n, maccount,
+        indexed_by<"byowner"_n, const_mem_fun<maccount, uint64_t, &maccount::get_owner>>>
+        maccount_table;
 	
 		TABLE producer {
 			name                       owner;
@@ -141,8 +144,8 @@ CONTRACT hdddata : public contract
 	
     private:
 		
-	hddbalance_table                             t_hddbalance;
-	mining_table                                     t_miningaccount;
-	producer_table                                  t_producer;
-    hddmarket_table                               t_hddmarket;
+	hbalance_table                                   _hbalance;
+	maccount_table                                 _maccount;
+	producer_table                                  _producer;
+    hmarket_table                                   _hmarket;
  };

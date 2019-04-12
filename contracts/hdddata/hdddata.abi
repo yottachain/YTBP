@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Apr 12 02:57:49 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Apr 12 05:06:41 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -25,7 +25,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "mining_name",
+                    "name": "mname",
                     "type": "name"
                 },
                 {
@@ -68,7 +68,7 @@
             "fields": []
         },
         {
-            "name": "hddbalance",
+            "name": "hbalance",
             "base": "",
             "fields": [
                 {
@@ -98,7 +98,7 @@
             ]
         },
         {
-            "name": "mining",
+            "name": "maccount",
             "base": "",
             "fields": [
                 {
@@ -116,7 +116,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "mining_name",
+                    "name": "mname",
                     "type": "name"
                 },
                 {
@@ -154,7 +154,7 @@
             ]
         },
         {
-            "name": "setcyclefee",
+            "name": "sethfee",
             "base": "",
             "fields": [
                 {
@@ -238,8 +238,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "setcyclefee",
-            "type": "setcyclefee",
+            "name": "sethfee",
+            "type": "sethfee",
             "ricardian_contract": ""
         },
         {
@@ -255,15 +255,15 @@
     ],
     "tables": [
         {
-            "name": "hddbalance",
-            "type": "hddbalance",
+            "name": "hbalance",
+            "type": "hbalance",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "mining",
-            "type": "mining",
+            "name": "maccount",
+            "type": "maccount",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
