@@ -1,9 +1,9 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Apr 11 04:20:16 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Apr 12 02:57:49 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
-            "name": "add_hdd_space",
+            "name": "addhspace",
             "base": "",
             "fields": [
                 {
@@ -21,7 +21,7 @@
             ]
         },
         {
-            "name": "add_mining_profit",
+            "name": "addmprofit",
             "base": "",
             "fields": [
                 {
@@ -53,21 +53,7 @@
             ]
         },
         {
-            "name": "create_mining_account",
-            "base": "",
-            "fields": [
-                {
-                    "name": "mining_name",
-                    "type": "name"
-                },
-                {
-                    "name": "owner",
-                    "type": "name"
-                }
-            ]
-        },
-        {
-            "name": "get_hdd_balance",
+            "name": "gethbalance",
             "base": "",
             "fields": [
                 {
@@ -77,7 +63,7 @@
             ]
         },
         {
-            "name": "get_hdd_sum_balance",
+            "name": "gethsum",
             "base": "",
             "fields": []
         },
@@ -126,6 +112,20 @@
             ]
         },
         {
+            "name": "newmaccount",
+            "base": "",
+            "fields": [
+                {
+                    "name": "mining_name",
+                    "type": "name"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "producer",
             "base": "",
             "fields": [
@@ -154,7 +154,7 @@
             ]
         },
         {
-            "name": "set_hdd_per_cycle_fee",
+            "name": "setcyclefee",
             "base": "",
             "fields": [
                 {
@@ -168,7 +168,7 @@
             ]
         },
         {
-            "name": "sub_hdd_balance",
+            "name": "subhbalance",
             "base": "",
             "fields": [
                 {
@@ -182,7 +182,7 @@
             ]
         },
         {
-            "name": "sub_hdd_space",
+            "name": "subhspace",
             "base": "",
             "fields": [
                 {
@@ -203,13 +203,13 @@
     "types": [],
     "actions": [
         {
-            "name": "add_hdd_space",
-            "type": "add_hdd_space",
+            "name": "addhspace",
+            "type": "addhspace",
             "ricardian_contract": ""
         },
         {
-            "name": "add_mining_profit",
-            "type": "add_mining_profit",
+            "name": "addmprofit",
+            "type": "addmprofit",
             "ricardian_contract": ""
         },
         {
@@ -218,18 +218,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "create_mining_account",
-            "type": "create_mining_account",
+            "name": "gethbalance",
+            "type": "gethbalance",
             "ricardian_contract": ""
         },
         {
-            "name": "get_hdd_balance",
-            "type": "get_hdd_balance",
+            "name": "gethsum",
+            "type": "gethsum",
             "ricardian_contract": ""
         },
         {
-            "name": "get_hdd_sum_balance",
-            "type": "get_hdd_sum_balance",
+            "name": "newmaccount",
+            "type": "newmaccount",
             "ricardian_contract": ""
         },
         {
@@ -238,18 +238,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "set_hdd_per_cycle_fee",
-            "type": "set_hdd_per_cycle_fee",
+            "name": "setcyclefee",
+            "type": "setcyclefee",
             "ricardian_contract": ""
         },
         {
-            "name": "sub_hdd_balance",
-            "type": "sub_hdd_balance",
+            "name": "subhbalance",
+            "type": "subhbalance",
             "ricardian_contract": ""
         },
         {
-            "name": "sub_hdd_space",
-            "type": "sub_hdd_space",
+            "name": "subhspace",
+            "type": "subhspace",
             "ricardian_contract": ""
         }
     ],

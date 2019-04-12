@@ -55,25 +55,25 @@ CONTRACT hdddata : public contract
 	typedef multi_index<"hddmarket"_n, exchange_state> hddmarket_table;
 	
     public:
-	ACTION get_hdd_balance(name owner);
+	ACTION gethbalance(name owner);
 	
-	ACTION get_hdd_sum_balance();
+	ACTION gethsum();
 	
-    ACTION set_hdd_per_cycle_fee(name owner, uint64_t fee);
+    ACTION setcyclefee(name owner, uint64_t fee);
 
-    ACTION create_mining_account(name mining_name, name owner);
+    ACTION newmaccount(name mining_name, name owner);
 
-    ACTION add_mining_profit(name mining_name, uint64_t space);
+    ACTION addmprofit(name mining_name, uint64_t space);
 
-    ACTION sub_hdd_balance(name owner, uint64_t balance);
+    ACTION subhbalance(name owner, uint64_t balance);
 
     ACTION buyhdd(name buyer, name receiver, asset quant);
 	
     ACTION sellhdd(name account, uint64_t quant);
 	
-    ACTION add_hdd_space(name owner, name hddaccount, uint64_t space);
+    ACTION addhspace(name owner, name hddaccount, uint64_t space);
 
-    ACTION sub_hdd_space(name owner, name hddaccount, uint64_t space);
+    ACTION subhspace(name owner, name hddaccount, uint64_t space);
 
 	static constexpr symbol hddcore_symbol = symbol(symbol_code("HDDCORE"), 4);
 	static constexpr symbol hdd_symbol     = symbol(symbol_code("HDD"), 0);

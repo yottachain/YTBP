@@ -63,7 +63,7 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
    }
    
 //@abi action
-void hdddata::get_hdd_balance(name owner) {
+void hdddata::gethbalance(name owner) {
 	//	当前余额=上次余额+(当前时间-上次余额时间)*（每周期收益-每周期费用）
 	require_auth(owner);	
 	//hddbalance_table  t_hddbalance(_self, _self.value);
@@ -90,7 +90,7 @@ void hdddata::get_hdd_balance(name owner) {
 
 }
 
-void hdddata::get_hdd_sum_balance() {
+void hdddata::gethsum() {
 	require_auth(_self);
 	
 	auto hddbalance_itr = t_hddbalance.find(HDD_ACCOUNT.value);
@@ -107,7 +107,7 @@ void hdddata::get_hdd_sum_balance() {
 	}
 }
 //@abi action
-void hdddata::set_hdd_per_cycle_fee(name owner, uint64_t fee) {
+void hdddata::setcyclefee(name owner, uint64_t fee) {
 	require_auth(_self);
 	require_auth(owner);
 	//hddbalance_table  t_hddbalance(owner, owner.value);
@@ -124,7 +124,7 @@ void hdddata::set_hdd_per_cycle_fee(name owner, uint64_t fee) {
 }
 
 //@abi action
-void hdddata::sub_hdd_balance(name owner,  uint64_t balance){
+void hdddata::subhbalance(name owner,  uint64_t balance){
 	require_auth(_self);
 	require_auth(owner);
 	//hddbalance_table  t_hddbalance(owner, owner.value);
@@ -138,7 +138,7 @@ void hdddata::sub_hdd_balance(name owner,  uint64_t balance){
 }
 
 //@abi action
-void hdddata::add_hdd_space(name owner, name hddaccount, uint64_t space){
+void hdddata::addhspace(name owner, name hddaccount, uint64_t space){
 	require_auth(owner);
 	require_auth(hddaccount);
 	//hddbalance_table  t_hddbalance(_self, _self.value);
@@ -152,7 +152,7 @@ void hdddata::add_hdd_space(name owner, name hddaccount, uint64_t space){
 }
 
 //@abi action
-void hdddata::sub_hdd_space(name owner, name hddaccount, uint64_t space){
+void hdddata::subhspace(name owner, name hddaccount, uint64_t space){
 	require_auth(owner);
 	require_auth(hddaccount);
 	//hddbalance_table  t_hddbalance(_self, _self.value);
@@ -166,7 +166,7 @@ void hdddata::sub_hdd_space(name owner, name hddaccount, uint64_t space){
 }
 
 //@abi action
-void hdddata::create_mining_account(name mining_name, name owner) {
+void hdddata::newmaccount(name mining_name, name owner) {
 	require_auth(mining_name);
 	//mining_account t_miningaccount(_self, _self.value);
 	auto mining_account_itr = t_miningaccount.find(mining_name.value);
@@ -192,7 +192,7 @@ void hdddata::create_mining_account(name mining_name, name owner) {
 }
 
 //@abi action
-void hdddata::add_mining_profit(name mining_name, uint64_t space){
+void hdddata::addmprofit(name mining_name, uint64_t space){
 	require_auth(mining_name);
 	//mining_account t_miningaccount(_self, _self.value);
 	auto mining_account_itr = t_miningaccount.find(mining_name.value);
