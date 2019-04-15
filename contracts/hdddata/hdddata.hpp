@@ -20,7 +20,7 @@ typedef double real_type;
 *  bancor exchange is entirely contained within this struct. There are no external
 *  side effects associated with using this API.
 */
-struct exchange_state {
+struct [[eosio::table, eosio::contract("hdddata")]] exchange_state {
   asset    supply;
 
   struct connector {

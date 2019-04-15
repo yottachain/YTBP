@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Apr 12 05:06:41 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Apr 15 03:30:22 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -49,6 +49,38 @@
                 {
                     "name": "quant",
                     "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "connector",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "asset"
+                },
+                {
+                    "name": "weight",
+                    "type": "float64"
+                }
+            ]
+        },
+        {
+            "name": "exchange_state",
+            "base": "",
+            "fields": [
+                {
+                    "name": "supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "base",
+                    "type": "connector"
+                },
+                {
+                    "name": "quote",
+                    "type": "connector"
                 }
             ]
         },
@@ -257,6 +289,13 @@
         {
             "name": "hbalance",
             "type": "hbalance",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "hmarket",
+            "type": "exchange_state",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
