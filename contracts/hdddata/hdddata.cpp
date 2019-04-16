@@ -12,7 +12,7 @@ const uint32_t minutes_in_one_day = hours_in_one_day * 60;
 const uint32_t seconds_in_one_day = minutes_in_one_day * 60;
 const uint32_t seconds_in_one_week = seconds_in_one_day * 7;
 const uint32_t seconds_in_one_year = seconds_in_one_day * 365;
-const name HDD_ACCOUNT = "hddofficial"_n;
+const name HDD_OFFICIAL = "hddofficial"_n;
 
 // constructor
 hdddata::hdddata( name s, name code, datastream<const char*> ds )
@@ -23,15 +23,16 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
    _producer(_self, _self.value)  {
 	//todo initialize produers ?
      
-	print( "construct system\n" );
-	auto hbalance_itr = _hbalance.find(HDD_ACCOUNT.value);
+	print( "construct system \n" );
+	auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
 	if(hbalance_itr == _hbalance.end()) {
 		_hbalance.emplace(_self, [&](auto &row) {
 			//todo check the 1st time insert
-			row.last_hdd_balance=0;
-			row.hdd_per_cycle_fee=0;
-			row.hdd_per_cycle_profit=0;
-			row.hdd_space=0;
+			row.owner = HDD_OFFICIAL;
+			row.last_hdd_balance=10;
+			row.hdd_per_cycle_fee=10;
+			row.hdd_per_cycle_profit=10;
+			row.hdd_space=20;
 			row.last_hdd_time = current_time();
 		});
 	}
@@ -59,6 +60,7 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
 
    hdddata:: ~hdddata() {
    }
+   
  symbol hdddata::core_symbol()const {
       const static auto sym = get_core_symbol( _hmarket );
       return sym;
@@ -86,6 +88,7 @@ void hdddata::gethbalance(name owner) {
 				hbalance_itr->get_last_hdd_balance() + 
 				//( current_time() - (hbalance_itr->last_hdd_time) )
 				10 * ( hbalance_itr->get_hdd_per_cycle_profit()-hbalance_itr->get_hdd_per_cycle_fee() );
+				
 			row.last_hdd_time = current_time();
 		});
 	}
@@ -95,7 +98,7 @@ void hdddata::gethbalance(name owner) {
 void hdddata::gethsum() {
 	require_auth(_self);
 	
-	auto hbalance_itr = _hbalance.find(HDD_ACCOUNT.value);
+	auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
 	if(hbalance_itr != _hbalance.end()) {
 		//todo check the 1st time insert
 		_hbalance.modify(hbalance_itr, _self, [&](auto &row) {
@@ -121,7 +124,11 @@ void hdddata::sethfee(name owner, uint64_t fee) {
 			//todo check overflow
 			row.hdd_per_cycle_fee -=fee;
 		});
-	}
+		}else {
+			print( "no owner in _hbalance :  ", owner, "\n" );
+			
+		}
+	
 	//每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
 }
 
@@ -136,6 +143,9 @@ void hdddata::subhbalance(name owner,  uint64_t balance){
 			//todo check overflow
 			row.last_hdd_balance -=balance;
 		});
+	}else {
+			print( "no owner in _hbalance :  ", owner, "\n" );
+			
 	}
 }
 
@@ -150,6 +160,9 @@ void hdddata::addhspace(name owner, name hddaccount, uint64_t space){
 			//todo check overflow
 			row.hdd_space +=space;
 		});
+	}else {
+			print( "no owner in _hbalance :  ", owner, "\n" );
+			
 	}
 }
 
@@ -164,6 +177,9 @@ void hdddata::subhspace(name owner, name hddaccount, uint64_t space){
 			//todo check overflow
 			row.hdd_space -=space;
 		});
+	}else {
+			print( "no owner in _hbalance :  ", owner, "\n" );
+			
 	}
 }
 
@@ -178,6 +194,7 @@ void hdddata::newmaccount(name mname, name owner) {
 			row.owner = owner;
 		 });
 	} else {
+		print( "owner  :  ", owner, "  already exist in  _hbalance \n" );
 		return ;
 	}
 	
@@ -210,6 +227,7 @@ void hdddata::addmprofit(name mname, uint64_t space){
 			});
 		} else {
 		//todo 
+			print( "no owner in _hbalance :  ", owner_id, "\n" );
 		}
 	}
 	//每周期收益 += (预采购空间*数据分片大小/1GB）*（记账周期/ 1年）		
@@ -261,7 +279,7 @@ extern "C" {
                 EOSIO_DISPATCH_HELPER( hdddata, (gethbalance)(gethsum)(sethfee)(newmaccount)(addmprofit)(subhbalance)(buyhdd)(sellhdd)(addhspace)(subhspace) )
             }
         }
-        else if(code==HDD_ACCOUNT.value && action=="transfer"_n.value) {
+        else if(code==HDD_OFFICIAL.value && action=="transfer"_n.value) {
             //execute_action( name(receiver), name(code), &hdddata::deposithdd );
         }
     }
