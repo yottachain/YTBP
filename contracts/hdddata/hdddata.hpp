@@ -82,6 +82,7 @@ CONTRACT hdddata : public contract
 	static constexpr eosio::name hdd_account{"eosio.hdd"_n};
 	static constexpr eosio::name hddfee_account{"eosio.hddfee"_n};
 	static constexpr eosio::name active_permission{"active"_n};
+	
 	static symbol get_core_symbol( name system_account = "hddofficial"_n ) {
 		hmarket_table rm(system_account, system_account.value);
 		const static auto sym = get_core_symbol( rm );
