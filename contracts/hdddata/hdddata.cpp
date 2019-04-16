@@ -22,8 +22,20 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
    _maccount(_self, _self.value),
    _hmarket(_self, _self.value),
    _producer(_self, _self.value)  {
-     
-	print( "construct system \n" );
+     	print( "construct system  \n " );
+    }
+
+   hdddata:: ~hdddata() {
+   }
+   
+ symbol hdddata::core_symbol()const {
+      const static auto sym = get_core_symbol( _hmarket );
+      return sym;																						
+   }
+
+ //@abit action
+ void hdddata::init() {
+	require_auth( _self ); 
 	auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
 	if(hbalance_itr == _hbalance.end()) {
 		_hbalance.emplace(_self, [&](auto &row) {
@@ -55,17 +67,8 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
                m.base.balance.symbol = hdd_symbol;
                m.quote.balance.amount = system_token_supply.amount / 1000;
                m.quote.balance.symbol = yta_symbol;
-            });
-    }
-
-   hdddata:: ~hdddata() {
-   }
-   
- symbol hdddata::core_symbol()const {
-      const static auto sym = get_core_symbol( _hmarket );
-      return sym;																						
-   }
-   
+    });
+ }
 //@abi action
 void hdddata::gethbalance(name owner) {
 	//	当前余额=上次余额+(当前时间-上次余额时间)*（每周期收益-每周期费用）
@@ -375,7 +378,7 @@ extern "C" {
         {
             switch(action)
             {
-                EOSIO_DISPATCH_HELPER( hdddata, (gethbalance)(gethsum)(sethfee)(newmaccount)(addmprofit)(subhbalance)(buyhdd)(sellhdd)(addhspace)(subhspace) )
+                EOSIO_DISPATCH_HELPER( hdddata, (init)(gethbalance)(gethsum)(sethfee)(newmaccount)(addmprofit)(subhbalance)(buyhdd)(sellhdd)(addhspace)(subhspace) )
             }
         }
         else if(code==HDD_OFFICIAL.value && action=="transfer"_n.value) {

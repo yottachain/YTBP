@@ -55,6 +55,8 @@ CONTRACT hdddata : public contract
 	
     ~hdddata();
 	
+	ACTION init();
+	
 	ACTION gethbalance(name owner);
 	
 	ACTION gethsum();

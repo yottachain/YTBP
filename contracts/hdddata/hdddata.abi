@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Apr 15 03:30:22 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Tue Apr 16 05:29:02 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -130,6 +130,11 @@
             ]
         },
         {
+            "name": "init",
+            "base": "",
+            "fields": []
+        },
+        {
             "name": "maccount",
             "base": "",
             "fields": [
@@ -257,6 +262,11 @@
         {
             "name": "gethsum",
             "type": "gethsum",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "init",
+            "type": "init",
             "ricardian_contract": ""
         },
         {
