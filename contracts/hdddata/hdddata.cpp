@@ -18,12 +18,10 @@ const name HDD_OFFICIAL = "hddofficial"_n;
 // constructor
 hdddata::hdddata( name s, name code, datastream<const char*> ds )
  : eosio::contract(s, code, ds),
-   _hbalance(_self, _self.value),
    _maccount(_self, _self.value),
    _hmarket(_self, _self.value),
    _producer(_self, _self.value)  {
-     	print( "construct system  \n " );
-    }
+	}
 
    hdddata:: ~hdddata() {
    }
@@ -34,32 +32,31 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
    }
 
  //@abit action
- void hdddata::init() {
-	require_auth( _self ); 
-	auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
+ void hdddata::init(name owner) {
+	require_auth( owner ); 
+	hbalance_table            _hbalance(_self, _self.value);
+	auto hbalance_itr = _hbalance.find(owner.value);
+	eosio_assert( hbalance_itr == _hbalance.end(), "_hbalance table has already been initialized" );
 	if(hbalance_itr == _hbalance.end()) {
 		_hbalance.emplace(_self, [&](auto &row) {
 			//todo check the 1st time insert
-			row.owner = HDD_OFFICIAL;
+			row.owner = owner;
 			row.last_hdd_balance=10;
 			row.hdd_per_cycle_fee=10;
 			row.hdd_per_cycle_profit=10;
 			row.hdd_space=20;
 			row.last_hdd_time = current_time();
-			
-			print( "create owner :  ", HDD_OFFICIAL, " while constructor \n" );
-		});
+			});
 	}
 	
 	auto itr = _hmarket.find(hddcore_symbol.raw());
-	eosio_assert( itr == _hmarket.end(), "hdd contract has already been initialized" );
+	eosio_assert( itr == _hmarket.end(), "_hmarket has already been initialized" );
 	
     auto system_token_supply   = eosio::token::get_supply(token_account, yta_symbol.code() );
     eosio_assert( system_token_supply.symbol == yta_symbol, "specified core symbol does not exist (precision mismatch)" ); 
 
 	eosio_assert( system_token_supply.amount > 0, "system token supply must be greater than 0" ); 
-	//auto system_token_supply = 0;
-	
+		
      _hmarket.emplace( _self, [&]( auto& m ) {
                m.supply.amount = 100000000000000ll;
                m.supply.symbol = hddcore_symbol;
@@ -71,13 +68,13 @@ hdddata::hdddata( name s, name code, datastream<const char*> ds )
  }
 //@abi action
 void hdddata::gethbalance(name owner) {
-	//	当前余额=上次余额+(当前时间-上次余额时间)*（每周期收益-每周期费用）
 	require_auth(owner);	
-	//hbalance_table  hbalance(_self, _self.value);
+	hbalance_table  _hbalance(_self, _self.value);
 	auto hbalance_itr = _hbalance.find(owner.value);
 	if(hbalance_itr == _hbalance.end()) {
 		_hbalance.emplace(owner, [&](auto &row) {
 			//todo check the 1st time insert
+			row.owner = owner;
 			row.last_hdd_balance=0;
 			row.hdd_per_cycle_fee=0;
 			row.hdd_per_cycle_profit=0;
@@ -100,7 +97,7 @@ void hdddata::gethbalance(name owner) {
 
 void hdddata::gethsum() {
 	require_auth(_self);
-	
+	hbalance_table            _hbalance(_self, _self.value);
 	auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
 	if(hbalance_itr != _hbalance.end()) {
 		//todo check the 1st time insert
@@ -118,7 +115,7 @@ void hdddata::gethsum() {
 void hdddata::sethfee(name owner, uint64_t fee) {
 	require_auth(_self);
 	require_auth(owner);
-	//hbalance_table  _hbalance(owner, owner.value);
+	hbalance_table  _hbalance(owner, owner.value);
 	auto hbalance_itr = _hbalance.find(owner.value);
 	if(hbalance_itr != _hbalance.end()) {
 		//每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
@@ -139,7 +136,7 @@ void hdddata::sethfee(name owner, uint64_t fee) {
 void hdddata::subhbalance(name owner,  uint64_t balance){
 	require_auth(_self);
 	require_auth(owner);
-	//hbalance_table  hbalance(owner, owner.value);
+	hbalance_table            _hbalance(_self, _self.value);
 	auto hbalance_itr = _hbalance.find(owner.value);
 	if(hbalance_itr != _hbalance.end()) {
 		_hbalance.modify(hbalance_itr, owner, [&](auto &row) {
@@ -156,6 +153,7 @@ void hdddata::subhbalance(name owner,  uint64_t balance){
 void hdddata::addhspace(name owner, name hddaccount, uint64_t space){
 	require_auth(owner);
 	require_auth(hddaccount);
+	hbalance_table            _hbalance(_self, _self.value);
 	auto hbalance_itr = _hbalance.find(hddaccount.value);
 	if(hbalance_itr != _hbalance.end()) {
 		_hbalance.modify(hbalance_itr, hddaccount, [&](auto &row) {
@@ -172,6 +170,7 @@ void hdddata::addhspace(name owner, name hddaccount, uint64_t space){
 void hdddata::subhspace(name owner, name hddaccount, uint64_t space){
 	require_auth(owner);
 	require_auth(hddaccount);
+	hbalance_table            _hbalance(_self, _self.value);
 	auto hbalance_itr = _hbalance.find(hddaccount.value);
 	if(hbalance_itr != _hbalance.end()) {
 		_hbalance.modify(hbalance_itr, hddaccount, [&](auto &row) {
@@ -200,13 +199,14 @@ void hdddata::newmaccount(name mname, name owner) {
 	}
 	
 	require_auth(owner);
-	//hbalance_table  hbalance(_self, _self.value);
+	hbalance_table  _hbalance(_self, _self.value);
 	auto hbalance_itr = _hbalance.find(owner.value);
 	if(hbalance_itr == _hbalance.end()) {
 	_hbalance.emplace(owner, [&](auto &row) {
 		//todo check the 1st time insert
 		row.owner = owner;
 		row.hdd_space=0;
+		row.last_hdd_time=current_time();
 	});
 	} 
 }
@@ -217,11 +217,11 @@ void hdddata::addmprofit(name mname, uint64_t space){
 	//maccount_table _maccount(_self, _self.value);
 	auto maccount_itr = _maccount.find(mname.value);
 	if( maccount_itr != _maccount.end()) {
-	//hbalance_table  _hbalance(_self, _self.value);
+	    hbalance_table  _hbalance(_self, _self.value);
 		auto owner_id = maccount_itr->get_owner();
 		auto hbalance_itr = _hbalance.find(owner_id);
-		if(hbalance_itr == _hbalance.end()) {
-			_hbalance.emplace(_self, [&](auto &row) {
+		if(hbalance_itr != _hbalance.end()) {
+			_hbalance.modify(hbalance_itr, _self, [&](auto &row) {
 			//todo check the 1st time insert
 			//row.owner = owner;
 			row.hdd_space=space;
@@ -250,7 +250,7 @@ void hdddata::buyhdd(name buyer, name receiver, asset quant) {
 	});
 
 	eosio_assert( bytes_out > 0, "must reserve a positive amount" );
-	
+	hbalance_table            _hbalance(_self, _self.value);
 	auto res_itr = _hbalance.find( receiver.value );
     if( res_itr ==  _hbalance.end() ) {
          res_itr = _hbalance.emplace( receiver, [&]( auto& res ) {
@@ -270,7 +270,7 @@ void hdddata::buyhdd(name buyer, name receiver, asset quant) {
 void hdddata::sellhdd(name account, uint64_t quant){
 	require_auth(account);
 	eosio_assert( quant > 0, "cannot sell negative hdd" );
-	
+	hbalance_table            _hbalance(_self, _self.value);
 	auto res_itr = _hbalance.find( account.value );
 	eosio_assert( res_itr != _hbalance.end(), "no resource row" );
 	

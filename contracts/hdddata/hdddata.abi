@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Tue Apr 16 05:29:02 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Apr 17 02:07:54 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -132,7 +132,12 @@
         {
             "name": "init",
             "base": "",
-            "fields": []
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
         },
         {
             "name": "maccount",

@@ -55,7 +55,7 @@ CONTRACT hdddata : public contract
 	
     ~hdddata();
 	
-	ACTION init();
+	ACTION init(name owner);
 	
 	ACTION gethbalance(name owner);
 	
@@ -102,12 +102,12 @@ CONTRACT hdddata : public contract
 	 symbol core_symbol()const;
 	 
 	TABLE  hbalance {
-		name                  owner;
+		name                  owner = "hddofficial"_n;
 		uint64_t              last_hdd_balance=0;
 		uint64_t              hdd_per_cycle_fee=0;
 		uint64_t              hdd_per_cycle_profit=0;
 		uint64_t              hdd_space=0;
-		uint64_t              last_hdd_time;
+		uint64_t              last_hdd_time = current_time();
 		uint64_t              primary_key() const { return owner.value; }
 		uint64_t              get_last_hdd_balance() const { return last_hdd_balance; }
 		uint64_t              get_hdd_per_cycle_fee() const { return hdd_per_cycle_fee; }
@@ -145,7 +145,7 @@ CONTRACT hdddata : public contract
 	
     private:
 		
-	hbalance_table                                   _hbalance;
+	//hbalance_table                                   _hbalance;
 	maccount_table                                 _maccount;
 	producer_table                                  _producer;
     hmarket_table                                   _hmarket;
