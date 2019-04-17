@@ -73,22 +73,24 @@ void hdddata::gethbalance(name owner) {
 	auto hbalance_itr = _hbalance.find(owner.value);
 	if(hbalance_itr == _hbalance.end()) {
 		_hbalance.emplace(owner, [&](auto &row) {
-			//todo check the 1st time insert
+		    print("A   gethbalance :  ", owner,   " is new  ... \n");
 			row.owner = owner;
-			row.last_hdd_balance=0;
-			row.hdd_per_cycle_fee=0;
-			row.hdd_per_cycle_profit=0;
-			row.hdd_space=0;
+			row.last_hdd_balance=10;
+			row.hdd_per_cycle_fee=10;
+			row.hdd_per_cycle_profit=10;
+			row.hdd_space=10;
 			row.last_hdd_time = current_time();
 		});
 	} else {
 		_hbalance.modify(hbalance_itr, _self, [&](auto &row) {
 			//todo  check overflow and time cycle 
+			print("A   gethbalance   last_hdd_balance :  ", hbalance_itr->get_last_hdd_balance(),  "\n");
 			row.last_hdd_balance=
 				hbalance_itr->get_last_hdd_balance() + 
 				//( current_time() - (hbalance_itr->last_hdd_time) )
-				10 * ( hbalance_itr->get_hdd_per_cycle_profit()-hbalance_itr->get_hdd_per_cycle_fee() );
+				10 * ( hbalance_itr->get_hdd_per_cycle_profit() - hbalance_itr->get_hdd_per_cycle_fee() );
 				
+				print("B   gethbalance   .last_hdd_balance :  ", row.last_hdd_balance,  "\n");
 			row.last_hdd_time = current_time();
 		});
 	}
@@ -121,11 +123,13 @@ void hdddata::sethfee(name owner, uint64_t fee) {
 		//每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
 		//eos_assert( xxx, "");
 		_hbalance.modify(hbalance_itr, owner, [&](auto &row) {
+			print("A   row.hdd_per_cycle_fee :  ", row.hdd_per_cycle_fee,  " \n");
 			//todo check overflow
 			row.hdd_per_cycle_fee -=fee;
 		});
+		print("B   row.hdd_per_cycle_fee :  ", hbalance_itr->get_hdd_per_cycle_fee(),  " \n");
 		}else {
-			print( "no owner in _hbalance :  ", owner, "\n" );
+			print( "no owner in _hbalance :  ", owner, " \n" );
 			
 		}
 	
@@ -144,7 +148,7 @@ void hdddata::subhbalance(name owner,  uint64_t balance){
 			row.last_hdd_balance -=balance;
 		});
 	}else {
-			print( "no owner in _hbalance :  ", owner, "\n" );
+			print( "no owner in _hbalance :  ", owner, " \n" );
 			
 	}
 }
@@ -161,7 +165,7 @@ void hdddata::addhspace(name owner, name hddaccount, uint64_t space){
 			row.hdd_space +=space;
 		});
 	}else {
-			print( "no owner in _hbalance :  ", owner, "\n" );
+			print( "no owner in _hbalance :  ", owner, " \n" );
 			
 	}
 }
@@ -203,8 +207,11 @@ void hdddata::newmaccount(name mname, name owner) {
 	auto hbalance_itr = _hbalance.find(owner.value);
 	if(hbalance_itr == _hbalance.end()) {
 	_hbalance.emplace(owner, [&](auto &row) {
-		//todo check the 1st time insert
+		//todo check the 1st time insert to modify
 		row.owner = owner;
+		row.last_hdd_balance=10;
+		row.hdd_per_cycle_fee=10;
+		row.hdd_per_cycle_profit=10;
 		row.hdd_space=0;
 		row.last_hdd_time=current_time();
 	});
@@ -224,11 +231,11 @@ void hdddata::addmprofit(name mname, uint64_t space){
 			_hbalance.modify(hbalance_itr, _self, [&](auto &row) {
 			//todo check the 1st time insert
 			//row.owner = owner;
-			row.hdd_space=space;
+			row.hdd_space = space;
 			});
 		} else {
 		//todo 
-			print( "no owner in _hbalance :  ", owner_id, "\n" );
+			print( "no owner in _hbalance :  ", owner_id, "  . \n" );
 		}
 	}
 	//每周期收益 += (预采购空间*数据分片大小/1GB）*（记账周期/ 1年）		
