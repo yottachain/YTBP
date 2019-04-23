@@ -107,7 +107,7 @@ private:
         uint64_t              hdd_per_cycle_fee=0;
         uint64_t              hdd_per_cycle_profit=0;
         uint64_t              hdd_space=0;
-        uint64_t              last_hdd_time = current_time();
+		uint64_t              last_hdd_time = current_time();                 //microseconds from 1970
         uint64_t              primary_key() const { return owner.value; }
         uint64_t              get_last_hdd_balance() const { return last_hdd_balance; }
         uint64_t              get_hdd_per_cycle_fee() const { return hdd_per_cycle_fee; }
@@ -144,6 +144,8 @@ private:
     typedef multi_index<"producer"_n, producer> producer_table;
     
 private:
+    void update_hddofficial(hbalance_table& _hblance, const uint64_t _hb, const uint64_t time);
+    
     
     //hbalance_table                                   _hbalance;
     maccount_table                                 _maccount;

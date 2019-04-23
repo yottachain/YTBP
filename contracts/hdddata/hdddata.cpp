@@ -16,6 +16,7 @@ const uint32_t minutes_in_one_day = hours_in_one_day * 60;
 const uint32_t seconds_in_one_day = minutes_in_one_day * 60;
 const uint32_t seconds_in_one_week = seconds_in_one_day * 7;
 const uint32_t seconds_in_one_year = seconds_in_one_day * 365;
+const int64_t  useconds_per_day      = 24 * 3600 * int64_t(1000000);
 
 const uint32_t one_gb  = 1024*1024*1024;   //1GB
 const uint32_t data_slice_size = 8*1024;   // among 4k-32k,set it as 8k
@@ -86,43 +87,65 @@ void hdddata::gethbalance(name owner) {
             print("A   gethbalance :  ", owner,   " is new  ... \n");
             row.owner = owner;
             row.last_hdd_balance=10;
-            row.hdd_per_cycle_fee=10;
+            row.hdd_per_cycle_fee=5;
             row.hdd_per_cycle_profit=10;
             row.hdd_space=10;
             row.last_hdd_time = current_time();
         });
     } else {
+        uint64_t tmp_t = current_time();
         _hbalance.modify(hbalance_itr, _self, [&](auto &row) {
+            print("gethbalance  modify  last_hdd_balance :  ", hbalance_itr->get_last_hdd_balance(),  "\n");
+            
+            uint64_t slot_t = (tmp_t - hbalance_itr->last_hdd_time)/1000000ll;   //convert to seconds
+            
+            print("gethbalance  modify  slot_t :  ", slot_t,  "\n");
             //todo  check overflow and time cycle 
-            print("A   gethbalance   last_hdd_balance :  ", hbalance_itr->get_last_hdd_balance(),  "\n");
             row.last_hdd_balance=
             hbalance_itr->get_last_hdd_balance() + 
-            //( current_time() - (hbalance_itr->last_hdd_time) )
-            10 * ( hbalance_itr->get_hdd_per_cycle_profit() - hbalance_itr->get_hdd_per_cycle_fee() );
+            slot_t * ( hbalance_itr->get_hdd_per_cycle_profit() - hbalance_itr->get_hdd_per_cycle_fee() ) * seconds_in_one_day;
             
             print("B   gethbalance   .last_hdd_balance :  ", row.last_hdd_balance,  "\n");
-            row.last_hdd_time = current_time();
+            row.last_hdd_time = tmp_t;
         });
+        
+        
     }
 
+}
+
+void hdddata::update_hddofficial(hbalance_table& _hbalance, const uint64_t _hb, const uint64_t time) {
+    auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
+    eosio_assert( hbalance_itr != _hbalance.end(), "no HDD_OFFICIAL exists  in  hbalance table" );
+    _hbalance.modify(hbalance_itr, _self, [&](auto &row) {
+        //todo  check overflow and time cycle 
+        row.last_hdd_balance  += _hb;
+        row.last_hdd_time = time;
+    });
 }
 
 void hdddata::gethsum() {
     require_auth(_self);
     hbalance_table            _hbalance(_self, _self.value);
     auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
-    
-    if(hbalance_itr != _hbalance.end()) {
-        //todo check the 1st time insert
-        _hbalance.modify(hbalance_itr, _self, [&](auto &row) {
-            //todo  check overflow and time cycle 
-            row.last_hdd_balance=
-            hbalance_itr->get_last_hdd_balance() + 
-            // todo ((uint64_t)( current_time() - hbalance_itr->last_hdd_time ))
-            10 *( hbalance_itr->get_hdd_per_cycle_profit()-hbalance_itr->get_hdd_per_cycle_fee() );
-            row.last_hdd_time = current_time();
-        });
-    }
+    eosio_assert( hbalance_itr != _hbalance.end(), "no HDD_OFFICIAL exists  in  hbalance table" );
+    //todo check the 1st time insert
+    uint64_t tmp_t = current_time();
+    _hbalance.modify(hbalance_itr, _self, [&](auto &row) {
+        print("gethbalance  modify  last_hdd_balance :  ", hbalance_itr->get_last_hdd_balance(),  "\n");
+        
+        uint64_t slot_t = (tmp_t - hbalance_itr->last_hdd_time)/1000000ll;   //convert to seconds
+        
+        print("gethbalance  modify  slot_t :  ", slot_t,  "\n");
+        //todo  check overflow and time cycle 
+        row.last_hdd_balance=
+        hbalance_itr->get_last_hdd_balance() + 
+        slot_t * ( hbalance_itr->get_hdd_per_cycle_profit() - hbalance_itr->get_hdd_per_cycle_fee() ) * seconds_in_one_day;
+        
+        print("B   gethbalance   .last_hdd_balance :  ", row.last_hdd_balance,  "\n");
+        row.last_hdd_time = tmp_t;
+    });
+
 }
 //@abi action
 void hdddata::sethfee(name owner, uint64_t fee) {
