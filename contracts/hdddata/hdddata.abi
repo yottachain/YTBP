@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Apr 15 03:30:22 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Apr 17 02:07:54 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -126,6 +126,16 @@
                 {
                     "name": "last_hdd_time",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "init",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
                 }
             ]
         },
@@ -257,6 +267,11 @@
         {
             "name": "gethsum",
             "type": "gethsum",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "init",
+            "type": "init",
             "ricardian_contract": ""
         },
         {
