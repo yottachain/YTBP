@@ -1,0 +1,269 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.1",
+    "types": [],
+    "structs": [
+        {
+            "name": "addhspace",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "addmprofit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minderid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "buyhdd",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "clearall",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "getbalance",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "hdd_global_state",
+            "base": "",
+            "fields": [
+                {
+                    "name": "hdd_total_balance",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "maccount",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "newmaccount",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "sellhdd",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "mount",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "sethfee",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "subbalance",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "balance",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "subhspace",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "userhdd",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account_name",
+                    "type": "name"
+                },
+                {
+                    "name": "hdd_balance",
+                    "type": "uint64"
+                },
+                {
+                    "name": "hdd_per_cycle_fee",
+                    "type": "uint64"
+                },
+                {
+                    "name": "hdd_per_cycle_profit",
+                    "type": "uint64"
+                },
+                {
+                    "name": "hdd_space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_hdd_time",
+                    "type": "uint64"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "addhspace",
+            "type": "addhspace",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "addmprofit",
+            "type": "addmprofit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "buyhdd",
+            "type": "buyhdd",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "clearall",
+            "type": "clearall",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "getbalance",
+            "type": "getbalance",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "newmaccount",
+            "type": "newmaccount",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sellhdd",
+            "type": "sellhdd",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sethfee",
+            "type": "sethfee",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "subbalance",
+            "type": "subbalance",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "subhspace",
+            "type": "subhspace",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "hddglobal",
+            "type": "hdd_global_state",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "maccount",
+            "type": "maccount",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "userhdd",
+            "type": "userhdd",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": []
+}
