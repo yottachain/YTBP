@@ -1,6 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Apr 17 02:07:54 2019",
-    "version": "eosio::abi/1.1",
+    "version": "eosio::abi/1.0",
     "structs": [
         {
             "name": "addhspace",
@@ -130,16 +129,6 @@
             ]
         },
         {
-            "name": "init",
-            "base": "",
-            "fields": [
-                {
-                    "name": "owner",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "maccount",
             "base": "",
             "fields": [
@@ -177,7 +166,7 @@
                 },
                 {
                     "name": "producer_key",
-                    "type": "public_key"
+                    "type": "name"
                 }
             ]
         },
@@ -270,11 +259,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "init",
-            "type": "init",
-            "ricardian_contract": ""
-        },
-        {
             "name": "newmaccount",
             "type": "newmaccount",
             "ricardian_contract": ""
@@ -331,6 +315,5 @@
         }
     ],
     "ricardian_clauses": [],
-    "variants": [],
     "abi_extensions": []
 }
