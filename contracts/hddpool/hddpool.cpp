@@ -28,7 +28,7 @@ const uint32_t one_gb  = 1024*1024*1024;   //1GB
 const uint32_t data_slice_size = 16*1024;   // among 4k-32k,set it as 16k
 const name HDD_OFFICIAL = "hddofficial"_n;
 
-const uint64_t inc_hdd_amount = 1000000;
+const uint64_t inc_hdd_amount = 1000000000;
 
 
 hddpool::hddpool( name s, name code, datastream<const char*> ds ) 
@@ -61,6 +61,7 @@ ACTION hddpool::getbalance(name user)
 {
    //require_auth( user );
    //require_auth(_self);
+   //require_auth2(user.value, "active"_n);
    userhdd_index _userhdd(_self, _self.value);
    auto it = _userhdd.find(user.value);
    if(it == _userhdd.end()){
@@ -153,7 +154,7 @@ ACTION hddpool::buyhdd( name user , asset quant)
 {
    require_auth( user );
    
-   eosio_assert(is_account(user), "from not a account");
+   eosio_assert(is_account(user), "user not a account");
    eosio_assert(is_account(hdd_account), "to not a account");
    eosio_assert(quant.is_valid(), "asset is invalid");
    eosio_assert(quant.symbol == yta_symbol, "must use YTA to buy HDD");
@@ -167,12 +168,13 @@ ACTION hddpool::buyhdd( name user , asset quant)
       std::make_tuple(user, hdd_account, quant, std::string("buy hdd"))
    ).send();*/ 
    
+   uint64_t _hdd_amount = quant.amount * 10000;
    userhdd_index _userhdd(_self, _self.value);
    auto it = _userhdd.find(user.value);
    if(it == _userhdd.end()){
       _userhdd.emplace(_self, [&](auto &row) {
          row.account_name = user;
-         //row.hdd_balance = quant.amount;
+         //row.hdd_balance = _hdd_amount;
          row.hdd_balance = inc_hdd_amount;
          row.hdd_per_cycle_fee = 0;
          row.hdd_per_cycle_profit = 0;
@@ -182,12 +184,12 @@ ACTION hddpool::buyhdd( name user , asset quant)
    }
    else {
       _userhdd.modify(it, _self, [&](auto &row) {
-         //row.hdd_balance += quant.amount;
+         //row.hdd_balance += _hdd_amount;
          row.hdd_balance += inc_hdd_amount;
       });  
    }
 
-   //update_hddofficial(_userhdd, quant.amount , 0, 0, 0);
+   //update_hddofficial(_userhdd, _hdd_amount , 0, 0, 0);
    update_hddofficial(_userhdd, inc_hdd_amount , 0, 0, 0);
 
 }
@@ -205,8 +207,10 @@ ACTION hddpool::sellhdd (name user, int64_t amount)
         row.hdd_balance -= inc_hdd_amount;
    });   
 
+   uint64_t _yta_amount = (double)amount/10000;
    /*
-   asset quant{amount, yta_symbol};
+   
+   asset quant{_yta_amount, yta_symbol};
    action(
       permission_level{hdd_account, active_permission},
       "eosio.token"_n, "transfer"_n,
@@ -214,7 +218,7 @@ ACTION hddpool::sellhdd (name user, int64_t amount)
    ).send();
    */ 
 
-   //update_hddofficial(_userhdd, -quant.amount , 0, 0, 0);
+   //update_hddofficial(_userhdd, -amount , 0, 0, 0);
    update_hddofficial(_userhdd, -inc_hdd_amount , 0, 0, 0);
 
 }
@@ -356,7 +360,6 @@ ACTION hddpool::addmprofit(uint64_t minderid, uint64_t space)
 
 ACTION hddpool::clearall()
 {
-   /*
    userhdd_index _userhdd( _self , _self.value );
    while (_userhdd.begin() != _userhdd.end())
       _userhdd.erase(_userhdd.begin());   
@@ -364,9 +367,8 @@ ACTION hddpool::clearall()
    maccount_index _maccount( _self , _self.value );
    while (_maccount.begin() != _maccount.end())
       _maccount.erase(_maccount.begin());   
-   */
-
-   _gstate.hdd_total_balance += 100000;
+   
+   //_gstate.hdd_total_balance += 100000;
 }
 
 bool hddpool::is_bp_account(uint64_t uservalue)
