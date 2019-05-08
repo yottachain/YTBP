@@ -261,6 +261,12 @@
          {"name":"last_name_close",               "type":"block_timestamp_type"}
       ]
     },{
+      "name": "eosio_global_count",
+      "base": "",
+      "fields": [
+         {"name":"total_accounts",                  "type":"uint64"}
+      ]
+    },{
       "name": "producer_info",
       "base": "",
       "fields": [
@@ -532,6 +538,12 @@
     },{
       "name": "global",
       "type": "eosio_global_state",
+      "index_type": "i64",
+      "key_names" : [],
+      "key_types" : []
+    },{
+      "name": "gcount",
+      "type": "eosio_global_count",
       "index_type": "i64",
       "key_names" : [],
       "key_types" : []

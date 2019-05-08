@@ -61,6 +61,14 @@ namespace eosiosystem {
                                 (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) )
    };
 
+   //##YTA-Change  start:
+   struct eosio_global_count {
+      uint64_t    total_accounts = 1;
+
+      EOSLIB_SERIALIZE( eosio_global_count, (total_accounts) )
+   };
+   //##YTA-Change  end:
+
    struct producer_info {
       account_name          owner;
       double                total_votes = 0;
@@ -120,6 +128,10 @@ namespace eosiosystem {
                                >  producers_table;
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
+
+   //##YTA-Change  start:
+   typedef eosio::singleton<N(gcount), eosio_global_count> global_count_singleton;
+   //##YTA-Change  end:
 
    //   static constexpr uint32_t     max_inflation_rate = 5;  // 5% annual inflation
    static constexpr uint32_t     seconds_per_day = 24 * 3600;

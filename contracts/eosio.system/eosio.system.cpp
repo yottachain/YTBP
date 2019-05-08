@@ -179,6 +179,17 @@ namespace eosiosystem {
       });
 
       set_resource_limits( newact, 0, 0, 0 );
+
+      //##YTA-Change  start:
+      global_count_singleton global(_self, _self);
+      eosio_global_count gstate;
+      if(global.exists()) {
+         gstate = global.get();
+      }
+      gstate.total_accounts += 1;
+      global.set( gstate, _self );
+         //##YTA-Change  end:
+
    }
 
 } /// eosio.system
