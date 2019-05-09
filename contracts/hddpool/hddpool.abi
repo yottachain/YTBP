@@ -1,6 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
-    "version": "eosio::abi/1.1",
+    "version": "eosio::abi/1.0",
     "types": [],
     "structs": [
         {
@@ -111,7 +110,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "mount",
+                    "name": "amount",
                     "type": "int64"
                 }
             ]
@@ -126,7 +125,7 @@
                 },
                 {
                     "name": "fee",
-                    "type": "uint64"
+                    "type": "int64"
                 }
             ]
         },
@@ -140,7 +139,7 @@
                 },
                 {
                     "name": "balance",
-                    "type": "uint64"
+                    "type": "int64"
                 }
             ]
         },
@@ -168,15 +167,15 @@
                 },
                 {
                     "name": "hdd_balance",
-                    "type": "uint64"
+                    "type": "int64"
                 },
                 {
                     "name": "hdd_per_cycle_fee",
-                    "type": "uint64"
+                    "type": "int64"
                 },
                 {
                     "name": "hdd_per_cycle_profit",
-                    "type": "uint64"
+                    "type": "int64"
                 },
                 {
                     "name": "hdd_space",
