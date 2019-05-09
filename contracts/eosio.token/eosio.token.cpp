@@ -4,6 +4,9 @@
  */
 
 #include "eosio.token.hpp"
+#include <hdddeposit/hdddeposit.hpp>
+
+const account_name hdddeposit_account = N(hdddeposit12);
 
 namespace eosio {
 
@@ -79,8 +82,16 @@ void token::transfer( account_name from,
     eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
     eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
-
+/*
+    //##YTA-Change  start:  
+    if( to == N(eosio.stake) || quantity.symbol != CORE_SYMBOL )  // no need to calculate hdd_deposit and hdd_lock anmout when stake operatation  
+      sub_balance( from, quantity );
+    else
+      sub_balance_yta( from, quantity );
+    //##YTA-Change  end:
+*/
     sub_balance( from, quantity );
+
     add_balance( to, quantity, from );
 }
 
@@ -88,7 +99,28 @@ void token::sub_balance( account_name owner, asset value ) {
    accounts from_acnts( _self, owner );
 
    const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
+
    eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
+
+   if( from.balance.amount == value.amount ) {
+      from_acnts.erase( from );
+   } else {
+      from_acnts.modify( from, owner, [&]( auto& a ) {
+          a.balance -= value;
+      });
+   }
+}
+
+//##YTA-Change  start:
+void token::sub_balance_yta( account_name owner, asset value ) {
+   accounts from_acnts( _self, owner );
+
+   const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
+
+   auto deposit = hdddeposit(hdddeposit_account).get_deposit(owner);
+   eosio_assert( deposit.symbol == value.symbol, "symbol precision mismatch" );
+   eosio_assert( from.balance.amount - deposit.amount >= value.amount, "overdrawn balance" );
+   //eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
 
 
    if( from.balance.amount == value.amount ) {
@@ -99,6 +131,7 @@ void token::sub_balance( account_name owner, asset value ) {
       });
    }
 }
+//##YTA-Change  end:
 
 void token::add_balance( account_name owner, asset value, account_name ram_payer )
 {
