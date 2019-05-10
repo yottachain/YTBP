@@ -21,7 +21,11 @@
             "base": "",
             "fields": [
                 {
-                    "name": "minderid",
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
                     "type": "uint64"
                 },
                 {

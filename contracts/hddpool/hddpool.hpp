@@ -29,7 +29,7 @@ class hddpool : public contract {
     void addhspace(name user, uint64_t space);
     void subhspace(name user, uint64_t space);
     void newmaccount(name owner, uint64_t minerid);
-    void addmprofit(uint64_t minderid, uint64_t space);
+    void addmprofit(name owner, uint64_t minerid, uint64_t space);
     void clearall();
 
   private:
@@ -56,7 +56,7 @@ class hddpool : public contract {
 
     
     struct hdd_global_state {
-      int64_t    hdd_total_balance = 0;
+      int64_t    hdd_total_balance = 10000000000;
     };        
 
     typedef eosio::singleton<N(hddglobal), hdd_global_state> global_state_singleton;
@@ -66,14 +66,14 @@ class hddpool : public contract {
 
 
     bool is_bp_account(uint64_t uservalue);
-
-    static hdd_global_state get_default_param();
     
     bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, 
           int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time, 
           int64_t &new_balance);
     
-    void update_hddofficial( userhdd_index& _hbalance, const int64_t _balance,
+    void update_hddofficial( const int64_t _balance,
           const int64_t _fee, const int64_t _profit, 
           const int64_t _space );      
+    
+    void update_total_hdd_balance( int64_t _balance_delta );
 };

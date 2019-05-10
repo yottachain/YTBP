@@ -40,7 +40,6 @@ hddpool::hddpool( account_name s)
 :contract(s),
  _global(_self, _self)
 {
-   //print("------hddpool::hddpool-----\n");
    if(_global.exists())
       _gstate = _global.get();
    else 
@@ -53,19 +52,14 @@ hddpool::~hddpool()
 }
 
 
-hddpool::hdd_global_state hddpool::get_default_param() {
-   hdd_global_state dp;
-   //print("------get_default_param-----\n");
-   dp.hdd_total_balance = 0;
-   return dp;
-}
-
 void hddpool::getbalance(name user)
 {
    //require_auth( user );
    //require_auth(_self);
    //require_auth2(user.value, "active"_n);
-   userhdd_index _userhdd(_self, _self);
+
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    if(it == _userhdd.end()){
       _userhdd.emplace(_self, [&](auto &row) {
@@ -93,6 +87,7 @@ void hddpool::getbalance(name user)
 }
 
 bool hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time, int64_t &new_balance) {
+
    uint64_t slot_t = (current_time - last_hdd_time)/1000000ll;   //convert to seconds
    new_balance = 0;
    //print( "oldbalance: ", oldbalance, "\n" );
@@ -101,27 +96,38 @@ bool hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, i
    //print( "slot_t: ", slot_t, "\n" );
    //print( "fee_cycle: ", fee_cycle, "\n" );
 
-   //double delta = (int64_t)(((double)slot_t / (double)fee_cycle) * ( (int64_t)hdd_per_cycle_profit - (int64_t)hdd_per_cycle_fee ));
-   //print( "delta: ", (int64_t)delta, "\n" );
    double tick = (double)((double)slot_t/fee_cycle);
-   //if(tick == 0)
-     // return false;
    new_balance = oldbalance;
    int64_t delta = (int64_t)(tick * (hdd_per_cycle_profit - hdd_per_cycle_fee ));
    if(delta < 0 && oldbalance <= -delta)
-      new_balance = 0;
-   else 
-      new_balance += delta;
+      delta = -oldbalance;
+   
+   new_balance += delta;
       
    //print( "new_balance: ", new_balance, "\n" );
+   
+   update_total_hdd_balance( delta );
 
    return true;
 }
 
-void hddpool::update_hddofficial( userhdd_index& _hbalance, const int64_t _balance,
+void hddpool::update_total_hdd_balance( int64_t _balance_delta ) {
+   _gstate.hdd_total_balance += _balance_delta;
+
+   if( _gstate.hdd_total_balance < 0 )
+      _gstate.hdd_total_balance = 0;
+}
+
+
+void hddpool::update_hddofficial( const int64_t _balance,
         const int64_t _fee, const int64_t _profit, 
         const int64_t _space )
 {
+   return;
+
+   //userhdd_index _hbalance(_self, _self);
+   userhdd_index _hbalance(_self, HDD_OFFICIAL.value);
+
    auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
    if(hbalance_itr == _hbalance.end()) {
       _hbalance.emplace(_self, [&](auto &row) {
@@ -133,7 +139,7 @@ void hddpool::update_hddofficial( userhdd_index& _hbalance, const int64_t _balan
          if(_space >= 0)
             row.hdd_space = (uint64_t)_space;
          else
-            row.hdd_space = (uint64_t)(-_space);
+            row.hdd_space = 0;
 
          row.last_hdd_time = current_time();
       });
@@ -159,6 +165,7 @@ void hddpool::update_hddofficial( userhdd_index& _hbalance, const int64_t _balan
             row.hdd_space -= (uint64_t)(-_space);   
       });
    } 
+   
 }
 
 void hddpool::buyhdd( name user , asset quant)
@@ -179,7 +186,8 @@ void hddpool::buyhdd( name user , asset quant)
    ).send();
    
    int64_t _hdd_amount = quant.amount * 10000;
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    if(it == _userhdd.end()){
       _userhdd.emplace(_self, [&](auto &row) {
@@ -199,15 +207,18 @@ void hddpool::buyhdd( name user , asset quant)
       });  
    }
 
-   update_hddofficial(_userhdd, _hdd_amount , 0, 0, 0);
-   //update_hddofficial(_userhdd, inc_hdd_amount , 0, 0, 0);
+   update_hddofficial(_hdd_amount , 0, 0, 0);
+   //update_hddofficial(inc_hdd_amount , 0, 0, 0);
+
+    update_total_hdd_balance(_hdd_amount);
 }
 
 void hddpool::sellhdd (name user, int64_t amount)
 {
    require_auth( user );
 
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert( it != _userhdd.end(), "user not exists in userhdd table." );
    eosio_assert( it->hdd_balance >= amount, "hdd overdrawn." );
@@ -227,8 +238,10 @@ void hddpool::sellhdd (name user, int64_t amount)
    ).send();
    
 
-   update_hddofficial(_userhdd, -amount , 0, 0, 0);
-   //update_hddofficial(_userhdd, -inc_hdd_amount , 0, 0, 0);
+   update_hddofficial(-amount , 0, 0, 0);
+   //update_hddofficial(-inc_hdd_amount , 0, 0, 0);
+
+   update_total_hdd_balance(-amount);
 
 }
 
@@ -236,7 +249,8 @@ void hddpool::sellhdd (name user, int64_t amount)
 void hddpool::sethfee( name user, int64_t fee)
 {
    eosio_assert(is_account(user), "user invalidate");
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert( it != _userhdd.end(), "user not exists in userhdd table" );
    eosio_assert(fee != it->hdd_per_cycle_fee, " the fee is the same \n");
@@ -258,7 +272,7 @@ void hddpool::sethfee( name user, int64_t fee)
     });  
     
     //变更总账户的每周期费用
-    update_hddofficial(_userhdd, 0, delta_fee, 0, 0);
+    update_hddofficial(0, delta_fee, 0, 0);
 }
 
 void hddpool::subbalance ( name user, int64_t balance)
@@ -266,7 +280,8 @@ void hddpool::subbalance ( name user, int64_t balance)
    require_auth(user);
 
    eosio_assert(is_account(user), "user invalidate");
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert( it != _userhdd.end(), "user not exists in userhdd table" );
     
@@ -274,14 +289,16 @@ void hddpool::subbalance ( name user, int64_t balance)
         row.hdd_balance -= balance;
    });
 
-   update_hddofficial(_userhdd, -balance, 0, 0, 0);
+   update_hddofficial(-balance, 0, 0, 0);
    
+   update_total_hdd_balance(-balance);
 }
 
 void hddpool::addhspace(name user, uint64_t space)
 {
    eosio_assert(is_account(user), "user invalidate");
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert( it != _userhdd.end(), "user not exists in userhdd table" );
     
@@ -289,13 +306,14 @@ void hddpool::addhspace(name user, uint64_t space)
         row.hdd_space += space;
    });   
 
-   update_hddofficial(_userhdd, 0, 0, 0, (int64_t)space);
+   update_hddofficial(0, 0, 0, (int64_t)space);
 }
 
 void hddpool::subhspace(name user, uint64_t space)
 {
    eosio_assert(is_account(user), "user invalidate");
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert( it != _userhdd.end(), "user not exists in userhdd table" );
     
@@ -303,25 +321,27 @@ void hddpool::subhspace(name user, uint64_t space)
         row.hdd_space -= space;
    });
 
-   update_hddofficial(_userhdd, 0, 0, 0, (int64_t)(-space));
+   update_hddofficial(0, 0, 0, (int64_t)(-space));
 
 }
 
 void hddpool::newmaccount(name owner, uint64_t minerid)
 {
    eosio_assert(is_account(owner), "owner invalidate");
-   maccount_index _maccount(_self, _self);
-    auto it = _maccount.find(owner.value);
-    eosio_assert( it == _maccount.end(), "minerid already exist in maccount table \n" );
+   //maccount_index _maccount(_self, _self);
+   maccount_index _maccount(_self, owner.value);
+   auto it = _maccount.find(minerid);
+   eosio_assert( it == _maccount.end(), "minerid already exist in maccount table \n" );
 
-    _maccount.emplace(_self, [&](auto &row) {
-        row.minerid = minerid;
-        row.owner = owner;
-    });
+   _maccount.emplace(_self, [&](auto &row) {
+      row.minerid = minerid;
+      row.owner = owner;
+   });
 
-    userhdd_index _userhdd(_self, _self);
-    auto userhdd_itr = _userhdd.find(owner.value);
-    if(userhdd_itr == _userhdd.end()) {
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, owner.value);
+   auto userhdd_itr = _userhdd.find(owner.value);
+   if(userhdd_itr == _userhdd.end()) {
       _userhdd.emplace(_self, [&](auto &row) {
          row.account_name = owner;
          row.hdd_balance = inc_hdd_amount;
@@ -333,18 +353,20 @@ void hddpool::newmaccount(name owner, uint64_t minerid)
     }
 }
 
-void hddpool::addmprofit(uint64_t minderid, uint64_t space)
+void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space)
 {
-   maccount_index _maccount(_self, _self);
-   auto it = _maccount.find(minderid);
+   //maccount_index _maccount(_self, _self);
+   maccount_index _maccount(_self, owner.value);
+   auto it = _maccount.find(minerid);
    eosio_assert( it != _maccount.end(), "minerid not register \n" );
-   name owner = it->owner;
+   //name owner = it->owner;
    _maccount.modify(it, _self, [&](auto &row) {
-        row.space = space;
+        row.space += space;
    });     
    
    //计算owner的每周期收益，计算之间先计算一下该用户上次的HDD余额
-   userhdd_index _userhdd(_self, _self);
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, owner.value);
    auto userhdd_itr = _userhdd.find(owner.value); 
    eosio_assert( userhdd_itr != _userhdd.end(), "no owner exists in userhdd table" );
    int64_t delta_profit = 0;
@@ -358,13 +380,14 @@ void hddpool::addmprofit(uint64_t minderid, uint64_t space)
       }           
       int64_t profit = 0;
       //每周期收益 += (生产空间*数据分片大小/1GB）*（记账周期/ 1年）
-      profit = (int64_t)(((double)(space*data_slice_size)/(double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year));
-      delta_profit = profit - userhdd_itr->hdd_per_cycle_profit;
-      row.hdd_per_cycle_profit = profit;
+      profit = (int64_t)( ((double)(space*data_slice_size)/(double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000 );
+      //delta_profit = profit - userhdd_itr->hdd_per_cycle_profit;
+      print( owner ,":" , minerid, "----", "profit : ", profit, "\n");
+      row.hdd_per_cycle_profit += profit;
     });     
 
    //变更总账户的每周期费用
-   update_hddofficial(_userhdd, 0, 0, delta_profit, 0);
+   update_hddofficial(0, 0, delta_profit, 0);
 }
 
 void hddpool::clearall()
@@ -376,8 +399,7 @@ void hddpool::clearall()
    maccount_index _maccount( _self , _self );
    while (_maccount.begin() != _maccount.end())
       _maccount.erase(_maccount.begin());   
-   
-   //_gstate.hdd_total_balance += 100000;
+
 }
 
 bool hddpool::is_bp_account(uint64_t uservalue)
