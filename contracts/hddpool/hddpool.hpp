@@ -46,11 +46,14 @@ class hddpool : public contract {
     typedef multi_index<N(userhdd), userhdd> userhdd_index; 
 
     struct maccount {
-      uint64_t minerid; //矿机id
-      name     owner; //拥有矿机的矿主的账户名
-      uint64_t space; //生产空间
-      uint64_t primary_key() const { return minerid; }
-      //uint64_t get_owner() const { return owner.value; }
+      uint64_t    minerid; //矿机id
+      name        owner; //拥有矿机的矿主的账户名
+      uint64_t    space; //生产空间
+      int64_t     hdd_per_cycle_profit; //每周期收益
+      int64_t     hdd_balance; //余额
+    	uint64_t    last_hdd_time; //上次余额计算时间 microseconds from 1970
+      uint64_t    primary_key() const { return minerid; }
+      //uint64_t  get_owner() const { return owner.value; }
     };
     typedef multi_index< N(maccount), maccount > maccount_index;
 

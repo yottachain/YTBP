@@ -56,7 +56,7 @@ void hddpool::getbalance(name user)
 {
    //require_auth( user );
    //require_auth(_self);
-   //require_auth2(user.value, "active"_n);
+   //require_auth2(user.value, N(custom));
 
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
@@ -80,7 +80,29 @@ void hddpool::getbalance(name user)
          if(calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance)) {
             row.hdd_balance = new_balance;
             row.last_hdd_time = tmp_t;      
-         }             
+         }
+
+         
+         //计算该账户下所有矿机的收益
+         maccount_index _maccount(_self, user.value);
+         for(auto it_m = _maccount.begin(); it_m != _maccount.end(); it_m++) {
+
+            int64_t balance_delta_m = 0;
+            _maccount.modify(it_m, _self, [&](auto &row_m) {
+               uint64_t tmp_t_m = current_time();
+               int64_t tmp_last_balance_m = it_m->hdd_balance;
+               int64_t new_balance_m = 0;
+               if(calculate_balance(tmp_last_balance_m, 0, it_m->hdd_per_cycle_profit, it_m->last_hdd_time, tmp_t_m, new_balance_m)) {
+                  balance_delta_m = new_balance_m - row_m.hdd_balance;
+                  row_m.hdd_balance = new_balance_m;
+                  row_m.last_hdd_time = tmp_t;
+               }
+            });
+
+            row.hdd_balance += balance_delta_m;              
+         }
+         
+
          print("{\"balance\":" , it->hdd_balance, "}");
       });
    }   
@@ -165,7 +187,7 @@ void hddpool::update_hddofficial( const int64_t _balance,
             row.hdd_space -= (uint64_t)(-_space);   
       });
    } 
-   
+
 }
 
 void hddpool::buyhdd( name user , asset quant)
@@ -336,6 +358,11 @@ void hddpool::newmaccount(name owner, uint64_t minerid)
    _maccount.emplace(_self, [&](auto &row) {
       row.minerid = minerid;
       row.owner = owner;
+      row.space = 0;
+      row.hdd_per_cycle_profit = 0;
+      row.hdd_balance = 0;
+      row.last_hdd_time = current_time();
+
    });
 
    //userhdd_index _userhdd(_self, _self);
@@ -360,34 +387,53 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space)
    auto it = _maccount.find(minerid);
    eosio_assert( it != _maccount.end(), "minerid not register \n" );
    //name owner = it->owner;
+
+   int64_t profit_delta = 0;
+   //每周期收益 += (生产空间*数据分片大小/1GB）*（记账周期/ 1年）
+   profit_delta = (int64_t)( ((double)(space*data_slice_size)/(double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000 );
+   
+   int64_t balance_delta = 0;
+
    _maccount.modify(it, _self, [&](auto &row) {
-        row.space += space;
+
+      uint64_t tmp_t = current_time();
+      int64_t tmp_last_balance = it->hdd_balance;
+      int64_t new_balance;
+      if(calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance)) {
+         balance_delta = new_balance - row.hdd_balance;
+         row.hdd_balance = new_balance;
+         row.last_hdd_time = tmp_t;
+      }
+
+      row.space += space;
+      row.hdd_per_cycle_profit += profit_delta;
+
    });     
    
-   //计算owner的每周期收益，计算之间先计算一下该用户上次的HDD余额
+   
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, owner.value);
    auto userhdd_itr = _userhdd.find(owner.value); 
    eosio_assert( userhdd_itr != _userhdd.end(), "no owner exists in userhdd table" );
-   int64_t delta_profit = 0;
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
       uint64_t tmp_t = current_time();
+
+      /*
       int64_t tmp_last_balance = userhdd_itr->hdd_balance;
       int64_t new_balance;
       if(calculate_balance(tmp_last_balance, userhdd_itr->hdd_per_cycle_fee, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hdd_time, tmp_t, new_balance)) {
          row.hdd_balance = new_balance;
          row.last_hdd_time = tmp_t;      
-      }           
-      int64_t profit = 0;
-      //每周期收益 += (生产空间*数据分片大小/1GB）*（记账周期/ 1年）
-      profit = (int64_t)( ((double)(space*data_slice_size)/(double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000 );
-      //delta_profit = profit - userhdd_itr->hdd_per_cycle_profit;
-      print( owner ,":" , minerid, "----", "profit : ", profit, "\n");
-      row.hdd_per_cycle_profit += profit;
-    });     
+      } */
+
+      row.last_hdd_time = tmp_t;  
+      row.hdd_balance += balance_delta;
+      row.hdd_per_cycle_profit = 0;
+    }); 
+    
 
    //变更总账户的每周期费用
-   update_hddofficial(0, 0, delta_profit, 0);
+   update_hddofficial(0, 0, profit_delta, 0);
 }
 
 void hddpool::clearall()

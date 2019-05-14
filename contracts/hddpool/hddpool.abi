@@ -88,7 +88,20 @@
                 {
                     "name": "space",
                     "type": "uint64"
+                },
+                {
+                    "name": "hdd_per_cycle_profit",
+                    "type": "int64"
+                },
+                {
+                    "name": "hdd_balance",
+                    "type": "int64"
+                },
+                {
+                    "name": "last_hdd_time",
+                    "type": "uint64"
                 }
+
             ]
         },
         {
