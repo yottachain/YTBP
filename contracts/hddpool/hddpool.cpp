@@ -22,7 +22,7 @@ const uint32_t seconds_in_one_day = minutes_in_one_day * 60;
 const uint32_t seconds_in_one_year = seconds_in_one_day * 365;
 //const int64_t  useconds_per_day      = 24 * 3600 * int64_t(1000000);
 
-const uint32_t fee_cycle = 30 ;     //计费周期(秒为单位)
+const uint32_t fee_cycle = seconds_in_one_day ;     //计费周期(秒为单位)
 
 const uint32_t one_gb  = 1024*1024*1024;   //1GB
 const uint32_t data_slice_size = 16*1024;   // among 4k-32k,set it as 16k
