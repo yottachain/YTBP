@@ -22,7 +22,8 @@ class hddpool : public contract {
     ~hddpool();    
 
     void getbalance( name user );
-    void buyhdd( name user , asset quant);
+    //void buyhdd( name user , asset quant);
+    void buyhdd( name user , int64_t amount);
     void sellhdd( name user, int64_t amount);
     void sethfee( name user, int64_t fee);
     void subbalance ( name user, int64_t balance);
@@ -63,10 +64,18 @@ class hddpool : public contract {
       int64_t    hdd_total_balance = 10000000000;
     };        
 
+    struct hdd_global_state2 {
+      uint64_t   hdd_total_user = 4;
+    };   
+
     typedef eosio::singleton<N(hddglobal), hdd_global_state> global_state_singleton;
+    typedef eosio::singleton<N(gusercount), hdd_global_state2> gusercount_singleton;
 
     global_state_singleton  _global;
     hdd_global_state        _gstate;    
+
+    gusercount_singleton    _global2;
+    hdd_global_state2       _gstate2;    
 
 
     bool is_bp_account(uint64_t uservalue);

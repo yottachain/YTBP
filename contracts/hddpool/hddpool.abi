@@ -57,8 +57,8 @@
                     "type": "name"
                 },
                 {
-                    "name": "quant",
-                    "type": "asset"
+                    "name": "amount",
+                    "type": "int64"
                 }
             ]
         },
@@ -83,10 +83,21 @@
             "fields": [
                 {
                     "name": "hdd_total_balance",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "hdd_global_state2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "hdd_total_user",
                     "type": "uint64"
                 }
             ]
         },
+
         {
             "name": "maccount",
             "base": "",
@@ -280,6 +291,13 @@
         {
             "name": "hddglobal",
             "type": "hdd_global_state",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "gusercount",
+            "type": "hdd_global_state2",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -37,17 +37,26 @@ const int64_t inc_hdd_amount = 1000000000;
 
 hddpool::hddpool( account_name s)
 :contract(s),
- _global(_self, _self)
+ _global(_self, _self),
+ _global2(_self, _self)
 {
+   
    if(_global.exists())
       _gstate = _global.get();
    else 
       _gstate = hdd_global_state{};
+
+   if(_global2.exists())
+      _gstate2 = _global2.get();
+   else 
+      _gstate2 = hdd_global_state2{};
+
 }
 
 hddpool::~hddpool()
 {
    _global.set(_gstate, _self);
+   _global2.set(_gstate2, _self);
 }
 
 
@@ -68,6 +77,8 @@ void hddpool::getbalance(name user)
          row.hdd_per_cycle_profit = 0;
          row.hdd_space = 0;
          row.last_hdd_time = current_time();
+
+         _gstate2.hdd_total_user += 1;
       });
       print("{\"balance\":" , inc_hdd_amount, "}");
    }
@@ -189,6 +200,7 @@ void hddpool::update_hddofficial( const int64_t _balance,
 
 }
 
+/*
 void hddpool::buyhdd( name user , asset quant)
 {
    require_auth( user );
@@ -233,6 +245,52 @@ void hddpool::buyhdd( name user , asset quant)
 
     update_total_hdd_balance(_hdd_amount);
 }
+*/
+
+void hddpool::buyhdd( name user , int64_t amount)
+{
+   require_auth( user );
+   
+   eosio_assert(is_account(user), "user not a account");
+   eosio_assert(is_account(hdd_account), "to not a account");
+   eosio_assert(amount > 0, "must transfer positive quantity");
+
+   asset quant;
+   quant.symbol = CORE_SYMBOL;
+   quant.amount = amount/10000;
+   action(
+      permission_level{user, active_permission},
+      token_account, N(transfer),
+      std::make_tuple(user, hdd_account, quant, std::string("buy hdd"))
+   ).send();
+   
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
+   auto it = _userhdd.find(user.value);
+   if(it == _userhdd.end()){
+      _userhdd.emplace(_self, [&](auto &row) {
+         row.account_name = user;
+         row.hdd_balance = amount;
+         //row.hdd_balance = inc_hdd_amount;
+         row.hdd_per_cycle_fee = 0;
+         row.hdd_per_cycle_profit = 0;
+         row.hdd_space = 0;
+         row.last_hdd_time = current_time();
+      });
+   }
+   else {
+      _userhdd.modify(it, _self, [&](auto &row) {
+         row.hdd_balance += amount;
+         //row.hdd_balance += inc_hdd_amount;
+      });  
+   }
+
+   update_hddofficial(amount , 0, 0, 0);
+   //update_hddofficial(inc_hdd_amount , 0, 0, 0);
+
+    update_total_hdd_balance(amount);
+}
+
 
 void hddpool::sellhdd (name user, int64_t amount)
 {
@@ -375,6 +433,8 @@ void hddpool::newmaccount(name owner, uint64_t minerid)
          row.hdd_per_cycle_profit = 0;
          row.hdd_space = 0;
          row.last_hdd_time = current_time();
+
+         _gstate2.hdd_total_user += 1;
       });            
     }
 }
