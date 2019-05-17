@@ -20,7 +20,6 @@ const uint32_t minutes_in_one_day = hours_in_one_day * 60;
 const uint32_t seconds_in_one_day = minutes_in_one_day * 60;
 //const uint32_t seconds_in_one_week = seconds_in_one_day * 7;
 const uint32_t seconds_in_one_year = seconds_in_one_day * 365;
-//const int64_t  useconds_per_day      = 24 * 3600 * int64_t(1000000);
 
 const uint32_t fee_cycle = seconds_in_one_day ;     //计费周期(秒为单位)
 
@@ -436,6 +435,40 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space)
    update_hddofficial(0, 0, profit_delta, 0);
 }
 
+void hddpool::calcmbalance(name owner, uint64_t minerid)
+{
+   //maccount_index _maccount(_self, _self);
+   maccount_index _maccount(_self, owner.value);
+   auto it = _maccount.find(minerid);
+   eosio_assert( it != _maccount.end(), "minerid not register \n" );
+
+   int64_t balance_delta = 0;
+
+   _maccount.modify(it, _self, [&](auto &row) {
+      uint64_t tmp_t = current_time();
+      int64_t tmp_last_balance = it->hdd_balance;
+      int64_t new_balance;
+      if(calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance)) {
+         balance_delta = new_balance - row.hdd_balance;
+         row.hdd_balance = new_balance;
+         row.last_hdd_time = tmp_t;
+      }
+   });     
+   
+   
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, owner.value);
+   auto userhdd_itr = _userhdd.find(owner.value); 
+   eosio_assert( userhdd_itr != _userhdd.end(), "no owner exists in userhdd table" );
+   _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
+      uint64_t tmp_t = current_time();
+      row.last_hdd_time = tmp_t;  
+      row.hdd_balance += balance_delta;
+      row.hdd_per_cycle_profit = 0;
+    }); 
+
+}
+
 void hddpool::clearall()
 {
    userhdd_index _userhdd( _self , _self );
@@ -460,4 +493,4 @@ bool hddpool::is_bp_account(uint64_t uservalue)
    return false;
 }
 
-EOSIO_ABI( hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(newmaccount)(addmprofit)(clearall))
+EOSIO_ABI( hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(newmaccount)(addmprofit)(clearall)(calcmbalance))

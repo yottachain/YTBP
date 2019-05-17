@@ -31,6 +31,7 @@ class hddpool : public contract {
     void newmaccount(name owner, uint64_t minerid);
     void addmprofit(name owner, uint64_t minerid, uint64_t space);
     void clearall();
+    void calcmbalance(name owner, uint64_t minerid);
 
   private:
 
