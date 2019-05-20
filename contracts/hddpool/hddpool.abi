@@ -97,7 +97,16 @@
                 }
             ]
         },
-
+        {
+            "name": "hdd_global_state3",
+            "base": "",
+            "fields": [
+                {
+                    "name": "hdd_macc_user",
+                    "type": "uint64"
+                }
+            ]
+        },
         {
             "name": "maccount",
             "base": "",
@@ -298,6 +307,13 @@
         {
             "name": "gusercount",
             "type": "hdd_global_state2",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "gmacccount",
+            "type": "hdd_global_state3",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

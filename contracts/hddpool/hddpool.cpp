@@ -38,7 +38,8 @@ const int64_t inc_hdd_amount = 1000000000;
 hddpool::hddpool( account_name s)
 :contract(s),
  _global(_self, _self),
- _global2(_self, _self)
+ _global2(_self, _self),
+ _global3(_self, _self)
 {
    
    if(_global.exists())
@@ -51,12 +52,18 @@ hddpool::hddpool( account_name s)
    else 
       _gstate2 = hdd_global_state2{};
 
+   if(_global3.exists())
+      _gstate3 = _global3.get();
+   else 
+      _gstate3 = hdd_global_state3{};
+
 }
 
 hddpool::~hddpool()
 {
    _global.set(_gstate, _self);
    _global2.set(_gstate2, _self);
+   _global3.set(_gstate3, _self);
 }
 
 
@@ -409,6 +416,11 @@ void hddpool::newmaccount(name owner, uint64_t minerid)
    eosio_assert(is_account(owner), "owner invalidate");
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
+   if (_maccount.begin() == _maccount.end()){
+      //miner pool inc
+      _gstate3.hdd_macc_user += 1;
+   }
+
    auto it = _maccount.find(minerid);
    eosio_assert( it == _maccount.end(), "minerid already exist in maccount table \n" );
 

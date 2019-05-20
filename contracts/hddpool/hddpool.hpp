@@ -66,10 +66,16 @@ class hddpool : public contract {
 
     struct hdd_global_state2 {
       uint64_t   hdd_total_user = 4;
+    };
+
+    struct hdd_global_state3 {
+      uint64_t   hdd_macc_user = 2;
     };   
+
 
     typedef eosio::singleton<N(hddglobal), hdd_global_state> global_state_singleton;
     typedef eosio::singleton<N(gusercount), hdd_global_state2> gusercount_singleton;
+    typedef eosio::singleton<N(gmacccount), hdd_global_state3> gmacccount_singleton;
 
     global_state_singleton  _global;
     hdd_global_state        _gstate;    
@@ -77,6 +83,8 @@ class hddpool : public contract {
     gusercount_singleton    _global2;
     hdd_global_state2       _gstate2;    
 
+    gmacccount_singleton    _global3;
+    hdd_global_state3       _gstate3;    
 
     bool is_bp_account(uint64_t uservalue);
     
