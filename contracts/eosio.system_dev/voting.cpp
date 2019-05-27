@@ -135,7 +135,11 @@ namespace eosiosystem {
          eosio_assert( voter_name != proxy, "cannot proxy to self" );
          require_recipient( proxy );
       } else {
-         eosio_assert( producers.size() <= 30, "attempt to vote for too many producers" );
+         //##YTA-Change  start:         
+         //eosio_assert( producers.size() <= 30, "attempt to vote for too many producers" );
+         // One voter can only vote for one producer
+         eosio_assert( producers.size() <= 1, "attempt to vote for too many producers" );
+         //##YTA-Change  end:
          for( size_t i = 1; i < producers.size(); ++i ) {
             eosio_assert( producers[i-1] < producers[i], "producer votes must be unique and sorted" );
          }
