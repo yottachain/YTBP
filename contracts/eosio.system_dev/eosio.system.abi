@@ -32,6 +32,13 @@
         {"name":"weight", "type":"weight_type"}
       ]
     },{
+      "name": "prod_meta",
+      "base": "",
+      "fields": [
+        {"name":"owner",        "type":"account_name"},
+        {"name":"total_votes",  "type":"float64"}
+      ]
+    },{
       "name": "bidname",
       "base": "",
       "fields": [
@@ -278,6 +285,22 @@
          {"name":"unpaid_blocks",   "type":"uint32"},
          {"name":"last_claim_time", "type":"uint64"},
          {"name":"location",        "type":"uint16"}
+      ]
+    },{
+      "name": "producer_info_ext",
+      "base": "",
+      "fields": [
+         {"name":"owner",           "type":"account_name"},
+         {"name":"seq_num",        "type":"uint16"}
+      ]
+    },{
+      "name": "producers_seq",
+      "base": "",
+      "fields": [
+         {"name":"seq_num",          "type":"uint16"},
+         {"name":"prods_l1",         "type":"prod_meta"}
+         {"name":"prods_l2",         "type":"prod_meta[]"}
+         {"name":"prods_l3",         "type":"prod_meta[]"}
       ]
     },{
       "name": "regproducer",
@@ -530,6 +553,18 @@
       "ricardian_contract": ""
     }],
    "tables": [{
+      "name": "producers2",
+      "type": "producer_info_ext",
+      "index_type": "i64",
+      "key_names" : ["owner"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "prods_seq",
+      "type": "producers_seq",
+      "index_type": "i64",
+      "key_names" : ["seq_num"],
+      "key_types" : ["uint64"]
+    },{
       "name": "producers",
       "type": "producer_info",
       "index_type": "i64",

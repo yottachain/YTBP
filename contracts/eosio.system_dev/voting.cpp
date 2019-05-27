@@ -25,7 +25,7 @@ namespace eosiosystem {
    using eosio::print;
    using eosio::singleton;
    using eosio::transaction;
-
+   using std::swap;
    /**
     *  This method will create a producer_config and producer_info object for 'producer'
     *
@@ -58,6 +58,16 @@ namespace eosiosystem {
                info.location      = location;
          });
       }
+
+      //##YTA-Change  start:
+      auto prod_ext = _producers2.find( producer );
+      if ( prod_ext == _producers2.end() ) {
+         _producers2.emplace( producer, [&]( producer_info_ext& info ){
+               info.owner         = producer;
+               info.seq_num       = 1; //This should have some policy to generate the seq_num
+         });
+      }
+      //##YTA-Change  end:
    }
 
    void system_contract::unregprod( const account_name producer ) {
@@ -70,6 +80,8 @@ namespace eosiosystem {
       });
    }
 
+   //##YTA-Change  start:
+/*
    void system_contract::update_elected_producers( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
 
@@ -101,6 +113,132 @@ namespace eosiosystem {
          _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
       }
    }
+*/
+
+   void system_contract::update_elected_producers( block_timestamp block_time ) {
+      _gstate.last_producer_schedule_update = block_time;
+
+
+      std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
+      top_producers.reserve(21);
+
+     for( uint16_t seq_num = 1; seq_num <= 21 ; seq_num++ ) {
+        std::pair<eosio::producer_key,uint16_t> ppinfo = getProducerForSeq( seq_num );
+        if( ppinfo.first.producer_name != 0 ) {
+            top_producers.emplace_back( ppinfo );
+        }
+     }
+
+      if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
+         return;
+      }
+
+      /// sort by producer name
+      std::sort( top_producers.begin(), top_producers.end() );
+
+      std::vector<eosio::producer_key> producers;
+
+      producers.reserve(top_producers.size());
+      for( const auto& item : top_producers )
+         producers.push_back(item.first);
+
+      bytes packed_schedule = pack(producers);
+
+      if( set_proposed_producers( packed_schedule.data(),  packed_schedule.size() ) >= 0 ) {
+         _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
+      }
+   }
+
+   std::pair<eosio::producer_key,uint16_t>  system_contract::getProducerForSeq(uint64_t seq_num ) {
+      producers_seq_table prodseq(_self, seq_num);
+      auto ps_itr = prodseq.find (seq_num); 
+      if( ps_itr == prodseq.end() )  
+         return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
+      
+      if(is_qualification_producers(ps_itr->prods_l1.owner)) {
+         return genProducerData(ps_itr->prods_l1.owner);
+      }
+
+
+      prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
+         info.prods_l3.push_back(info.prods_l1);
+
+         sort(info.prods_l2.begin(), info.prods_l2.end() ,[](const prod_meta &a,  const prod_meta &b) { return a.total_votes < b.total_votes; });
+         if( info.prods_l2.begin() != info.prods_l2.end() ) {
+            info.prods_l1 = *(info.prods_l2.begin());
+            info.prods_l2.erase(info.prods_l2.begin());
+         }        
+
+         sort(info.prods_l3.begin(), info.prods_l3.end() ,[](const prod_meta &a,  const prod_meta &b) { return a.total_votes < b.total_votes; });
+         if( info.prods_l3.begin() != info.prods_l3.end() ) {
+            info.prods_l1 = *(info.prods_l3.begin());
+            info.prods_l3.erase(info.prods_l3.begin());
+         }   
+      });
+      
+      return genProducerData(ps_itr->prods_l1.owner);
+   }
+
+   std::pair<eosio::producer_key,uint16_t>  system_contract::genProducerData(account_name owner) {
+      auto prod = _producers.find(owner);
+      if ( prod == _producers.end() ) {
+         return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
+      }
+      return std::pair<eosio::producer_key,uint16_t>({{prod->owner , prod->producer_key}, prod->location});
+   }
+
+   bool system_contract::is_qualification_producers( account_name name ) {
+      auto prod = _producers.find(name);
+      if ( prod == _producers.end() ) {
+         return false;
+      }
+      if( !prod->active())
+         return false;
+      
+      user_resources_table  userres( _self, name );
+      auto res_itr = userres.find( name );
+      if( res_itr ==  userres.end() ) {
+         return false;
+      }
+      asset totalbw = res_itr->cpu_weight + res_itr->net_weight;
+      asset threshold{ 5000000000, CORE_SYMBOL }; 
+      if( totalbw < threshold)
+         return false; 
+      
+      return true;
+   }
+
+
+   void system_contract::update_producers_seq_totalvotes( uint64_t seq_num, account_name owner, double total_votes) {
+      if(seq_num == 0 || seq_num > 21)
+         return;
+      
+      producers_seq_table prodseq(_self, seq_num);
+      auto ps_itr = prodseq.find (seq_num);
+
+      prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
+         if( info.prods_l1.owner == owner ) {
+            info.prods_l1.total_votes = total_votes;
+            return;
+         }
+
+         for(auto it = info.prods_l2.begin(); it != info.prods_l2.end(); it++) {
+            if(it->owner == owner) {
+               it->total_votes = total_votes;
+               return;
+            }
+         }
+
+         for(auto it = info.prods_l3.begin(); it != info.prods_l3.end(); it++) {
+            if(it->owner == owner) {
+               it->total_votes = total_votes;
+               return;
+            }
+         }
+
+      });
+   }
+   //##YTA-Change  end:
 
    double stake2vote( int64_t staked ) {
       /// TODO subtract 2080 brings the large numbers closer to this decade
@@ -205,6 +343,7 @@ namespace eosiosystem {
       }
 
       for( const auto& pd : producer_deltas ) {
+         double total_votes = 0;
          auto pitr = _producers.find( pd.first );
          if( pitr != _producers.end() ) {
             eosio_assert( !voting || pitr->active() || !pd.second.second /* not from new set */, "producer is not currently registered" );
@@ -215,10 +354,21 @@ namespace eosiosystem {
                }
                _gstate.total_producer_vote_weight += pd.second.first;
                //eosio_assert( p.total_votes >= 0, "something bad happened" );
+               total_votes = p.total_votes;
             });
          } else {
             eosio_assert( !pd.second.second /* not from new set */, "producer is not registered" ); //data corruption
          }
+
+         //##YTA-Change  start:
+         auto pitr2 = _producers2.find( pd.first );
+         if( pitr2 != _producers2.end() ) {
+            //pitr2->seq_num   
+            update_producers_seq_totalvotes(pitr2->seq_num, pd.first, total_votes); 
+         }  else {
+            eosio_assert( !pd.second.second /* not from new set */, "producer is not registered" ); //data corruption
+         }     
+         //##YTA-Change  end:         
       }
 
       _voters.modify( voter, 0, [&]( auto& av ) {
