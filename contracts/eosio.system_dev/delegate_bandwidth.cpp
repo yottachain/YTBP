@@ -31,6 +31,8 @@ namespace eosiosystem {
    static constexpr time refund_delay = 3*24*3600;
    static constexpr time refund_expiration_time = 3600;
 
+   //##YTA-Change  start:  
+   /*
    struct user_resources {
       account_name  owner;
       asset         net_weight;
@@ -41,7 +43,8 @@ namespace eosiosystem {
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
-   };
+   };*/
+   //##YTA-Change  end:  
 
 
    /**
@@ -76,7 +79,9 @@ namespace eosiosystem {
     *  These tables are designed to be constructed in the scope of the relevant user, this
     *  facilitates simpler API for per-user queries
     */
-   typedef eosio::multi_index< N(userres), user_resources>      user_resources_table;
+   //##YTA-Change  start:  
+   //typedef eosio::multi_index< N(userres), user_resources>      user_resources_table;
+   //##YTA-Change  end:  
    typedef eosio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
    typedef eosio::multi_index< N(refunds), refund_request>      refunds_table;
 

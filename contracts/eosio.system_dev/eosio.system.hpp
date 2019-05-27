@@ -120,6 +120,24 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
    };
 
+   //##YTA-Change  start:  
+   struct user_resources {
+      account_name  owner;
+      asset         net_weight;
+      asset         cpu_weight;
+      int64_t       ram_bytes = 0;
+
+      uint64_t primary_key()const { return owner; }
+
+      // explicit serialization macro is not necessary, used here only to improve compilation time
+      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
+   };  
+   //##YTA-Change  end:   
+
+   //##YTA-Change  start:  
+   typedef eosio::multi_index< N(userres), user_resources>      user_resources_table;
+   //##YTA-Change  end:  
+
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
 
 
