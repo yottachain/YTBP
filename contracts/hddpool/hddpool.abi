@@ -108,6 +108,16 @@
             ]
         },
         {
+            "name": "hdd_global_price",
+            "base": "",
+            "fields": [
+                {
+                    "name": "price",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
             "name": "maccount",
             "base": "",
             "fields": [
@@ -318,6 +328,13 @@
             "key_names": [],
             "key_types": []
         },
+        {
+            "name": "ghddprice",
+            "type": "hdd_global_price",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },        
         {
             "name": "maccount",
             "type": "maccount",

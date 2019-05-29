@@ -34,12 +34,14 @@ static constexpr eosio::name hdd_account{N(hddpool12345)};
 
 const int64_t inc_hdd_amount = 1000000000;
 
+const int64_t price_delta = 5;
 
 hddpool::hddpool( account_name s)
 :contract(s),
  _global(_self, _self),
  _global2(_self, _self),
- _global3(_self, _self)
+ _global3(_self, _self),
+ _ghddprice(_self, _self)
 {
    
    if(_global.exists())
@@ -57,6 +59,11 @@ hddpool::hddpool( account_name s)
    else 
       _gstate3 = hdd_global_state3{};
 
+   if(_ghddprice.exists())
+      _ghddpriceState = _ghddprice.get();
+   else
+      _ghddpriceState = hdd_global_price{};
+
 }
 
 hddpool::~hddpool()
@@ -64,6 +71,7 @@ hddpool::~hddpool()
    _global.set(_gstate, _self);
    _global2.set(_gstate2, _self);
    _global3.set(_gstate3, _self);
+   _ghddprice.set(_ghddpriceState, _self);
 }
 
 
@@ -264,7 +272,9 @@ void hddpool::buyhdd( name user , int64_t amount)
 
    asset quant;
    quant.symbol = CORE_SYMBOL;
-   quant.amount = amount/10000;
+   //quant.amount = amount/10000;
+   quant.amount = ((amount/10000)*_ghddpriceState.price)/100;
+
    action(
       permission_level{user, active_permission},
       token_account, N(transfer),
@@ -295,7 +305,9 @@ void hddpool::buyhdd( name user , int64_t amount)
    update_hddofficial(amount , 0, 0, 0);
    //update_hddofficial(inc_hdd_amount , 0, 0, 0);
 
-    update_total_hdd_balance(amount);
+   update_total_hdd_balance(amount);
+
+   _ghddpriceState.price += price_delta;
 }
 
 
@@ -314,7 +326,9 @@ void hddpool::sellhdd (name user, int64_t amount)
         //row.hdd_balance -= inc_hdd_amount;
    });   
 
-   int64_t _yta_amount = (int64_t)((double)amount/10000);
+   //int64_t _yta_amount = (int64_t)((double)amount/10000);
+   int64_t _yta_amount = (int64_t)( (((double)amount/10000)*_ghddpriceState.price)/100  );
+
    
    asset quant{_yta_amount, CORE_SYMBOL};
    action(
@@ -328,6 +342,10 @@ void hddpool::sellhdd (name user, int64_t amount)
    //update_hddofficial(-inc_hdd_amount , 0, 0, 0);
 
    update_total_hdd_balance(-amount);
+
+   _ghddpriceState.price -= price_delta;
+   if(_ghddpriceState.price <= 10)
+      _ghddpriceState.price = 10;
 
 }
 
