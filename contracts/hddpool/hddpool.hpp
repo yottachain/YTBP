@@ -73,7 +73,7 @@ class hddpool : public contract {
     };
 
     struct hdd_global_price  {
-      int64_t price = 100;
+      int64_t price = 70;
     };
 
 

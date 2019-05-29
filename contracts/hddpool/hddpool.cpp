@@ -34,7 +34,7 @@ static constexpr eosio::name hdd_account{N(hddpool12345)};
 
 const int64_t inc_hdd_amount = 1000000000;
 
-const int64_t price_delta = 5;
+const int64_t price_delta = 1;
 
 hddpool::hddpool( account_name s)
 :contract(s),
@@ -308,6 +308,8 @@ void hddpool::buyhdd( name user , int64_t amount)
    update_total_hdd_balance(amount);
 
    _ghddpriceState.price += price_delta;
+   if(_ghddpriceState.price > 85)
+      _ghddpriceState.price = 85; 
 }
 
 
@@ -344,8 +346,8 @@ void hddpool::sellhdd (name user, int64_t amount)
    update_total_hdd_balance(-amount);
 
    _ghddpriceState.price -= price_delta;
-   if(_ghddpriceState.price <= 10)
-      _ghddpriceState.price = 10;
+   if(_ghddpriceState.price < 70)
+      _ghddpriceState.price = 70;
 
 }
 
