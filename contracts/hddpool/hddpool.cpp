@@ -6,7 +6,7 @@
 #include <eosiolib/print.hpp>
 #include <eosiolib/serialize.hpp>
 #include <eosiolib/multi_index.hpp>
-//#include <eosio.token/eosio.token.hpp>
+#include <eosio.token/eosio.token.hpp>
 
 #include <cmath>
 #include <string>
@@ -41,7 +41,8 @@ hddpool::hddpool( account_name s)
  _global(_self, _self),
  _global2(_self, _self),
  _global3(_self, _self),
- _ghddprice(_self, _self)
+ _ghddprice(_self, _self),
+ _hmarket(_self, _self)
 {
    
    if(_global.exists())
@@ -63,6 +64,31 @@ hddpool::hddpool( account_name s)
       _ghddpriceState = _ghddprice.get();
    else
       _ghddpriceState = hdd_global_price{};
+
+
+      auto itr = _hmarket.find(S(4,HDDCORE));
+
+      //print( "check hdd market\n" );
+
+      if( itr == _hmarket.end() ) {
+         auto system_token_supply   = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(CORE_SYMBOL).name()).amount;
+         if( system_token_supply > 0 ) {
+            itr = _hmarket.emplace( _self, [&]( auto& m ) {
+               m.supply.amount = 100000000000000ll;
+               m.supply.symbol = S(4,HDDCORE);
+               m.base.balance.amount = 400000000000000000ll;
+               m.base.weight = 1.0;
+               m.base.balance.symbol = S(8,HDD);
+               m.quote.balance.amount = system_token_supply;
+               m.quote.balance.symbol = CORE_SYMBOL;
+               m.quote.weight = 1.428;
+            });
+         }
+      } else {
+         //print( "hdd market already created\n" );
+         //_hmarket.erase(_hmarket.begin()); 
+      }
+
 
 }
 
@@ -215,17 +241,21 @@ void hddpool::update_hddofficial( const int64_t _balance,
 
 }
 
-/*
+
 void hddpool::buyhdd( name user , asset quant)
 {
    require_auth( user );
+
+   //auto system_token_supply   = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(CORE_SYMBOL).name()).amount;
+   //print( "quant.amount: ", system_token_supply , "\n" );
+   //return;
    
    eosio_assert(is_account(user), "user not a account");
    eosio_assert(is_account(hdd_account), "to not a account");
    eosio_assert(quant.is_valid(), "asset is invalid");
    eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA to buy HDD");
    eosio_assert(quant.amount > 0, "must transfer positive quantity");
-   print( "quant.amount: ", quant.amount , "\n" );
+   //print( "quant.amount: ", quant.amount , "\n" );
 
    action(
       permission_level{user, active_permission},
@@ -234,6 +264,13 @@ void hddpool::buyhdd( name user , asset quant)
    ).send();
    
    int64_t _hdd_amount = quant.amount * 10000;
+   const auto& market = _hmarket.get(S(4,HDDCORE), "hdd market does not exist");
+   _hmarket.modify( market, 0, [&]( auto& es ) {
+      _hdd_amount = es.convert( quant, S(8,HDD)).amount;
+   });
+   print("_hdd_amount:  ", _hdd_amount, "\n");
+
+
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
@@ -258,10 +295,55 @@ void hddpool::buyhdd( name user , asset quant)
    update_hddofficial(_hdd_amount , 0, 0, 0);
    //update_hddofficial(inc_hdd_amount , 0, 0, 0);
 
-    update_total_hdd_balance(_hdd_amount);
+   update_total_hdd_balance(_hdd_amount);
 }
-*/
 
+void hddpool::sellhdd (name user, int64_t amount)
+{
+   require_auth( user );
+
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, user.value);
+   auto it = _userhdd.find(user.value);
+   eosio_assert( it != _userhdd.end(), "user not exists in userhdd table." );
+   eosio_assert( it->hdd_balance >= amount, "hdd overdrawn." );
+
+   _userhdd.modify(it, _self, [&](auto &row) {
+        row.hdd_balance -= amount;
+        //row.hdd_balance -= inc_hdd_amount;
+   });   
+
+   int64_t _yta_amount = (int64_t)((double)amount/10000);
+   //int64_t _yta_amount = (int64_t)( (((double)amount/10000)*_ghddpriceState.price)/100  );
+   //asset tokens_out;
+   auto itr = _hmarket.find(S(4,HDDCORE));
+   _hmarket.modify( itr, 0, [&]( auto& es ) {
+        /// the cast to int64_t of quant is safe because we certify quant is <= quota which is limited by prior purchases
+        _yta_amount = es.convert( asset(amount, S(8,HDD)), CORE_SYMBOL).amount;
+   });
+   print("_yta_amount:  ", _yta_amount, "\n");
+
+   
+   asset quant{_yta_amount, CORE_SYMBOL};
+   action(
+      permission_level{hdd_account, active_permission},
+      token_account, N(transfer),
+      std::make_tuple(hdd_account, user, quant, std::string("sell hdd"))
+   ).send();
+   
+
+   update_hddofficial(-amount , 0, 0, 0);
+   //update_hddofficial(-inc_hdd_amount , 0, 0, 0);
+
+   update_total_hdd_balance(-amount);
+
+   _ghddpriceState.price -= price_delta;
+   if(_ghddpriceState.price < 70)
+      _ghddpriceState.price = 70;
+
+}
+
+/*
 void hddpool::buyhdd( name user , int64_t amount)
 {
    require_auth( user );
@@ -350,7 +432,7 @@ void hddpool::sellhdd (name user, int64_t amount)
       _ghddpriceState.price = 70;
 
 }
-
+*/
 
 void hddpool::sethfee( name user, int64_t fee)
 {
@@ -584,5 +666,86 @@ bool hddpool::is_bp_account(uint64_t uservalue)
    }
    return false;
 }
+
+
+   asset exchange_state::convert_to_exchange( connector& c, asset in ) {
+
+      real_type R(supply.amount);
+      real_type C(c.balance.amount+in.amount);
+      real_type F(c.weight/1000.0);
+      real_type T(in.amount);
+      real_type ONE(1.0);
+
+      real_type E = -R * (ONE - std::pow( ONE + T / C, F) );
+      //print( "E: ", E, "\n");
+      int64_t issued = int64_t(E);
+
+      supply.amount += issued;
+      c.balance.amount += in.amount;
+
+      return asset( issued, supply.symbol );
+   }
+
+   asset exchange_state::convert_from_exchange( connector& c, asset in ) {
+      eosio_assert( in.symbol== supply.symbol, "unexpected asset symbol input" );
+
+      real_type R(supply.amount - in.amount);
+      real_type C(c.balance.amount);
+      real_type F(1000.0/c.weight);
+      real_type E(in.amount);
+      real_type ONE(1.0);
+
+
+     // potentially more accurate: 
+     // The functions std::expm1 and std::log1p are useful for financial calculations, for example, 
+     // when calculating small daily interest rates: (1+x)n
+     // -1 can be expressed as std::expm1(n * std::log1p(x)). 
+     // real_type T = C * std::expm1( F * std::log1p(E/R) );
+      
+      real_type T = C * (std::pow( ONE + E/R, F) - ONE);
+      //print( "T: ", T, "\n");
+      int64_t out = int64_t(T);
+
+      supply.amount -= in.amount;
+      c.balance.amount -= out;
+
+      return asset( out, c.balance.symbol );
+   }
+
+   asset exchange_state::convert( asset from, symbol_type to ) {
+      auto sell_symbol  = from.symbol;
+      auto ex_symbol    = supply.symbol;
+      auto base_symbol  = base.balance.symbol;
+      auto quote_symbol = quote.balance.symbol;
+
+      //print( "From: ", from, " TO ", asset( 0,to), "\n" );
+      //print( "base: ", base_symbol, "\n" );
+      //print( "quote: ", quote_symbol, "\n" );
+      //print( "ex: ", supply.symbol, "\n" );
+
+      if( sell_symbol != ex_symbol ) {
+         if( sell_symbol == base_symbol ) {
+            from = convert_to_exchange( base, from );
+         } else if( sell_symbol == quote_symbol ) {
+            from = convert_to_exchange( quote, from );
+         } else { 
+            eosio_assert( false, "invalid sell" );
+         }
+      } else {
+         if( to == base_symbol ) {
+            from = convert_from_exchange( base, from ); 
+         } else if( to == quote_symbol ) {
+            from = convert_from_exchange( quote, from ); 
+         } else {
+            eosio_assert( false, "invalid conversion" );
+         }
+      }
+
+      if( to != from.symbol )
+         return convert( from, to );
+
+      return from;
+   }
+
 
 EOSIO_ABI( hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(newmaccount)(addmprofit)(clearall)(calcmbalance))

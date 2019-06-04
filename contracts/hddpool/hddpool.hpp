@@ -14,6 +14,39 @@ using eosio::datastream;
 using eosio::multi_index;
 typedef double real_type;
 
+//copy from eosio.system 
+/**
+*  Uses Bancor math to create a 50/50 relay between two asset types. The state of the
+*  bancor exchange is entirely contained within this struct. There are no external
+*  side effects associated with using this API.
+*/
+   struct exchange_state {
+      asset    supply;
+
+      struct connector {
+         asset balance;
+         double weight = 1.428;
+
+         EOSLIB_SERIALIZE( connector, (balance)(weight) )
+      };
+
+      connector base;
+      connector quote;
+
+      uint64_t primary_key()const { return supply.symbol; }
+
+      asset convert_to_exchange( connector& c, asset in ); 
+      asset convert_from_exchange( connector& c, asset in );
+      asset convert( asset from, symbol_type to );
+
+      EOSLIB_SERIALIZE( exchange_state, (supply)(base)(quote) )
+   };
+
+//comment old style declaration 
+typedef multi_index<N(hmarket), exchange_state> hmarket_table;
+
+
+
 class hddpool : public contract {
   public:
     using contract::contract;
@@ -22,8 +55,8 @@ class hddpool : public contract {
     ~hddpool();    
 
     void getbalance( name user );
-    //void buyhdd( name user , asset quant);
-    void buyhdd( name user , int64_t amount);
+    void buyhdd( name user , asset quant);
+    //void buyhdd( name user , int64_t amount);
     void sellhdd( name user, int64_t amount);
     void sethfee( name user, int64_t fee);
     void subbalance ( name user, int64_t balance);
@@ -93,6 +126,8 @@ class hddpool : public contract {
 
     ghddprice_singleton     _ghddprice;
     hdd_global_price        _ghddpriceState;   
+
+    hmarket_table                                   _hmarket;
 
 
     bool is_bp_account(uint64_t uservalue);

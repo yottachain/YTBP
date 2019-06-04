@@ -57,8 +57,40 @@
                     "type": "name"
                 },
                 {
-                    "name": "amount",
-                    "type": "int64"
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "connector",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "asset"
+                },
+                {
+                    "name": "weight",
+                    "type": "float64"
+                }
+            ]
+        },
+        {
+            "name": "exchange_state",
+            "base": "",
+            "fields": [
+                {
+                    "name": "supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "base",
+                    "type": "connector"
+                },
+                {
+                    "name": "quote",
+                    "type": "connector"
                 }
             ]
         },
@@ -334,7 +366,14 @@
             "index_type": "i64",
             "key_names": [],
             "key_types": []
-        },        
+        },   
+        {
+            "name": "hmarket",
+            "type": "exchange_state",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
         {
             "name": "maccount",
             "type": "maccount",
