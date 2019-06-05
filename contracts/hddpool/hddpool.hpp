@@ -3,142 +3,145 @@
 #include <eosiolib/time.hpp>
 #include <eosiolib/singleton.hpp>
 
-using eosio::contract;
-using eosio::name;
 using eosio::asset;
-using eosio::symbol_type;
-using eosio::indexed_by;
 using eosio::const_mem_fun;
-using eosio::microseconds;
+using eosio::contract;
 using eosio::datastream;
+using eosio::indexed_by;
+using eosio::microseconds;
 using eosio::multi_index;
+using eosio::name;
+using eosio::symbol_type;
 typedef double real_type;
 
-//copy from eosio.system 
+//copy from eosio.system
 /**
 *  Uses Bancor math to create a 50/50 relay between two asset types. The state of the
 *  bancor exchange is entirely contained within this struct. There are no external
 *  side effects associated with using this API.
 */
-   struct exchange_state {
-      asset    supply;
+struct exchange_state
+{
+  asset supply;
 
-      struct connector {
-         asset balance;
-         double weight = .5;
+  struct connector
+  {
+    asset balance;
+    double weight = .5;
 
-         EOSLIB_SERIALIZE( connector, (balance)(weight) )
-      };
+    EOSLIB_SERIALIZE(connector, (balance)(weight))
+  };
 
-      connector base;
-      connector quote;
+  connector base;
+  connector quote;
 
-      uint64_t primary_key()const { return supply.symbol; }
+  uint64_t primary_key() const { return supply.symbol; }
 
-      asset convert_to_exchange( connector& c, asset in ); 
-      asset convert_from_exchange( connector& c, asset in );
-      asset convert( asset from, symbol_type to );
+  asset convert_to_exchange(connector &c, asset in);
+  asset convert_from_exchange(connector &c, asset in);
+  asset convert(asset from, symbol_type to);
 
-      EOSLIB_SERIALIZE( exchange_state, (supply)(base)(quote) )
-   };
+  EOSLIB_SERIALIZE(exchange_state, (supply)(base)(quote))
+};
 
-//comment old style declaration 
+//comment old style declaration
 typedef multi_index<N(hmarket), exchange_state> hmarket_table;
 
+class hddpool : public contract
+{
+public:
+  using contract::contract;
 
+  hddpool(account_name s);
+  ~hddpool();
 
-class hddpool : public contract {
-  public:
-    using contract::contract;
+  void getbalance(name user);
+  void buyhdd(name user, asset quant);
+  //void buyhdd( name user , int64_t amount);
+  void sellhdd(name user, int64_t amount);
+  void sethfee(name user, int64_t fee);
+  void subbalance(name user, int64_t balance);
+  void addhspace(name user, uint64_t space);
+  void subhspace(name user, uint64_t space);
+  void newmaccount(name owner, uint64_t minerid);
+  void addmprofit(name owner, uint64_t minerid, uint64_t space);
+  void clearall();
+  void calcmbalance(name owner, uint64_t minerid);
 
-    hddpool( account_name s);
-    ~hddpool();    
+private:
+  struct userhdd
+  {
+    name account_name;            //账户名
+    int64_t hdd_balance;          //余额
+    int64_t hdd_per_cycle_fee;    //每周期费用
+    int64_t hdd_per_cycle_profit; //每周期收益
+    uint64_t hdd_space;           //占用存储空间
+    uint64_t last_hdd_time;       //上次余额计算时间 microseconds from 1970
+    uint64_t primary_key() const { return account_name.value; }
+  };
+  typedef multi_index<N(userhdd), userhdd> userhdd_index;
 
-    void getbalance( name user );
-    void buyhdd( name user , asset quant);
-    //void buyhdd( name user , int64_t amount);
-    void sellhdd( name user, int64_t amount);
-    void sethfee( name user, int64_t fee);
-    void subbalance ( name user, int64_t balance);
-    void addhspace(name user, uint64_t space);
-    void subhspace(name user, uint64_t space);
-    void newmaccount(name owner, uint64_t minerid);
-    void addmprofit(name owner, uint64_t minerid, uint64_t space);
-    void clearall();
-    void calcmbalance(name owner, uint64_t minerid);
+  struct maccount
+  {
+    uint64_t minerid;             //矿机id
+    name owner;                   //拥有矿机的矿主的账户名
+    uint64_t space;               //生产空间
+    int64_t hdd_per_cycle_profit; //每周期收益
+    int64_t hdd_balance;          //余额
+    uint64_t last_hdd_time;       //上次余额计算时间 microseconds from 1970
+    uint64_t primary_key() const { return minerid; }
+    //uint64_t  get_owner() const { return owner.value; }
+  };
+  typedef multi_index<N(maccount), maccount> maccount_index;
 
-  private:
+  struct hdd_global_state
+  {
+    int64_t hdd_total_balance = 10000000000;
+  };
 
-    struct userhdd {
-      name       account_name; //账户名
-      int64_t    hdd_balance; //余额
-      int64_t    hdd_per_cycle_fee; //每周期费用
-      int64_t    hdd_per_cycle_profit; //每周期收益
-      uint64_t   hdd_space; //占用存储空间
-    	uint64_t   last_hdd_time; //上次余额计算时间 microseconds from 1970
-      uint64_t   primary_key() const { return account_name.value; }
-    }; 
-    typedef multi_index<N(userhdd), userhdd> userhdd_index; 
+  struct hdd_global_state2
+  {
+    uint64_t hdd_total_user = 4;
+  };
 
-    struct maccount {
-      uint64_t    minerid; //矿机id
-      name        owner; //拥有矿机的矿主的账户名
-      uint64_t    space; //生产空间
-      int64_t     hdd_per_cycle_profit; //每周期收益
-      int64_t     hdd_balance; //余额
-    	uint64_t    last_hdd_time; //上次余额计算时间 microseconds from 1970
-      uint64_t    primary_key() const { return minerid; }
-      //uint64_t  get_owner() const { return owner.value; }
-    };
-    typedef multi_index< N(maccount), maccount > maccount_index;
+  struct hdd_global_state3
+  {
+    uint64_t hdd_macc_user = 2;
+  };
 
-    
-    struct hdd_global_state {
-      int64_t    hdd_total_balance = 10000000000;
-    };        
+  struct hdd_global_price
+  {
+    int64_t price = 70;
+  };
 
-    struct hdd_global_state2 {
-      uint64_t   hdd_total_user = 4;
-    };
+  typedef eosio::singleton<N(hddglobal), hdd_global_state> global_state_singleton;
+  typedef eosio::singleton<N(gusercount), hdd_global_state2> gusercount_singleton;
+  typedef eosio::singleton<N(gmacccount), hdd_global_state3> gmacccount_singleton;
+  typedef eosio::singleton<N(ghddprice), hdd_global_price> ghddprice_singleton;
 
-    struct hdd_global_state3 {
-      uint64_t   hdd_macc_user = 2;
-    };
+  global_state_singleton _global;
+  hdd_global_state _gstate;
 
-    struct hdd_global_price  {
-      int64_t price = 70;
-    };
+  gusercount_singleton _global2;
+  hdd_global_state2 _gstate2;
 
+  gmacccount_singleton _global3;
+  hdd_global_state3 _gstate3;
 
-    typedef eosio::singleton<N(hddglobal), hdd_global_state> global_state_singleton;
-    typedef eosio::singleton<N(gusercount), hdd_global_state2> gusercount_singleton;
-    typedef eosio::singleton<N(gmacccount), hdd_global_state3> gmacccount_singleton;
-    typedef eosio::singleton<N(ghddprice), hdd_global_price> ghddprice_singleton;    
+  ghddprice_singleton _ghddprice;
+  hdd_global_price _ghddpriceState;
 
-    global_state_singleton  _global;
-    hdd_global_state        _gstate;    
+  hmarket_table _hmarket;
 
-    gusercount_singleton    _global2;
-    hdd_global_state2       _gstate2;    
+  bool is_bp_account(uint64_t uservalue);
 
-    gmacccount_singleton    _global3;
-    hdd_global_state3       _gstate3;   
+  bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee,
+                         int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time,
+                         int64_t &new_balance);
 
-    ghddprice_singleton     _ghddprice;
-    hdd_global_price        _ghddpriceState;   
+  void update_hddofficial(const int64_t _balance,
+                          const int64_t _fee, const int64_t _profit,
+                          const int64_t _space);
 
-    hmarket_table                                   _hmarket;
-
-
-    bool is_bp_account(uint64_t uservalue);
-    
-    bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, 
-          int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time, 
-          int64_t &new_balance);
-    
-    void update_hddofficial( const int64_t _balance,
-          const int64_t _fee, const int64_t _profit, 
-          const int64_t _space );      
-    
-    void update_total_hdd_balance( int64_t _balance_delta );
+  void update_total_hdd_balance(int64_t _balance_delta);
 };
