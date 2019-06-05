@@ -32,6 +32,9 @@ static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name hdd_account{N(hddpool12345)};
 
+#define HDD_SYMBOL_BANCOR S(4,HDD)
+#define HDDCORE_SYMBOL_BANCOR S(4,HDDCORE)
+
 const int64_t inc_hdd_amount = 1000000000;
 
 const int64_t price_delta = 1;
@@ -66,7 +69,7 @@ hddpool::hddpool( account_name s)
       _ghddpriceState = hdd_global_price{};
 
 
-      auto itr = _hmarket.find(S(4,HDDCORE));
+      auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
 
       //print( "check hdd market\n" );
 
@@ -75,13 +78,14 @@ hddpool::hddpool( account_name s)
          if( system_token_supply > 0 ) {
             itr = _hmarket.emplace( _self, [&]( auto& m ) {
                m.supply.amount = 100000000000000ll;
-               m.supply.symbol = S(4,HDDCORE);
-               m.base.balance.amount = 400000000000000000ll;
-               m.base.weight = 1.0;
-               m.base.balance.symbol = S(8,HDD);
-               m.quote.balance.amount = system_token_supply;
+               m.supply.symbol = HDDCORE_SYMBOL_BANCOR;
+               //m.base.balance.amount = 400000000000000000ll;
+               m.base.balance.amount = 40000000000000ll / 1000;
+               m.base.weight = 0.35;
+               m.base.balance.symbol = HDD_SYMBOL_BANCOR;;
+               m.quote.balance.amount = system_token_supply / 1000;
                m.quote.balance.symbol = CORE_SYMBOL;
-               m.quote.weight = 1.428;
+               m.quote.weight = 0.5;
             });
          }
       } else {
@@ -264,9 +268,9 @@ void hddpool::buyhdd( name user , asset quant)
    ).send();
    
    int64_t _hdd_amount = quant.amount * 10000;
-   const auto& market = _hmarket.get(S(4,HDDCORE), "hdd market does not exist");
+   const auto& market = _hmarket.get(HDDCORE_SYMBOL_BANCOR, "hdd market does not exist");
    _hmarket.modify( market, 0, [&]( auto& es ) {
-      _hdd_amount = es.convert( quant, S(8,HDD)).amount;
+      _hdd_amount = (es.convert( quant, HDD_SYMBOL_BANCOR).amount) * 10000;
    });
    print("_hdd_amount:  ", _hdd_amount, "\n");
 
@@ -316,10 +320,10 @@ void hddpool::sellhdd (name user, int64_t amount)
    int64_t _yta_amount = (int64_t)((double)amount/10000);
    //int64_t _yta_amount = (int64_t)( (((double)amount/10000)*_ghddpriceState.price)/100  );
    //asset tokens_out;
-   auto itr = _hmarket.find(S(4,HDDCORE));
+   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
    _hmarket.modify( itr, 0, [&]( auto& es ) {
         /// the cast to int64_t of quant is safe because we certify quant is <= quota which is limited by prior purchases
-        _yta_amount = es.convert( asset(amount, S(8,HDD)), CORE_SYMBOL).amount;
+        _yta_amount = es.convert( asset(amount/10000, HDD_SYMBOL_BANCOR), CORE_SYMBOL).amount;
    });
    print("_yta_amount:  ", _yta_amount, "\n");
 
@@ -336,11 +340,6 @@ void hddpool::sellhdd (name user, int64_t amount)
    //update_hddofficial(-inc_hdd_amount , 0, 0, 0);
 
    update_total_hdd_balance(-amount);
-
-   _ghddpriceState.price -= price_delta;
-   if(_ghddpriceState.price < 70)
-      _ghddpriceState.price = 70;
-
 }
 
 /*
@@ -645,6 +644,8 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
 
 void hddpool::clearall()
 {
+   require_auth(_self);
+   /*
    userhdd_index _userhdd( _self , _self );
    while (_userhdd.begin() != _userhdd.end())
       _userhdd.erase(_userhdd.begin());   
@@ -652,7 +653,15 @@ void hddpool::clearall()
    maccount_index _maccount( _self , _self );
    while (_maccount.begin() != _maccount.end())
       _maccount.erase(_maccount.begin());   
+      */
 
+   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
+
+   //print( "check hdd market\n" );
+
+   if( itr != _hmarket.end() ) {
+      _hmarket.erase(_hmarket.begin());
+   }
 }
 
 bool hddpool::is_bp_account(uint64_t uservalue)

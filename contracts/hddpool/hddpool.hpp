@@ -25,7 +25,7 @@ typedef double real_type;
 
       struct connector {
          asset balance;
-         double weight = 1.428;
+         double weight = .5;
 
          EOSLIB_SERIALIZE( connector, (balance)(weight) )
       };
