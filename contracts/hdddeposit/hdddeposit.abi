@@ -11,9 +11,13 @@
                     "type": "name"
                 },                
                 {
-                    "name": "amount",
+                    "name": "deposit",
                     "type": "asset"
-                }
+                },
+                {
+                    "name": "forfeit",
+                    "type": "asset"
+                }                
             ]
         },
         {
@@ -71,6 +75,34 @@
             ]
         },
         {
+            "name": "payforfeit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "drawforfeit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "clearminer",
             "base": "",
             "fields": [
@@ -102,6 +134,16 @@
             "type": "undeposit",
             "ricardian_contract": ""
         },
+        {
+            "name": "payforfeit",
+            "type": "payforfeit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "drawforfeit",
+            "type": "drawforfeit",
+            "ricardian_contract": ""
+        },                
         {
             "name": "clearminer",
             "type": "clearminer",

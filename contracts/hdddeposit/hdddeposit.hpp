@@ -3,6 +3,7 @@
 #include <eosiolib/singleton.hpp>
 #include <eosiolib/symbol.hpp>
 
+
 using eosio::name;
 using eosio::asset;
 using eosio::multi_index;
@@ -15,17 +16,21 @@ class hdddeposit : public eosio::contract {
 
         void paydeposit(name user, uint64_t minerid, asset quant);
         void undeposit(name user, uint64_t minerid, asset quant);
+        void payforfeit(name user, uint64_t minerid, asset quant);
+        void drawforfeit(name user);
         void clearminer(uint64_t minerid);
         void clearacc(name user);
 
+        inline asset get_deposit_and_forfeit( account_name user )const;
         inline asset get_deposit( account_name user )const;
 
 
     private:
-        //记录某个账户缴纳的押金总量
+        //记录某个账户缴纳的押金总量和当前需要缴纳的罚款总量
         struct accdeposit {
             name        account_name;
-            asset       amount; 
+            asset       deposit; 
+            asset       forfeit;   
             uint64_t    primary_key()const { return account_name.value; }
         };
         typedef multi_index<N(accdeposit), accdeposit> accdeposit_table; 
@@ -40,14 +45,26 @@ class hdddeposit : public eosio::contract {
         typedef multi_index<N(minerdeposit), minerdeposit> minerdeposit_table;       
 };
 
-//thid const function will be called by eosio.token transfer action to check where a user has hdd deposit
+//this const function will be called by eosio.token transfer action to check where a user has hdd deposit
 asset hdddeposit::get_deposit( account_name user ) const
 {
     accdeposit_table _deposit(_self, user);
     auto acc = _deposit.find( user );    
     if ( acc != _deposit.end() ) {
-        return acc->amount;
+        return acc->deposit;
     } 
     asset zero{0, CORE_SYMBOL};
     return zero;
 }
+
+asset hdddeposit::get_deposit_and_forfeit( account_name user ) const
+{
+    accdeposit_table _deposit(_self, user);
+    auto acc = _deposit.find( user );    
+    if ( acc != _deposit.end() ) {
+        return acc->deposit + acc->forfeit;
+    } 
+    asset zero{0, CORE_SYMBOL};
+    return zero;
+}
+

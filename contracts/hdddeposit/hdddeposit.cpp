@@ -2,8 +2,17 @@
 #include <eosiolib/action.hpp>
 #include <eosiolib/chain.h>
 #include <eosiolib/symbol.hpp>
+#include <eosiolib/eosio.hpp>
+#include <eosiolib/print.hpp>
+#include <eosiolib/serialize.hpp>
+#include <eosiolib/multi_index.hpp>
 #include <eosio.token/eosio.token.hpp>
 
+using namespace eosio;
+
+static constexpr eosio::name active_permission{N(active)};
+static constexpr eosio::name token_account{N(eosio.token)};
+static constexpr eosio::name hdd_deposit_account{N(hdddeposit12)};
 
 void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     
@@ -18,8 +27,8 @@ void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     accdeposit_table _deposit(_self, user.value);
     auto acc = _deposit.find( user.value );    
     if ( acc != _deposit.end() ) {
-        eosio_assert( real_balance.amount >= acc->amount.amount, "user balance not enough." );
-        real_balance -= acc->amount;
+        real_balance.amount -= acc->deposit.amount;
+        real_balance.amount -= acc->forfeit.amount;     
     }
     //to do : also need sub lock_token in futuer
     //......
@@ -46,11 +55,11 @@ void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     if ( acc == _deposit.end() ) {
         _deposit.emplace( _self, [&]( auto& a ){
             a.account_name = user;
-            a.amount = quant;
+            a.deposit = quant;
         });
     } else {
         _deposit.modify( acc, 0, [&]( auto& a ) {
-            a.amount += quant;
+            a.deposit += quant;
         });
     }
 }
@@ -68,23 +77,59 @@ void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
     eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
     eosio_assert(miner.account_name == user, "must use same account to decrease deposit.");
     const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
-    eosio_assert( acc.amount.amount >= quant.amount, "overdrawn deposit." );
+    eosio_assert( acc.deposit.amount >= quant.amount, "overdrawn deposit." );
 
-    if( miner.deposit.amount == quant.amount ) {
-        _mdeposit.erase( miner );
-    } else {
-        _mdeposit.modify( miner, 0, [&]( auto& a ) {
-            a.deposit -= quant;
-        });
-    }
+    _mdeposit.modify( miner, 0, [&]( auto& a ) {
+        a.deposit.amount -= quant.amount;
+    });
 
-    if( acc.amount.amount == quant.amount ) {
-        _deposit.erase( acc );
-    } else {
-        _deposit.modify( acc, 0, [&]( auto& a ) {
-            a.amount -= quant;
-        });
-    }
+    _deposit.modify( acc, 0, [&]( auto& a ) {
+        a.deposit.amount -= quant.amount;
+    });
+}
+
+void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant) {
+    require_auth(_self); // need hdd official account to sign this action.
+
+    eosio_assert(is_account(user), "user is not an account.");
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA for hdd deposit.");
+
+    minerdeposit_table _mdeposit(_self, minerid);
+    accdeposit_table   _deposit(_self, user.value);
+    const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
+    eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
+    eosio_assert(miner.account_name == user, "must use same account to pay forfeit.");
+    const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
+    eosio_assert( acc.deposit.amount >= quant.amount, "overdrawn deposit." );
+
+    _mdeposit.modify( miner, 0, [&]( auto& a ) {
+        a.deposit.amount -= quant.amount;
+    });
+
+    _deposit.modify( acc, 0, [&]( auto& a ) {
+        a.deposit.amount -= quant.amount;
+        a.forfeit.amount += quant.amount;
+    });    
+
+}
+
+void hdddeposit::drawforfeit(name user) {
+    require_auth(_self); // need hdd official account to sign this action.
+
+    eosio_assert(is_account(user), "user is not an account.");
+    accdeposit_table   _deposit(_self, user.value);
+    const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
+
+    asset quant{acc.forfeit.amount, CORE_SYMBOL};
+    action(
+       permission_level{user, active_permission},
+       token_account, N(transfer),
+       std::make_tuple(user, hdd_deposit_account, quant, std::string("draw forfeit")))
+       .send();
+    
+    _deposit.modify( acc, 0, [&]( auto& a ) {
+        a.forfeit.amount = 0;
+    });      
 
 }
 
@@ -102,4 +147,4 @@ void hdddeposit::clearacc(name user) {
     _deposit.erase( acc );
 }
 
-EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(clearminer)(clearacc))
+EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(clearminer)(clearacc))

@@ -6,7 +6,7 @@
 #include "eosio.token.hpp"
 #include <hdddeposit/hdddeposit.hpp>
 
-const account_name hdddeposit_account = N(hdddeposit12);
+const account_name hdd_deposit_account = N(hdddeposit12);
 
 namespace eosio {
 
@@ -82,15 +82,13 @@ void token::transfer( account_name from,
     eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
     eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
-/*
+
     //##YTA-Change  start:  
     if( to == N(eosio.stake) || quantity.symbol != CORE_SYMBOL )  // no need to calculate hdd_deposit and hdd_lock anmout when stake operatation  
       sub_balance( from, quantity );
     else
-      sub_balance_yta( from, quantity );
+      sub_balance_yta( from, quantity, to );
     //##YTA-Change  end:
-*/
-    sub_balance( from, quantity );
 
     add_balance( to, quantity, from );
 }
@@ -112,16 +110,22 @@ void token::sub_balance( account_name owner, asset value ) {
 }
 
 //##YTA-Change  start:
-void token::sub_balance_yta( account_name owner, asset value ) {
+void token::sub_balance_yta( account_name owner, asset value , account_name to) {
    accounts from_acnts( _self, owner );
 
    const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
 
-   auto deposit = hdddeposit(hdddeposit_account).get_deposit(owner);
-   eosio_assert( deposit.symbol == value.symbol, "symbol precision mismatch" );
-   eosio_assert( from.balance.amount - deposit.amount >= value.amount, "overdrawn balance" );
-   //eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
+   //todo : need consider lock_token situation
+   if(to == hdd_deposit_account) {
+      auto deposit = hdddeposit(hdd_deposit_account).get_deposit(owner);
+      eosio_assert( deposit.symbol == value.symbol, "symbol precision mismatch" );
+      eosio_assert( from.balance.amount - deposit.amount >= value.amount, "overdrawn balance" );
 
+   } else {
+      auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
+      eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
+      eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
+   }
 
    if( from.balance.amount == value.amount ) {
       from_acnts.erase( from );

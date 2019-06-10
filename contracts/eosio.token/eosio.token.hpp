@@ -56,7 +56,7 @@ namespace eosio {
 
          void sub_balance( account_name owner, asset value );
          //##YTA-Change  start:
-         void sub_balance_yta( account_name owner, asset value );
+         void sub_balance_yta( account_name owner, asset value, account_name to );
          //##YTA-Change  end:
          void add_balance( account_name owner, asset value, account_name ram_payer );
 
