@@ -84,7 +84,7 @@ void token::transfer( account_name from,
 
 
     //##YTA-Change  start:  
-    if( to == N(eosio.stake) || quantity.symbol != CORE_SYMBOL )  // no need to calculate hdd_deposit and hdd_lock anmout when stake operatation  
+    if( quantity.symbol != CORE_SYMBOL )  // no need to calculate hdd_deposit and hdd_lock anmout when stake operatation  
       sub_balance( from, quantity );
     else
       sub_balance_yta( from, quantity, to );
@@ -121,7 +121,13 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
       eosio_assert( deposit.symbol == value.symbol, "symbol precision mismatch" );
       eosio_assert( from.balance.amount - deposit.amount >= value.amount, "overdrawn balance" );
 
-   } else {
+   } else if( to == N(eosio.stake) ) {
+      //forfeit can not use to delegatebw and vote
+      auto forfeit = hdddeposit(hdd_deposit_account).get_forfeit(owner);
+      eosio_assert( forfeit.symbol == value.symbol, "symbol precision mismatch" );
+      eosio_assert( from.balance.amount - forfeit.amount >= value.amount, "overdrawn balance" );
+   }
+   else {
       auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
       eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
       eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );

@@ -23,6 +23,7 @@ class hdddeposit : public eosio::contract {
 
         inline asset get_deposit_and_forfeit( account_name user )const;
         inline asset get_deposit( account_name user )const;
+        inline asset get_forfeit( account_name user)const;
 
 
     private:
@@ -45,7 +46,7 @@ class hdddeposit : public eosio::contract {
         typedef multi_index<N(minerdeposit), minerdeposit> minerdeposit_table;       
 };
 
-//this const function will be called by eosio.token transfer action to check where a user has hdd deposit
+//these const functions will be called by eosio.token transfer action to check where a user has hdd deposit or forfeit
 asset hdddeposit::get_deposit( account_name user ) const
 {
     accdeposit_table _deposit(_self, user);
@@ -56,6 +57,18 @@ asset hdddeposit::get_deposit( account_name user ) const
     asset zero{0, CORE_SYMBOL};
     return zero;
 }
+
+asset hdddeposit::get_forfeit( account_name user ) const
+{
+    accdeposit_table _deposit(_self, user);
+    auto acc = _deposit.find( user );    
+    if ( acc != _deposit.end() ) {
+        return acc->forfeit;
+    } 
+    asset zero{0, CORE_SYMBOL};
+    return zero;
+}
+
 
 asset hdddeposit::get_deposit_and_forfeit( account_name user ) const
 {
