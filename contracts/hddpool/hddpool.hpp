@@ -55,16 +55,16 @@ public:
   hddpool(account_name s);
   ~hddpool();
 
-  void getbalance(name user);
-  void buyhdd(name user, asset quant);
+  void getbalance(name user, uint8_t acc_type, name caller);
+  void buyhdd(name from, name receiver, asset quant);
   //void buyhdd( name user , int64_t amount);
   void sellhdd(name user, int64_t amount);
-  void sethfee(name user, int64_t fee);
+  void sethfee(name user, int64_t fee, name caller);
   void subbalance(name user, int64_t balance);
-  void addhspace(name user, uint64_t space);
-  void subhspace(name user, uint64_t space);
-  void newmaccount(name owner, uint64_t minerid);
-  void addmprofit(name owner, uint64_t minerid, uint64_t space);
+  void addhspace(name user, uint64_t space, name caller);
+  void subhspace(name user, uint64_t space, name caller);
+  void newmaccount(name owner, uint64_t minerid, name caller);
+  void addmprofit(name owner, uint64_t minerid, uint64_t space, name caller);
   void clearall();
   void calcmbalance(name owner, uint64_t minerid);
 

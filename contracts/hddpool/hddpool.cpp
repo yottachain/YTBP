@@ -106,10 +106,21 @@ hddpool::~hddpool()
    _ghddprice.set(_ghddpriceState, _self);
 }
 
-void hddpool::getbalance(name user)
+void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 {
    //require_auth( user );
-   //require_auth(_self);
+   if(acc_type == 1) {
+      eosio_assert(is_account(user), "user not a account.");
+      require_auth( user );
+   }
+   else if(acc_type == 2) {
+      eosio_assert(is_account(caller), "caller not a account.");
+      eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+      require_auth( caller );
+
+   } else {
+      require_auth( _self );
+   }
    //require_auth2(user.value, N(custom));
 
    //userhdd_index _userhdd(_self, _self);
@@ -249,15 +260,16 @@ void hddpool::update_hddofficial(const int64_t _balance,
    }
 }
 
-void hddpool::buyhdd(name user, asset quant)
+void hddpool::buyhdd(name from, name receiver, asset quant)
 {
-   require_auth(user);
+   require_auth(from);
 
    //auto system_token_supply   = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(CORE_SYMBOL).name()).amount;
    //print( "quant.amount: ", system_token_supply , "\n" );
    //return;
 
-   eosio_assert(is_account(user), "user not a account");
+   eosio_assert(is_account(from), "user not a account");
+   eosio_assert(is_account(receiver), "receiver not a account");
    eosio_assert(is_account(hdd_account), "to not a account");
    eosio_assert(quant.is_valid(), "asset is invalid");
    eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA to buy HDD");
@@ -265,9 +277,9 @@ void hddpool::buyhdd(name user, asset quant)
    //print( "quant.amount: ", quant.amount , "\n" );
 
    action(
-       permission_level{user, active_permission},
+       permission_level{from, active_permission},
        token_account, N(transfer),
-       std::make_tuple(user, hdd_account, quant, std::string("buy hdd")))
+       std::make_tuple(from, hdd_account, quant, std::string("buy hdd")))
        .send();
 
    int64_t _hdd_amount = quant.amount * 10000;
@@ -278,12 +290,12 @@ void hddpool::buyhdd(name user, asset quant)
    print("_hdd_amount:  ", _hdd_amount, "\n");
 
    //userhdd_index _userhdd(_self, _self);
-   userhdd_index _userhdd(_self, user.value);
-   auto it = _userhdd.find(user.value);
+   userhdd_index _userhdd(_self, receiver.value);
+   auto it = _userhdd.find(receiver.value);
    if (it == _userhdd.end())
    {
       _userhdd.emplace(_self, [&](auto &row) {
-         row.account_name = user;
+         row.account_name = receiver;
          row.hdd_balance = _hdd_amount;
          //row.hdd_balance = inc_hdd_amount;
          row.hdd_per_cycle_fee = 0;
@@ -435,9 +447,13 @@ void hddpool::sellhdd (name user, int64_t amount)
 }
 */
 
-void hddpool::sethfee(name user, int64_t fee)
+void hddpool::sethfee(name user, int64_t fee, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
@@ -484,10 +500,14 @@ void hddpool::subbalance(name user, int64_t balance)
    update_total_hdd_balance(-balance);
 }
 
-void hddpool::addhspace(name user, uint64_t space)
+void hddpool::addhspace(name user, uint64_t space, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
-   //userhdd_index _userhdd(_self, _self);
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
+  //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
@@ -499,9 +519,13 @@ void hddpool::addhspace(name user, uint64_t space)
    update_hddofficial(0, 0, 0, (int64_t)space);
 }
 
-void hddpool::subhspace(name user, uint64_t space)
+void hddpool::subhspace(name user, uint64_t space, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
@@ -514,9 +538,13 @@ void hddpool::subhspace(name user, uint64_t space)
    update_hddofficial(0, 0, 0, (int64_t)(-space));
 }
 
-void hddpool::newmaccount(name owner, uint64_t minerid)
+void hddpool::newmaccount(name owner, uint64_t minerid, name caller)
 {
    eosio_assert(is_account(owner), "owner invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
    if (_maccount.begin() == _maccount.end())
@@ -555,8 +583,13 @@ void hddpool::newmaccount(name owner, uint64_t minerid)
    }
 }
 
-void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space)
+void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
+   eosio_assert(is_account(owner), "owner invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
    auto it = _maccount.find(minerid);
@@ -610,6 +643,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space)
 
 void hddpool::calcmbalance(name owner, uint64_t minerid)
 {
+   require_auth(owner);
+
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
    auto it = _maccount.find(minerid);
