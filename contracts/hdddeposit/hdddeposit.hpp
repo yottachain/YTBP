@@ -18,6 +18,7 @@ class hdddeposit : public eosio::contract {
         void undeposit(name user, uint64_t minerid, asset quant);
         void payforfeit(name user, uint64_t minerid, asset quant);
         void drawforfeit(name user);
+        void cutvote(name user);
         void clearminer(uint64_t minerid);
         void clearacc(name user);
 

@@ -12,6 +12,7 @@ using namespace eosio;
 
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
+static constexpr eosio::name system_account{N(eosio)};
 static constexpr eosio::name hdd_deposit_account{N(hdddeposit12)};
 
 void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
@@ -133,6 +134,26 @@ void hdddeposit::drawforfeit(name user) {
 
 }
 
+void hdddeposit::cutvote(name user) {
+    require_auth(_self); // need hdd official account to sign this action.
+
+    eosio_assert(is_account(user), "user is not an account.");
+    accdeposit_table   _deposit(_self, user.value);
+    const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
+
+    asset quantb{acc.forfeit.amount/2, CORE_SYMBOL};
+    asset quantw{acc.forfeit.amount/2, CORE_SYMBOL};
+    
+    //asset quantb{10000, CORE_SYMBOL};
+    //asset quantw{10000, CORE_SYMBOL};
+
+    action(
+       permission_level{user, active_permission},
+       system_account, N(undelegatebw),
+       std::make_tuple(user, user, quantb, quantw))
+       .send();
+}
+
 void hdddeposit::clearminer(uint64_t minerid) {
     require_auth(_self);
     minerdeposit_table _mdeposit(_self, minerid);
@@ -147,4 +168,4 @@ void hdddeposit::clearacc(name user) {
     _deposit.erase( acc );
 }
 
-EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(clearminer)(clearacc))
+EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(clearminer)(clearacc))

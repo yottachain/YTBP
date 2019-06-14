@@ -103,6 +103,16 @@
             ]
         },
         {
+            "name": "cutvote",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "clearminer",
             "base": "",
             "fields": [
@@ -142,6 +152,11 @@
         {
             "name": "drawforfeit",
             "type": "drawforfeit",
+            "ricardian_contract": ""
+        },   
+        {
+            "name": "cutvote",
+            "type": "cutvote",
             "ricardian_contract": ""
         },                
         {
