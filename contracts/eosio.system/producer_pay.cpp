@@ -64,8 +64,13 @@ namespace eosiosystem {
          });
       }
 
+      //##YTA-Change  start:         
       /// only update block producers once every minute, block_timestamp is in half seconds
-      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
+      //if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
+      /// update block producers once every two minute due to election strategy is more complex than before
+      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 240 ) {
+      //##YTA-Change  end:         
+
          update_elected_producers( timestamp );
 
          if( (timestamp.slot - _gstate.last_name_close.slot) > blocks_per_day ) {
