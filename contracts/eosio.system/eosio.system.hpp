@@ -103,10 +103,11 @@ namespace eosiosystem {
    struct prod_meta {
       account_name         owner;
       double               total_votes = 0;
+      eosio::public_key    producer_key; /// a packed public key object
       int64_t              all_stake = 0;
       bool                 is_active = true;
 
-      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(all_stake)(is_active) )      
+      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(producer_key)(all_stake)(is_active) )      
    };
 
    struct producers_seq {
@@ -263,11 +264,9 @@ namespace eosiosystem {
 
          void add_producer_seq( const account_name producer, uint16_t seq , uint8_t level );
 
-         void active_producer_seq( const account_name producer, bool isactive);
+         void active_producer_seq( const account_name producer, const eosio::public_key& producer_key, bool isactive);
 
-         void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);
-
-         
+         void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);    
  //##YTA-Change  end:           
 
          void setram( uint64_t max_ram_size );
@@ -288,7 +287,9 @@ namespace eosiosystem {
          void bidname( account_name bidder, account_name newname, asset bid );
       private:
          void update_elected_producers( block_timestamp timestamp );
-
+//##YTA-Change  start:  
+         void update_elected_producers_yta( block_timestamp timestamp );
+//##YTA-Change  end:  
 
          // Implementation details:
 

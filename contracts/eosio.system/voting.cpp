@@ -49,7 +49,7 @@ namespace eosiosystem {
                info.location     = location;
             });
          
-         active_producer_seq(producer, true);
+         active_producer_seq(producer, producer_key, true);
       } else {
          _producers.emplace( producer, [&]( producer_info& info ){
                info.owner         = producer;
@@ -71,7 +71,7 @@ namespace eosiosystem {
             info.deactivate();
       });
 
-      active_producer_seq(producer, false);
+      active_producer_seq(producer, public_key(), false);
    }
 //##YTA-Change  start: 
    void system_contract::clsprods2() {
@@ -119,6 +119,7 @@ namespace eosiosystem {
       _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
          if(info.prods_l1.owner == producer) {
             info.prods_l1.owner = 0;
+            info.prods_l1.producer_key = public_key();
             info.prods_l1.all_stake = 0;
             info.prods_l1.total_votes = 0;            
             info.prods_l1.is_active = false;
@@ -153,6 +154,7 @@ namespace eosiosystem {
       //need retrive from system producers table
       const auto& prod = _producers.get( producer, "producer not found" );
       prodm.owner = producer;
+      prodm.producer_key = prod.producer_key;
       prodm.all_stake = 0;
       prodm.total_votes = prod.total_votes;
       prodm.is_active = prod.is_active;
@@ -184,7 +186,7 @@ namespace eosiosystem {
       }       
    }
 
-   void system_contract::active_producer_seq( const account_name producer, bool isactive) {
+   void system_contract::active_producer_seq( const account_name producer, const eosio::public_key& producer_key, bool isactive) {
       auto it = _producers2.find(producer);
 
       if (it == _producers2.end()) 
@@ -199,11 +201,13 @@ namespace eosiosystem {
       _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
          if(info.prods_l1.owner == producer) {
             info.prods_l1.is_active = isactive;
+            info.prods_l1.producer_key = producer_key;
          }
 
          for( auto it2 =  info.prods_l2.begin(); it2 !=  info.prods_l2.end(); it2++ ) {
             if(it2->owner == producer) {
                it2->is_active = isactive;
+               it2->producer_key = producer_key;
                break;
             } 
          }
@@ -211,6 +215,7 @@ namespace eosiosystem {
          for( auto it3 =  info.prods_l3.begin(); it3 !=  info.prods_l3.end(); it3++ ) {
             if(it3->owner == producer) {
                it3->is_active = isactive;
+               it3->producer_key = producer_key;
                break;
             } 
          }   
@@ -218,6 +223,7 @@ namespace eosiosystem {
          for( auto itall =  info.prods_all.begin(); itall !=  info.prods_all.end(); itall++ ) {
             if(itall->owner == producer) {
                itall->is_active = isactive;
+               itall->producer_key = producer_key;
                break;
             } 
          }   
@@ -263,8 +269,11 @@ namespace eosiosystem {
       });
    }
 
-   
-//##YTA-Change  ens:  
+   void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
+      _gstate.last_producer_schedule_update = block_time;
+
+   }   
+//##YTA-Change  end:  
 
    void system_contract::update_elected_producers( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
