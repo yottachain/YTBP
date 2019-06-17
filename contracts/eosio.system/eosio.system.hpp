@@ -89,6 +89,40 @@ namespace eosiosystem {
                         (unpaid_blocks)(last_claim_time)(location) )
    };
 
+   //##YTA-Change  start:
+   struct producer_info_ext {
+      account_name          owner;
+      uint16_t              seq_num = 1; // from 1 to 21      
+      int64_t               all_stake = 0;
+      uint64_t primary_key()const { return owner; }          
+
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num) )
+
+   };
+
+   struct prod_meta {
+      account_name         owner;
+      double               total_votes = 0;
+      int64_t              all_stake = 0;
+      bool                 is_active = true;
+
+      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(all_stake)(is_active) )      
+   };
+
+   struct producers_seq {
+      uint16_t                      seq_num = 1; // from 1 to 21
+      prod_meta                     prods_l1;  // only one
+      std::vector<prod_meta>        prods_l2;  //max 5
+      std::vector<prod_meta>        prods_l3;  
+      std::vector<prod_meta>        prods_all;
+
+      uint64_t primary_key()const { return seq_num; }          
+
+      EOSLIB_SERIALIZE( producers_seq, (seq_num)(prods_l1)(prods_l2)(prods_l3)(prods_all) )
+
+   };
+   //##YTA-Change  end:
+
    struct voter_info {
       account_name                owner = 0; /// the voter
       account_name                proxy = 0; /// the proxy set by the voter, if any
@@ -127,6 +161,12 @@ namespace eosiosystem {
                                indexed_by<N(prototalvote), const_mem_fun<producer_info, double, &producer_info::by_votes>  >
                                >  producers_table;
 
+   //##YTA-Change  start:  
+   typedef eosio::multi_index< N(producers2), producer_info_ext>  producers_ext_table;
+   typedef eosio::multi_index< N(produderseq), producers_seq>       producers_seq_table;
+   //##YTA-Change  end:  
+
+
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 
    //##YTA-Change  start:
@@ -141,6 +181,9 @@ namespace eosiosystem {
       private:
          voters_table           _voters;
          producers_table        _producers;
+         //##YTA-Change  start:  
+         producers_ext_table    _producers2;
+         //##YTA-Change  end:           
          global_state_singleton _global;
 
          eosio_global_state     _gstate;
@@ -211,6 +254,22 @@ namespace eosiosystem {
 
          void unregprod( const account_name producer );
 
+//##YTA-Change  start:  
+         void clsprods2();
+
+         void seqproducer( const account_name producer, uint16_t seq , uint8_t level );
+
+         void rm_producer_seq( const account_name producer, uint16_t seq );
+
+         void add_producer_seq( const account_name producer, uint16_t seq , uint8_t level );
+
+         void active_producer_seq( const account_name producer, bool isactive);
+
+         void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);
+
+         
+ //##YTA-Change  end:           
+
          void setram( uint64_t max_ram_size );
 
          void voteproducer( const account_name voter, const account_name proxy, const std::vector<account_name>& producers );
@@ -229,6 +288,7 @@ namespace eosiosystem {
          void bidname( account_name bidder, account_name newname, asset bid );
       private:
          void update_elected_producers( block_timestamp timestamp );
+
 
          // Implementation details:
 

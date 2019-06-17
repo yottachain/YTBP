@@ -48,6 +48,8 @@ namespace eosiosystem {
                info.url          = url;
                info.location     = location;
             });
+         
+         active_producer_seq(producer, true);
       } else {
          _producers.emplace( producer, [&]( producer_info& info ){
                info.owner         = producer;
@@ -68,7 +70,201 @@ namespace eosiosystem {
       _producers.modify( prod, 0, [&]( producer_info& info ){
             info.deactivate();
       });
+
+      active_producer_seq(producer, false);
    }
+//##YTA-Change  start: 
+   void system_contract::clsprods2() {
+      require_auth( _self );
+
+      while (_producers2.begin() != _producers2.end())
+         _producers2.erase(_producers2.begin()); 
+
+      for( uint16_t seq = 1; seq <= 21; seq++ ) {
+         producers_seq_table _prod_seq( _self, seq );
+         if( _prod_seq.begin() != _prod_seq.end() )
+            _prod_seq.erase(_prod_seq.begin()); 
+      }      
+   }
+
+   void system_contract::seqproducer( const account_name producer, uint16_t seq , uint8_t level ) {
+      require_auth( _self );
+      
+      eosio_assert(seq >= 1 && seq <= 21 , "invalidate seq number");
+      eosio_assert(level >= 1 && level <= 3 , "invalidate level number");
+      //const auto& prod = _producers.get( producer, "producer not found" );
+      
+      auto it = _producers2.find(producer);
+      if (it == _producers2.end()) {
+         _producers2.emplace(_self, [&](auto &row) {
+            row.owner = producer;
+            row.seq_num = seq;
+         });
+         add_producer_seq(producer, seq, level);
+      } else {
+         uint16_t old_seq = it->seq_num;   
+         _producers2.modify(it, _self, [&](auto &row) {
+            row.seq_num = seq;
+         });
+         rm_producer_seq(producer, old_seq);
+         add_producer_seq(producer, seq, level);
+      }
+   }
+
+   void system_contract::rm_producer_seq(const account_name producer, uint16_t seq) {
+      producers_seq_table _prodseq(_self, seq);
+      auto ps_itr = _prodseq.find (seq); 
+      if( ps_itr == _prodseq.end() ) 
+         return;
+      _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
+         if(info.prods_l1.owner == producer) {
+            info.prods_l1.owner = 0;
+            info.prods_l1.all_stake = 0;
+            info.prods_l1.total_votes = 0;            
+            info.prods_l1.is_active = false;
+         }
+
+         for( auto it2 =  info.prods_l2.begin(); it2 !=  info.prods_l2.end(); it2++ ) {
+            if(it2->owner == producer) {
+               info.prods_l2.erase(it2);
+               break;
+            } 
+         }
+
+         for( auto it3 =  info.prods_l3.begin(); it3 !=  info.prods_l3.end(); it3++ ) {
+            if(it3->owner == producer) {
+               info.prods_l3.erase(it3);
+               break;
+            } 
+         }   
+
+         for( auto itall =  info.prods_all.begin(); itall !=  info.prods_all.end(); itall++ ) {
+            if(itall->owner == producer) {
+               info.prods_all.erase(itall);
+               break;
+            } 
+         }   
+      });
+   }
+
+   void system_contract::add_producer_seq( const account_name producer, uint16_t seq , uint8_t level ) {
+      producers_seq_table _prodseq(_self, seq);
+      prod_meta prodm;
+      //need retrive from system producers table
+      const auto& prod = _producers.get( producer, "producer not found" );
+      prodm.owner = producer;
+      prodm.all_stake = 0;
+      prodm.total_votes = prod.total_votes;
+      prodm.is_active = prod.is_active;
+      auto ps_itr = _prodseq.find (seq);
+      if( ps_itr == _prodseq.end() ) {
+         _prodseq.emplace(_self, [&](auto &row) {
+            row.seq_num = seq;
+            row.prods_all.push_back(prodm);
+            if(level == 1) {
+               row.prods_l1 = prodm;
+            } else if(level == 2) {
+               row.prods_l2.push_back(prodm);
+            } else if(level == 3) {
+               row.prods_l3.push_back(prodm);
+            }
+         });
+      } else {
+         _prodseq.modify(ps_itr, _self, [&](auto &row) {
+            row.prods_all.push_back(prodm);
+            if(level == 1) {
+               row.prods_l1 = prodm;
+            } else if(level == 2) {
+               row.prods_l2.push_back(prodm);
+            } else if(level == 3) {
+               row.prods_l3.push_back(prodm);
+            }
+
+         });
+      }       
+   }
+
+   void system_contract::active_producer_seq( const account_name producer, bool isactive) {
+      auto it = _producers2.find(producer);
+
+      if (it == _producers2.end()) 
+         return;
+      
+      uint16_t seq = it->seq_num;
+      producers_seq_table _prodseq(_self, seq);
+      auto ps_itr = _prodseq.find (seq);
+      if( ps_itr == _prodseq.end() )
+         return;
+
+      _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
+         if(info.prods_l1.owner == producer) {
+            info.prods_l1.is_active = isactive;
+         }
+
+         for( auto it2 =  info.prods_l2.begin(); it2 !=  info.prods_l2.end(); it2++ ) {
+            if(it2->owner == producer) {
+               it2->is_active = isactive;
+               break;
+            } 
+         }
+
+         for( auto it3 =  info.prods_l3.begin(); it3 !=  info.prods_l3.end(); it3++ ) {
+            if(it3->owner == producer) {
+               it3->is_active = isactive;
+               break;
+            } 
+         }   
+
+         for( auto itall =  info.prods_all.begin(); itall !=  info.prods_all.end(); itall++ ) {
+            if(itall->owner == producer) {
+               itall->is_active = isactive;
+               break;
+            } 
+         }   
+      });
+      
+   }
+
+   void system_contract::update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes) {
+      
+      producers_seq_table _prodseq(_self, seq_num);
+      auto ps_itr = _prodseq.find (seq_num);
+      
+      if( ps_itr == _prodseq.end() )
+         return;      
+
+      _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
+         if( info.prods_l1.owner == owner ) {
+            info.prods_l1.total_votes = total_votes;
+            //return;
+         }
+
+         for(auto it = info.prods_l2.begin(); it != info.prods_l2.end(); it++) {
+            if(it->owner == owner) {
+               it->total_votes = total_votes;
+               break;
+            }
+         }
+
+         for(auto it = info.prods_l3.begin(); it != info.prods_l3.end(); it++) {
+            if(it->owner == owner) {
+               it->total_votes = total_votes;
+               break;
+            }
+         }
+
+         for(auto it = info.prods_all.begin(); it != info.prods_all.end(); it++) {
+            if(it->owner == owner) {
+               it->total_votes = total_votes;
+               break;
+            }
+         }         
+
+      });
+   }
+
+   
+//##YTA-Change  ens:  
 
    void system_contract::update_elected_producers( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
@@ -135,7 +331,11 @@ namespace eosiosystem {
          eosio_assert( voter_name != proxy, "cannot proxy to self" );
          require_recipient( proxy );
       } else {
-         eosio_assert( producers.size() <= 30, "attempt to vote for too many producers" );
+         //##YTA-Change  start:         
+         //eosio_assert( producers.size() <= 30, "attempt to vote for too many producers" );
+         // One voter can only vote for one producer
+         eosio_assert( producers.size() <= 1, "attempt to vote for too many producers" );
+         //##YTA-Change  end:
          for( size_t i = 1; i < producers.size(); ++i ) {
             eosio_assert( producers[i-1] < producers[i], "producer votes must be unique and sorted" );
          }
@@ -201,6 +401,7 @@ namespace eosiosystem {
       }
 
       for( const auto& pd : producer_deltas ) {
+         double total_votes = 0;
          auto pitr = _producers.find( pd.first );
          if( pitr != _producers.end() ) {
             eosio_assert( !voting || pitr->active() || !pd.second.second /* not from new set */, "producer is not currently registered" );
@@ -211,10 +412,22 @@ namespace eosiosystem {
                }
                _gstate.total_producer_vote_weight += pd.second.first;
                //eosio_assert( p.total_votes >= 0, "something bad happened" );
+               total_votes = p.total_votes;
             });
          } else {
             eosio_assert( !pd.second.second /* not from new set */, "producer is not registered" ); //data corruption
          }
+         //##YTA-Change  start:
+         auto pitr2 = _producers2.find( pd.first );
+         if( pitr2 != _producers2.end() ) {
+            //pitr2->seq_num   
+            update_producers_seq_totalvotes(pitr2->seq_num, pd.first, total_votes); 
+         }  else {
+            eosio_assert( !pd.second.second /* not from new set */, "producer is not registered" ); //data corruption
+         }     
+         //##YTA-Change  end:         
+
+
       }
 
       _voters.modify( voter, 0, [&]( auto& av ) {

@@ -32,6 +32,15 @@
         {"name":"weight", "type":"weight_type"}
       ]
     },{
+      "name": "prod_meta",
+      "base": "",
+      "fields": [
+        {"name":"owner",        "type":"account_name"},
+        {"name":"total_votes",  "type":"float64"},
+        {"name":"all_stake",    "type":"int64"},
+        {"name":"is_active",    "type":"bool"}
+      ]
+    },{
       "name": "bidname",
       "base": "",
       "fields": [
@@ -280,6 +289,27 @@
          {"name":"location",        "type":"uint16"}
       ]
     },{
+      "name": "producer_info_ext",
+      "base": "",
+      "fields": [
+         {"name":"owner",           "type":"account_name"},
+         {"name":"seq_num",        "type":"uint16"},
+         {"name":"all_stake",      "type":"int64"}
+
+      ]
+    },{
+      "name": "producers_seq",
+      "base": "",
+      "fields": [
+         {"name":"seq_num",          "type":"uint16"},
+         {"name":"prods_l1",         "type":"prod_meta"},
+         {"name":"prods_l2",         "type":"prod_meta[]"},
+         {"name":"prods_l3",         "type":"prod_meta[]"},
+         {"name":"prods_all",        "type":"prod_meta[]"},
+
+
+      ]
+    },{
       "name": "regproducer",
       "base": "",
       "fields": [
@@ -293,6 +323,18 @@
       "base": "",
       "fields": [
         {"name":"producer",     "type":"account_name"}
+      ]
+    },{
+      "name": "clsprods2",
+      "base": "",
+      "fields": []
+    },{
+      "name": "seqproducer",
+      "base": "",
+      "fields": [
+        {"name":"producer",     "type":"account_name"},
+        {"name":"seq",          "type":"uint16"},
+        {"name":"level",        "type":"uint8"}
       ]
     },{
       "name": "setram",
@@ -489,6 +531,14 @@
       "type": "unregprod",
       "ricardian_contract": ""
    },{
+      "name": "clsprods2",
+      "type": "clsprods2",
+      "ricardian_contract": ""
+   },{
+      "name": "seqproducer",
+      "type": "seqproducer",
+      "ricardian_contract": ""
+   },{
       "name": "regproxy",
       "type": "regproxy",
       "ricardian_contract": ""
@@ -534,6 +584,18 @@
       "type": "producer_info",
       "index_type": "i64",
       "key_names" : ["owner"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "producers2",
+      "type": "producer_info_ext",
+      "index_type": "i64",
+      "key_names" : ["owner"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "produderseq",
+      "type": "producers_seq",
+      "index_type": "i64",
+      "key_names" : ["seq_num"],
       "key_types" : ["uint64"]
     },{
       "name": "global",
