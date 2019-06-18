@@ -296,7 +296,7 @@ namespace eosiosystem {
       for( const auto& item : top_producers )
          producers.push_back(item.first);
       
-/* 
+ 
       print("producers start------------------------------\n");
       for( const auto& item : producers ) {
          print("producer -", (name{item.producer_name}), "--");
@@ -311,12 +311,19 @@ namespace eosiosystem {
          print("\n");
       }
       print("producers   end------------------------------\n");
-*/
+
    }
 
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
-
+      print("update_elected_producers_yta   start------------------------------\n");
+      print("-----------------------------------------------\n");
+      print("-----------------------------------------------\n");
+      print("-----------------------------------------------\n");
+      print("-----------------------------------------------\n");
+      print("-----------------------------------------------\n");
+      print("-----------------------------------------------\n");
+ 
       std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
       top_producers.reserve(21);
 
@@ -342,10 +349,14 @@ namespace eosiosystem {
          producers.push_back(item.first);
 
       bytes packed_schedule = pack(producers);
-
+      
+      print("set_proposed_producers   start------------------------\n");
       if( set_proposed_producers( packed_schedule.data(),  packed_schedule.size() ) >= 0 ) {
          _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
+         print("set_proposed_producers   succes-----------------------\n");
       }
+
+      print("update_elected_producers_yta   end------------------------------\n");
 
    }  
 

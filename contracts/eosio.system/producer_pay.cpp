@@ -72,6 +72,8 @@ namespace eosiosystem {
       //##YTA-Change  end:         
 
          update_elected_producers( timestamp );
+         //update_elected_producers_yta( timestamp );
+
 
          if( (timestamp.slot - _gstate.last_name_close.slot) > blocks_per_day ) {
             name_bid_table bids(_self,_self);
