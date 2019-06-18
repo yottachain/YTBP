@@ -93,6 +93,8 @@ namespace eosiosystem {
       _producers.modify( prod, 0, [&](auto& p) {
             p.deactivate();
          });
+
+      active_producer_seq(producer, public_key(), false);   
    }
 
    void system_contract::bidname( account_name bidder, account_name newname, asset bid ) {
@@ -204,7 +206,7 @@ EOSIO_ABI( eosiosystem::system_contract,
      // delegate_bandwidth.cpp
      (buyrambytes)(buyram)(sellram)(delegatebw)(undelegatebw)(refund)
      // voting.cpp
-     (regproducer)(unregprod)(voteproducer)(regproxy)(clsprods2)(seqproducer)
+     (regproducer)(unregprod)(voteproducer)(regproxy)(clsprods2)(seqproducer)(testnewelec)
      // producer_pay.cpp
      (onblock)(claimrewards)
 )

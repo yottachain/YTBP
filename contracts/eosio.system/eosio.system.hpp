@@ -93,7 +93,6 @@ namespace eosiosystem {
    struct producer_info_ext {
       account_name          owner;
       uint16_t              seq_num = 1; // from 1 to 21      
-      int64_t               all_stake = 0;
       uint64_t primary_key()const { return owner; }          
 
       EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num) )
@@ -102,12 +101,13 @@ namespace eosiosystem {
 
    struct prod_meta {
       account_name         owner;
-      double               total_votes = 0;
+      double               total_votes = 0; // total votes
       eosio::public_key    producer_key; /// a packed public key object
-      int64_t              all_stake = 0;
+      int64_t              all_stake = 0;  // total original votes (buy yta amount)
       bool                 is_active = true;
+      uint16_t             location = 0;
 
-      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(producer_key)(all_stake)(is_active) )      
+      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(producer_key)(all_stake)(is_active)(location) )      
    };
 
    struct producers_seq {
@@ -260,14 +260,8 @@ namespace eosiosystem {
 
          void seqproducer( const account_name producer, uint16_t seq , uint8_t level );
 
-         void rm_producer_seq( const account_name producer, uint16_t seq );
-
-         void add_producer_seq( const account_name producer, uint16_t seq , uint8_t level );
-
-         void active_producer_seq( const account_name producer, const eosio::public_key& producer_key, bool isactive);
-
-         void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);    
- //##YTA-Change  end:           
+         void testnewelec();         
+//##YTA-Change  end:           
 
          void setram( uint64_t max_ram_size );
 
@@ -287,8 +281,19 @@ namespace eosiosystem {
          void bidname( account_name bidder, account_name newname, asset bid );
       private:
          void update_elected_producers( block_timestamp timestamp );
+
 //##YTA-Change  start:  
          void update_elected_producers_yta( block_timestamp timestamp );
+
+         std::pair<eosio::producer_key,uint16_t>  getProducerForSeq(uint64_t seq_num );
+
+         void rm_producer_seq( const account_name producer, uint16_t seq );
+
+         void add_producer_seq( const account_name producer, uint16_t seq , uint8_t level );
+
+         void active_producer_seq( const account_name producer, const eosio::public_key& producer_key, bool isactive);
+
+         void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);              
 //##YTA-Change  end:  
 
          // Implementation details:

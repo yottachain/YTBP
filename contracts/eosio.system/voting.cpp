@@ -269,10 +269,113 @@ namespace eosiosystem {
       });
    }
 
+   void system_contract::testnewelec() {
+      require_auth( _self );
+
+      std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
+      top_producers.reserve(21);
+
+
+     for( uint16_t seq_num = 1; seq_num <= 21 ; seq_num++ ) {
+        std::pair<eosio::producer_key,uint16_t> ppinfo = getProducerForSeq( seq_num );
+        if( ppinfo.first.producer_name != 0 ) {
+            top_producers.emplace_back( ppinfo );
+        }
+     }
+
+      if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
+         return;
+      }
+
+      /// sort by producer name
+      std::sort( top_producers.begin(), top_producers.end() );
+
+      std::vector<eosio::producer_key> producers;
+
+      producers.reserve(top_producers.size());
+      for( const auto& item : top_producers )
+         producers.push_back(item.first);
+      
+/* 
+      print("producers start------------------------------\n");
+      for( const auto& item : producers ) {
+         print("producer -", (name{item.producer_name}), "--");
+         
+         //std::string str(std::begin(item.block_signing_key.data), std::end(item.block_signing_key.data));
+         //for(size_t i=0; i<33; i++) {
+         //   char c = item.block_signing_key.data[i];
+         //   printf("%c",c);
+         //}
+         //print(str);
+         
+         print("\n");
+      }
+      print("producers   end------------------------------\n");
+*/
+   }
+
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
 
-   }   
+      std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
+      top_producers.reserve(21);
+
+
+     for( uint16_t seq_num = 1; seq_num <= 21 ; seq_num++ ) {
+        std::pair<eosio::producer_key,uint16_t> ppinfo = getProducerForSeq( seq_num );
+        if( ppinfo.first.producer_name != 0 ) {
+            top_producers.emplace_back( ppinfo );
+        }
+     }
+
+      if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
+         return;
+      }
+
+      /// sort by producer name
+      std::sort( top_producers.begin(), top_producers.end() );
+
+      std::vector<eosio::producer_key> producers;
+
+      producers.reserve(top_producers.size());
+      for( const auto& item : top_producers )
+         producers.push_back(item.first);
+
+      bytes packed_schedule = pack(producers);
+
+      if( set_proposed_producers( packed_schedule.data(),  packed_schedule.size() ) >= 0 ) {
+         _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
+      }
+
+   }  
+
+   std::pair<eosio::producer_key,uint16_t>  system_contract::getProducerForSeq(uint64_t seq_num ) {
+      producers_seq_table _prodseq(_self, seq_num);
+      auto ps_itr = _prodseq.find (seq_num); 
+      if( ps_itr == _prodseq.end() )  
+         return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
+      
+      if (ps_itr->prods_all.begin() == ps_itr->prods_all.end() )
+         return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
+
+      double total_votes = 0;
+      bool is_find = false;
+      auto max = ps_itr->prods_all.begin();
+      for( auto it = ps_itr->prods_all.begin(); it != ps_itr->prods_all.end(); it++ ) {
+         if(it->is_active && it->total_votes > total_votes) {
+            max = it;
+            total_votes = it->total_votes;
+            is_find = true;
+         }
+      }
+
+      if(is_find)
+         return std::pair<eosio::producer_key,uint16_t>({{max->owner, max->producer_key}, max->location});
+
+      return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
+   }
+
+
 //##YTA-Change  end:  
 
    void system_contract::update_elected_producers( block_timestamp block_time ) {
