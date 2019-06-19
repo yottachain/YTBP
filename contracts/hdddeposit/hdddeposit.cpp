@@ -89,8 +89,15 @@ void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
     });
 }
 
-void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant) {
-    require_auth(_self); // need hdd official account to sign this action.
+void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller) {
+
+    if(acc_type == 2) {
+        eosio_assert(is_account(caller), "caller not a account.");
+        eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+        require_auth( caller );
+    } else {
+        require_auth( _self );
+    }
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA for hdd deposit.");
@@ -114,8 +121,15 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant) {
 
 }
 
-void hdddeposit::drawforfeit(name user) {
-    require_auth(_self); // need hdd official account to sign this action.
+void hdddeposit::drawforfeit(name user, uint8_t acc_type, name caller) {
+
+    if(acc_type == 2) {
+        eosio_assert(is_account(caller), "caller not a account.");
+        eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+        require_auth( caller );
+    } else {
+        require_auth( _self );
+    }
 
     eosio_assert(is_account(user), "user is not an account.");
     accdeposit_table   _deposit(_self, user.value);
@@ -134,8 +148,15 @@ void hdddeposit::drawforfeit(name user) {
 
 }
 
-void hdddeposit::cutvote(name user) {
-    require_auth(_self); // need hdd official account to sign this action.
+void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
+
+    if(acc_type == 2) {
+        eosio_assert(is_account(caller), "caller not a account.");
+        eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+        require_auth( caller );
+    } else {
+        require_auth( _self );
+    }
 
     eosio_assert(is_account(user), "user is not an account.");
     accdeposit_table   _deposit(_self, user.value);
@@ -167,5 +188,19 @@ void hdddeposit::clearacc(name user) {
     const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
     _deposit.erase( acc );
 }
+
+bool hdddeposit::is_bp_account(uint64_t uservalue)
+{
+   account_name producers[21];
+   uint32_t bytes_populated = get_active_producers(producers, sizeof(account_name) * 21);
+   uint32_t count = bytes_populated / sizeof(account_name);
+   for (uint32_t i = 0; i < count; i++)
+   {
+      if (producers[i] == uservalue)
+         return true;
+   }
+   return false;
+}
+
 
 EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(clearminer)(clearacc))

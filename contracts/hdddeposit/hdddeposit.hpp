@@ -16,9 +16,9 @@ class hdddeposit : public eosio::contract {
 
         void paydeposit(name user, uint64_t minerid, asset quant);
         void undeposit(name user, uint64_t minerid, asset quant);
-        void payforfeit(name user, uint64_t minerid, asset quant);
-        void drawforfeit(name user);
-        void cutvote(name user);
+        void payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller);
+        void drawforfeit(name user, uint8_t acc_type, name caller);
+        void cutvote(name user, uint8_t acc_type, name caller);
         void clearminer(uint64_t minerid);
         void clearacc(name user);
 
@@ -28,6 +28,9 @@ class hdddeposit : public eosio::contract {
 
 
     private:
+
+        bool is_bp_account(uint64_t uservalue);
+
         //记录某个账户缴纳的押金总量和当前需要缴纳的罚款总量
         struct accdeposit {
             name        account_name;
