@@ -601,7 +601,7 @@
       "key_names" : ["owner"],
       "key_types" : ["uint64"]
     },{
-      "name": "produderseq",
+      "name": "producerseq",
       "type": "producers_seq",
       "index_type": "i64",
       "key_names" : ["seq_num"],

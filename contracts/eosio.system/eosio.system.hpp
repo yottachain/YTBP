@@ -112,6 +112,7 @@ namespace eosiosystem {
 
    struct producers_seq {
       uint16_t                      seq_num = 1; // from 1 to 21
+      bool                          is_org = true;
       prod_meta                     prods_l1;  // only one
       std::vector<prod_meta>        prods_l2;  //max 5
       std::vector<prod_meta>        prods_l3;  
@@ -164,7 +165,7 @@ namespace eosiosystem {
 
    //##YTA-Change  start:  
    typedef eosio::multi_index< N(producers2), producer_info_ext>  producers_ext_table;
-   typedef eosio::multi_index< N(produderseq), producers_seq>       producers_seq_table;
+   typedef eosio::multi_index< N(producerseq), producers_seq>       producers_seq_table;
    //##YTA-Change  end:  
 
 
