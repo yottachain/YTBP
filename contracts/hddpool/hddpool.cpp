@@ -288,7 +288,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
       _hdd_amount = (es.convert(quant, HDD_SYMBOL_BANCOR).amount) * 10000;
    });
    print("_hdd_amount:  ", _hdd_amount, "\n");
-
+   _ghddpriceState.price = (quant.amount * 100 ) / (_hdd_amount/10000);
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, receiver.value);
    auto it = _userhdd.find(receiver.value);
@@ -342,6 +342,7 @@ void hddpool::sellhdd(name user, int64_t amount)
       _yta_amount = es.convert(asset(amount / 10000, HDD_SYMBOL_BANCOR), CORE_SYMBOL).amount;
    });
    print("_yta_amount:  ", _yta_amount, "\n");
+   _ghddpriceState.price = (_yta_amount * 100 ) / (amount/10000);
 
    asset quant{_yta_amount, CORE_SYMBOL};
    action(
