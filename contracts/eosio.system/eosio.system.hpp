@@ -105,9 +105,10 @@ namespace eosiosystem {
       eosio::public_key    producer_key; /// a packed public key object
       int64_t              all_stake = 0;  // total original votes (buy yta amount)
       bool                 is_active = true;
+      std::string          url;
       uint16_t             location = 0;
 
-      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(producer_key)(all_stake)(is_active)(location) )      
+      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(producer_key)(all_stake)(is_active)(url)(location) )      
    };
 
    struct producers_seq {
@@ -292,7 +293,7 @@ namespace eosiosystem {
 
          void add_producer_seq( const account_name producer, uint16_t seq , uint8_t level );
 
-         void active_producer_seq( const account_name producer, const eosio::public_key& producer_key, bool isactive);
+         void change_producer_seq_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url);
 
          void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);              
 //##YTA-Change  end:  

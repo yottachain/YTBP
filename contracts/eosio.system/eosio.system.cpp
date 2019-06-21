@@ -94,7 +94,7 @@ namespace eosiosystem {
             p.deactivate();
          });
 
-      active_producer_seq(producer, public_key(), false);   
+      change_producer_seq_info(producer, public_key(), false, false , "");   
    }
 
    void system_contract::bidname( account_name bidder, account_name newname, asset bid ) {

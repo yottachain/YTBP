@@ -49,7 +49,7 @@ namespace eosiosystem {
                info.location     = location;
             });
          
-         active_producer_seq(producer, producer_key, true);
+         change_producer_seq_info(producer, producer_key, true, true, url);
       } else {
          _producers.emplace( producer, [&]( producer_info& info ){
                info.owner         = producer;
@@ -71,7 +71,7 @@ namespace eosiosystem {
             info.deactivate();
       });
 
-      active_producer_seq(producer, public_key(), false);
+      change_producer_seq_info(producer, public_key(), false, false, "");
    }
 //##YTA-Change  start: 
    void system_contract::clsprods2() {
@@ -89,6 +89,8 @@ namespace eosiosystem {
 
    void system_contract::seqproducer( const account_name producer, uint16_t seq , uint8_t level ) {
       require_auth( _self );
+      
+      const auto& prod = _producers.get( producer, "producer not found" );
       
       eosio_assert(seq >= 1 && seq <= 21 , "invalidate seq number");
       eosio_assert(level >= 1 && level <= 3 , "invalidate level number");
@@ -123,6 +125,7 @@ namespace eosiosystem {
             info.prods_l1.all_stake = 0;
             info.prods_l1.total_votes = 0;            
             info.prods_l1.is_active = false;
+            info.prods_l1.url = "";
             info.is_org = false;
          }
 
@@ -159,6 +162,7 @@ namespace eosiosystem {
       prodm.all_stake = (int64_t)prod.total_votes;
       prodm.total_votes = prod.total_votes;
       prodm.is_active = prod.is_active;
+      prodm.url = prod.url;
       auto ps_itr = _prodseq.find (seq);
       if( ps_itr == _prodseq.end() ) {
          _prodseq.emplace(_self, [&](auto &row) {
@@ -191,7 +195,7 @@ namespace eosiosystem {
       }       
    }
 
-   void system_contract::active_producer_seq( const account_name producer, const eosio::public_key& producer_key, bool isactive) {
+   void system_contract::change_producer_seq_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url) {
       auto it = _producers2.find(producer);
 
       if (it == _producers2.end()) 
@@ -207,12 +211,16 @@ namespace eosiosystem {
          if(info.prods_l1.owner == producer) {
             info.prods_l1.is_active = isactive;
             info.prods_l1.producer_key = producer_key;
+            if(seturl)
+               info.prods_l1.url = url;
          }
 
          for( auto it2 =  info.prods_l2.begin(); it2 !=  info.prods_l2.end(); it2++ ) {
             if(it2->owner == producer) {
                it2->is_active = isactive;
                it2->producer_key = producer_key;
+               if(seturl)
+                  it2->url = url;               
                break;
             } 
          }
@@ -221,6 +229,8 @@ namespace eosiosystem {
             if(it3->owner == producer) {
                it3->is_active = isactive;
                it3->producer_key = producer_key;
+               if(seturl)
+                  it3->url = url;                  
                break;
             } 
          }   
@@ -229,6 +239,8 @@ namespace eosiosystem {
             if(itall->owner == producer) {
                itall->is_active = isactive;
                itall->producer_key = producer_key;
+               if(seturl)
+                  itall->url = url;                  
                break;
             } 
          }   

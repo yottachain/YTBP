@@ -40,6 +40,7 @@
         {"name":"producer_key", "type":"public_key"},        
         {"name":"all_stake",    "type":"int64"},
         {"name":"is_active",    "type":"bool"},
+        {"name":"url",          "type":"string"},
         {"name":"location",     "type":"uint16"}
       ]
     },{
