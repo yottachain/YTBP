@@ -39,6 +39,16 @@
             ]
         },
         {
+            "name": "deposit_rate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "rate",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
             "name": "paydeposit",
             "base": "",
             "fields": [
@@ -129,6 +139,16 @@
                 {
                     "name": "user",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "setrate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "rate",
+                    "type": "int64"
                 }
             ]
         }      
@@ -168,7 +188,12 @@
             "name": "clearacc",
             "type": "clearacc",
             "ricardian_contract": ""
-        }                
+        },
+        {
+            "name": "setrate",
+            "type": "setrate",
+            "ricardian_contract": ""
+        }                          
     ],
     "tables": [
         {
@@ -184,7 +209,14 @@
             "index_type": "i64",
             "key_names": [],
             "key_types": []
-        }
+        },
+        {
+            "name": "gdepositrate",
+            "type": "deposit_rate",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }        
     ],
     "ricardian_clauses": [],
     "variants": []

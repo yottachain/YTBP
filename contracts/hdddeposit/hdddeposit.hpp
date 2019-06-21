@@ -21,6 +21,7 @@ class hdddeposit : public eosio::contract {
         void cutvote(name user, uint8_t acc_type, name caller);
         void clearminer(uint64_t minerid);
         void clearacc(name user);
+        void setrate(int64_t rate);
 
         inline asset get_deposit_and_forfeit( account_name user )const;
         inline asset get_deposit( account_name user )const;
@@ -47,7 +48,13 @@ class hdddeposit : public eosio::contract {
             asset       deposit;
             uint64_t    primary_key()const { return minerid; }
         };
-        typedef multi_index<N(minerdeposit), minerdeposit> minerdeposit_table;       
+        typedef multi_index<N(minerdeposit), minerdeposit> minerdeposit_table;   
+
+        struct deposit_rate
+        {
+            int64_t rate = 100;
+        };
+        typedef eosio::singleton<N(gdepositrate), deposit_rate> grate_singleton;
 };
 
 //these const functions will be called by eosio.token transfer action to check where a user has hdd deposit or forfeit

@@ -189,6 +189,22 @@ void hdddeposit::clearacc(name user) {
     _deposit.erase( acc );
 }
 
+void hdddeposit::setrate(int64_t rate) {
+    require_auth(_self);
+    grate_singleton _rate(_self, _self);
+    deposit_rate    _rateState;
+
+   if (_rate.exists())
+      _rateState = _rate.get();
+   else
+      _rateState = deposit_rate{};
+
+    _rateState.rate = rate;
+
+    _rate.set(_rateState, _self);
+
+}
+
 bool hdddeposit::is_bp_account(uint64_t uservalue)
 {
    account_name producers[21];
@@ -203,4 +219,4 @@ bool hdddeposit::is_bp_account(uint64_t uservalue)
 }
 
 
-EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(clearminer)(clearacc))
+EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(clearminer)(clearacc)(setrate))
