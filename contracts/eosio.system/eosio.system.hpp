@@ -112,7 +112,7 @@ namespace eosiosystem {
 
    struct producers_seq {
       uint16_t                      seq_num = 1; // from 1 to 21
-      bool                          is_org = true;
+      bool                          is_org = false; 
       prod_meta                     prods_l1;  // only one
       std::vector<prod_meta>        prods_l2;  //max 5
       std::vector<prod_meta>        prods_l3;  
@@ -120,7 +120,7 @@ namespace eosiosystem {
 
       uint64_t primary_key()const { return seq_num; }          
 
-      EOSLIB_SERIALIZE( producers_seq, (seq_num)(prods_l1)(prods_l2)(prods_l3)(prods_all) )
+      EOSLIB_SERIALIZE( producers_seq, (seq_num)(is_org)(prods_l1)(prods_l2)(prods_l3)(prods_all) )
 
    };
    //##YTA-Change  end:

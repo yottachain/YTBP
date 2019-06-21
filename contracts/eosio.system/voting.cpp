@@ -123,6 +123,7 @@ namespace eosiosystem {
             info.prods_l1.all_stake = 0;
             info.prods_l1.total_votes = 0;            
             info.prods_l1.is_active = false;
+            info.is_org = false;
          }
 
          for( auto it2 =  info.prods_l2.begin(); it2 !=  info.prods_l2.end(); it2++ ) {
@@ -155,13 +156,15 @@ namespace eosiosystem {
       const auto& prod = _producers.get( producer, "producer not found" );
       prodm.owner = producer;
       prodm.producer_key = prod.producer_key;
-      prodm.all_stake = 0;
+      prodm.all_stake = (int64_t)prod.total_votes;
       prodm.total_votes = prod.total_votes;
       prodm.is_active = prod.is_active;
       auto ps_itr = _prodseq.find (seq);
       if( ps_itr == _prodseq.end() ) {
          _prodseq.emplace(_self, [&](auto &row) {
             row.seq_num = seq;
+            if(level == 1)
+               row.is_org = true;            
             row.prods_all.push_back(prodm);
             if(level == 1) {
                row.prods_l1 = prodm;
@@ -173,6 +176,8 @@ namespace eosiosystem {
          });
       } else {
          _prodseq.modify(ps_itr, _self, [&](auto &row) {
+            if(level == 1)
+               row.is_org = true;            
             row.prods_all.push_back(prodm);
             if(level == 1) {
                row.prods_l1 = prodm;
@@ -242,12 +247,14 @@ namespace eosiosystem {
       _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
          if( info.prods_l1.owner == owner ) {
             info.prods_l1.total_votes = total_votes;
+            info.prods_l1.all_stake = (int64_t)total_votes;
             //return;
          }
 
          for(auto it = info.prods_l2.begin(); it != info.prods_l2.end(); it++) {
             if(it->owner == owner) {
                it->total_votes = total_votes;
+               it->all_stake = (int64_t)total_votes;
                break;
             }
          }
@@ -255,6 +262,7 @@ namespace eosiosystem {
          for(auto it = info.prods_l3.begin(); it != info.prods_l3.end(); it++) {
             if(it->owner == owner) {
                it->total_votes = total_votes;
+               it->all_stake = (int64_t)total_votes;
                break;
             }
          }
@@ -262,6 +270,7 @@ namespace eosiosystem {
          for(auto it = info.prods_all.begin(); it != info.prods_all.end(); it++) {
             if(it->owner == owner) {
                it->total_votes = total_votes;
+               it->all_stake = (int64_t)total_votes;
                break;
             }
          }         
@@ -368,6 +377,19 @@ namespace eosiosystem {
       
       if (ps_itr->prods_all.begin() == ps_itr->prods_all.end() )
          return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
+      
+      if(ps_itr->is_org) {
+         print("getProducerForSeq   use org------------------------------", seq_num, "\n");
+         if(ps_itr->prods_l1.is_active && ps_itr->prods_l1.all_stake >50000000000) {
+            print("getProducerForSeq  org producer------------------------------", seq_num, "\n");         
+            return std::pair<eosio::producer_key,uint16_t>({{ps_itr->prods_l1.owner, ps_itr->prods_l1.producer_key}, ps_itr->prods_l1.location});
+         } else {
+             _prodseq.modify(ps_itr, _self, [&](auto &row) {
+                row.is_org = false;
+            });
+         }  
+      }
+   
 
       double total_votes = 0;
       bool is_find = false;
@@ -423,8 +445,9 @@ namespace eosiosystem {
 
    double stake2vote( int64_t staked ) {
       /// TODO subtract 2080 brings the large numbers closer to this decade
-      double weight = int64_t( (now() - (block_timestamp::block_timestamp_epoch / 1000)) / (seconds_per_day * 7) )  / double( 52 );
-      return double(staked) * std::pow( 2, weight );
+      //double weight = int64_t( (now() - (block_timestamp::block_timestamp_epoch / 1000)) / (seconds_per_day * 7) )  / double( 52 );
+      //return double(staked) * std::pow( 2, weight );
+      return double(staked);
    }
    /**
     *  @pre producers must be sorted from lowest to highest and must be registered and active

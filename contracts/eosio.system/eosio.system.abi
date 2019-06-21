@@ -303,6 +303,7 @@
       "base": "",
       "fields": [
          {"name":"seq_num",          "type":"uint16"},
+         {"name":"is_org",           "type":"bool"},
          {"name":"prods_l1",         "type":"prod_meta"},
          {"name":"prods_l2",         "type":"prod_meta[]"},
          {"name":"prods_l3",         "type":"prod_meta[]"},
