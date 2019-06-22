@@ -296,8 +296,8 @@
       "base": "",
       "fields": [
          {"name":"owner",           "type":"account_name"},
-         {"name":"seq_num",        "type":"uint16"}
-
+         {"name":"seq_num",         "type":"uint16"},
+         {"name":"out_votes",       "type":"int64"}
       ]
     },{
       "name": "producers_seq",
@@ -343,6 +343,13 @@
       "name": "testnewelec",
       "base": "",
       "fields": []
+    },{
+      "name": "tmpvotennn",
+      "base": "",
+      "fields": [
+        {"name":"producer",     "type":"account_name"},
+        {"name":"tickets",      "type":"int64"}
+      ]
     },{
       "name": "setram",
       "base": "",
@@ -548,6 +555,10 @@
    },{
       "name": "testnewelec",
       "type": "testnewelec",
+      "ricardian_contract": ""
+   },{
+      "name": "tmpvotennn",
+      "type": "tmpvotennn",
       "ricardian_contract": ""
    },{
       "name": "regproxy",

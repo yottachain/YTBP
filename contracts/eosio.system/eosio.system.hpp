@@ -93,9 +93,10 @@ namespace eosiosystem {
    struct producer_info_ext {
       account_name          owner;
       uint16_t              seq_num = 1; // from 1 to 21      
+      int64_t               out_votes = 0;
       uint64_t primary_key()const { return owner; }          
 
-      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num) )
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes))
 
    };
 
@@ -124,6 +125,8 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( producers_seq, (seq_num)(is_org)(prods_l1)(prods_l2)(prods_l3)(prods_all) )
 
    };
+
+   //struct remove
    //##YTA-Change  end:
 
    struct voter_info {
@@ -261,6 +264,8 @@ namespace eosiosystem {
          void clsprods2();
 
          void seqproducer( const account_name producer, uint16_t seq , uint8_t level );
+
+         void tmpvotennn( const account_name producer, int64_t tickets );
 
          void testnewelec();         
 //##YTA-Change  end:           

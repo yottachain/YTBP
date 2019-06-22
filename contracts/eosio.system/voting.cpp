@@ -90,8 +90,10 @@ namespace eosiosystem {
    void system_contract::seqproducer( const account_name producer, uint16_t seq , uint8_t level ) {
       require_auth( _self );
       
-      const auto& prod = _producers.get( producer, "producer not found" );
-      
+      //const auto& prod = _producers.get( producer, "producer not found" );
+      auto itp = _producers.find(producer);
+      eosio_assert( itp != _producers.end() , "producer not found");      
+
       eosio_assert(seq >= 1 && seq <= 21 , "invalidate seq number");
       eosio_assert(level >= 1 && level <= 3 , "invalidate level number");
       //const auto& prod = _producers.get( producer, "producer not found" );
@@ -335,6 +337,29 @@ namespace eosiosystem {
 
    }
 
+   void system_contract::tmpvotennn( const account_name producer, int64_t tickets ) {
+      require_auth( _self );
+
+      const auto& prod = _producers.get( producer, "producer not found" );
+      //auto it = _producers.find(producer);
+      //eosio_assert( it != _producers.end() , "producer not found");
+      
+      _producers.modify( prod, 0, [&]( producer_info& info ){
+         int64_t vote_delta = 0;
+         auto pitr2 = _producers2.find( producer);
+         if( pitr2 != _producers2.end() ) {
+            vote_delta = tickets - pitr2->out_votes; 
+            info.total_votes += vote_delta;
+            _producers2.modify( pitr2, 0, [&]( producer_info_ext& info2){
+               info2.out_votes = tickets;
+            });
+            update_producers_seq_totalvotes(pitr2->seq_num, producer, info.total_votes); 
+         }  
+      });
+      _gstate.total_producer_vote_weight += tickets;
+
+   }   
+
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
       print("update_elected_producers_yta   start------------------------------\n");
@@ -419,7 +444,6 @@ namespace eosiosystem {
 
       return std::pair<eosio::producer_key,uint16_t>({{0, eosio::public_key{}}, 0});
    }
-
 
 //##YTA-Change  end:  
 
