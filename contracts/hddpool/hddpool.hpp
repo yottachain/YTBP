@@ -65,8 +65,14 @@ public:
   void subhspace(name user, uint64_t space, name caller);
   void newmaccount(name owner, uint64_t minerid, name caller);
   void addmprofit(name owner, uint64_t minerid, uint64_t space, name caller);
-  void clearall();
+  void clearall(name owner);
   void calcmbalance(name owner, uint64_t minerid);
+
+  //store pool related actions -- start
+  void clsallpools();
+  void regstrpool(name pool_id, name pool_owner, uint64_t max_space);
+  void addm2pool(uint64_t minerid, name pool_id, name minerowner);
+  //store pool related actions -- end
 
 private:
   struct userhdd
@@ -93,6 +99,48 @@ private:
     //uint64_t  get_owner() const { return owner.value; }
   };
   typedef multi_index<N(maccount), maccount> maccount_index;
+
+  struct miner2acc //scope minerid
+  {
+    uint64_t minerid;             //矿机id
+    name owner;                   //拥有矿机的矿主的账户名  
+    uint64_t  primary_key() const { return minerid; }  
+  };
+  typedef multi_index<N(miner2acc), miner2acc> miner2acc_index;
+
+  //store poll tables  (scope : self) start -----------------
+  //store pool
+  struct storepool
+  {
+    name        pool_id;  //pool id use eos name type  
+    name        pool_owner; //pool owner is a ytachain account
+    uint64_t    max_space;  //max space for this pool
+    uint64_t    space_left; //space left for this pool 
+    uint64_t    primary_key() const { return pool_id.value; }
+  };
+  typedef multi_index<N(storepool), storepool> storepool_index;
+
+  //storepool's miners ( scope : pool_id )
+  struct spoolminers
+  {
+    name        pool_id;      //pool id use eos name type  
+    uint64_t    minerid;      //矿机id
+    name        miner_owner;  //拥有矿机的矿主的账户名
+    uint64_t    space;        //矿机的生产空间
+    uint64_t    primary_key() const { return minerid; }
+  };
+  typedef multi_index<N(spoolminers), spoolminers> spoolminers_index;
+
+  //miner's storepool ( scope : minerid)
+  struct miner2pool
+  {
+    uint64_t  minerid;
+    name      pool_id;
+    uint64_t  primary_key() const { return minerid; }
+  };
+  typedef multi_index<N(miner2pool), miner2pool> miner2pool_index;
+  //store poll tables  (scope : self) end -------------------
+
 
   struct hdd_global_state
   {

@@ -109,7 +109,53 @@
         {
             "name": "clearall",
             "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "clsallpools",
+            "base": "",
             "fields": []
+        },     
+        {
+            "name": "regstrpool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                },
+                {
+                    "name": "pool_owner",
+                    "type": "name"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "addm2pool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                },
+                {
+                    "name": "minerowner",
+                    "type": "name"
+                }
+            ]
         },
         {
             "name": "getbalance",
@@ -197,7 +243,78 @@
                     "name": "last_hdd_time",
                     "type": "uint64"
                 }
-
+            ]
+        },
+        {
+            "name": "miner2acc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "storepool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                },
+                {
+                    "name": "pool_owner",
+                    "type": "name"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "space_left",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "spoolminers",
+            "base": "",
+            "fields": [
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                },
+                {
+                    "name": "miner_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "miner_owner",
+                    "type": "name"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "miner2pool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                }
             ]
         },
         {
@@ -368,7 +485,22 @@
             "name": "subhspace",
             "type": "subhspace",
             "ricardian_contract": ""
-        }
+        },
+        {
+            "name": "clsallpools",
+            "type": "clsallpools",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "regstrpool",
+            "type": "regstrpool",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "addm2pool",
+            "type": "addm2pool",
+            "ricardian_contract": ""
+        }                    
     ],
     "tables": [
         {
@@ -407,8 +539,36 @@
             "key_types": []
         },
         {
+            "name": "storepool",
+            "type": "storepool",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "spoolminers",
+            "type": "spoolminers",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "miner2pool",
+            "type": "miner2pool",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "maccount",
             "type": "maccount",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "miner2acc",
+            "type": "miner2acc",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
