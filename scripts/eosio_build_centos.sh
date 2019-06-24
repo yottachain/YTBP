@@ -52,8 +52,7 @@
         printf "\\t- Yum installation found at %s.\\n" "${YUM}"
 
         printf "\\tUpdating YUM repository...\\n"
-        #if ! sudo "${YUM}" -y update > /dev/null 2>&1; then
-		if ! true;then
+        if ! sudo "${YUM}" -y update > /dev/null 2>&1; then
                 printf "\\t!! YUM update failed !!\\n"
                 printf "\\tExiting now.\\n"
                 exit 1;
@@ -179,8 +178,7 @@
 			case $yn in
 				[Yy]* )
 					printf "\\tInstalling dependencies\\n\\n"
-					#if ! sudo "${YUM}" -y install ${DEP}; then
-					if ! true;then
+					if ! sudo "${YUM}" -y install ${DEP}; then
 						printf "\\t!! YUM dependency installation failed !!\\n"
 						printf "\\tExiting now.\\n"
 						exit 1;
