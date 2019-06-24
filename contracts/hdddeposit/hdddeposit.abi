@@ -121,7 +121,15 @@
                 {
                     "name": "user",
                     "type": "name"
-                }
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }                                
             ]
         },
         {
@@ -131,7 +139,15 @@
                 {
                     "name": "user",
                     "type": "name"
-                }
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }                                
             ]
         },
         {
