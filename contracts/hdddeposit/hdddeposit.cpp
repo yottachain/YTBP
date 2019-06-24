@@ -20,7 +20,7 @@ void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     require_auth(user);
 
     eosio_assert(is_account(user), "user is not an account.");
-    eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA for hdd deposit.");
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
 
     //check if user has enough YTA balance for deposit
     auto balance   = eosio::token(N(eosio.token)).get_balance( user.value , quant.symbol.name() );

@@ -272,7 +272,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    eosio_assert(is_account(receiver), "receiver not a account");
    eosio_assert(is_account(hdd_account), "to not a account");
    eosio_assert(quant.is_valid(), "asset is invalid");
-   eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA to buy HDD");
+   eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset to buy HDD");
    eosio_assert(quant.amount > 0, "must transfer positive quantity");
    //print( "quant.amount: ", quant.amount , "\n" );
 
