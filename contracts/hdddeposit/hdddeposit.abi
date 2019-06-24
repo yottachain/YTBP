@@ -3,7 +3,7 @@
     "types": [],
     "structs": [
         {
-            "name": "accdeposit",
+            "name": "acc2deposit",
             "base": "",
             "fields": [
                 {
@@ -21,7 +21,7 @@
             ]
         },
         {
-            "name": "minerdeposit",
+            "name": "miner2dep",
             "base": "",
             "fields": [
                 {
@@ -34,6 +34,10 @@
                 },
                 {
                     "name": "deposit",
+                    "type": "asset"
+                },
+                {
+                    "name": "dep_total",
                     "type": "asset"
                 }
             ]
@@ -99,7 +103,15 @@
                 {
                     "name": "quant",
                     "type": "asset"
-                }
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }                                
             ]
         },
         {
@@ -197,15 +209,15 @@
     ],
     "tables": [
         {
-            "name": "accdeposit",
-            "type": "accdeposit",
+            "name": "acc2deposit",
+            "type": "acc2deposit",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "minerdeposit",
-            "type": "minerdeposit",
+            "name": "miner2dep",
+            "type": "miner2dep",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

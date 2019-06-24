@@ -7,6 +7,8 @@
 using eosio::name;
 using eosio::asset;
 using eosio::multi_index;
+using eosio::indexed_by;
+using eosio::const_mem_fun;
 
 
 class hdddeposit : public eosio::contract {
@@ -33,22 +35,26 @@ class hdddeposit : public eosio::contract {
         bool is_bp_account(uint64_t uservalue);
 
         //记录某个账户缴纳的押金总量和当前需要缴纳的罚款总量
-        struct accdeposit {
+        struct acc2deposit {
             name        account_name;
             asset       deposit; 
             asset       forfeit;   
             uint64_t    primary_key()const { return account_name.value; }
         };
-        typedef multi_index<N(accdeposit), accdeposit> accdeposit_table; 
+        typedef multi_index<N(acc2deposit), acc2deposit> accdeposit_table; 
 
         //记录哪个账户为哪个矿机抵押了多少钱
-        struct minerdeposit {
+        struct miner2dep {
             uint64_t    minerid;    //矿机ID
             name        account_name; 
             asset       deposit;
+            asset       dep_total;
             uint64_t    primary_key()const { return minerid; }
+            uint64_t    by_accname()const    { return account_name.value;  }
         };
-        typedef multi_index<N(minerdeposit), minerdeposit> minerdeposit_table;   
+        typedef multi_index<N(miner2dep), miner2dep,
+                            indexed_by<N(accname), const_mem_fun<miner2dep, uint64_t, &miner2dep::by_accname>  >
+                            > minerdeposit_table;   
 
         struct deposit_rate
         {
