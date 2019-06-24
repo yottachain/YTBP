@@ -35,7 +35,7 @@ static constexpr eosio::name hdd_account{N(hddpool12345)};
 #define HDD_SYMBOL_BANCOR S(4, HDD)
 #define HDDCORE_SYMBOL_BANCOR S(4, HDDCORE)
 
-const int64_t inc_hdd_amount = 1000000000;
+const int64_t inc_hdd_amount = 0;//1000000000;
 
 const int64_t price_delta = 1;
 
