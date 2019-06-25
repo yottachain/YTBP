@@ -417,7 +417,8 @@ namespace eosiosystem {
       
       if(ps_itr->is_org) {
          print("getProducerForSeq   use org------------------------------", seq_num, "\n");
-         if(ps_itr->prods_l1.is_active && ps_itr->prods_l1.all_stake >50000000000) {
+         //if(ps_itr->prods_l1.is_active && ps_itr->prods_l1.total_votes > 50000000000) {
+         if(ps_itr->prods_l1.is_active && ps_itr->prods_l1.total_votes > 0) {
             print("getProducerForSeq  org producer------------------------------", seq_num, "\n");         
             return std::pair<eosio::producer_key,uint16_t>({{ps_itr->prods_l1.owner, ps_itr->prods_l1.producer_key}, ps_itr->prods_l1.location});
          } else {

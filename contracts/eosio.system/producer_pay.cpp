@@ -8,7 +8,7 @@ namespace eosiosystem {
    //##YTA-Change  start:
    //Change total vote rate from 15% to 1% for test network
    //const int64_t  min_activated_stake   = 150'000'000'0000;
-   const int64_t  min_activated_stake   = 10'000'000'0000;
+   const int64_t  min_activated_stake   = 0;
    //##YTA-Change  end:
    const uint32_t blocks_per_year       = 52*7*24*2*3600;   // half seconds per year
    const uint32_t seconds_per_year      = 52*7*24*3600;
