@@ -15,7 +15,7 @@ static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name system_account{N(eosio)};
 static constexpr eosio::name hdd_deposit_account{N(hdddeposit12)};
 
-void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
+void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     
     require_auth(user);
 
@@ -23,10 +23,10 @@ void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
 
     //check if user has enough YTA balance for deposit
-    auto balance   = eosio::token(N(eosio.token)).get_balance( user.value , quant.symbol.name() );
+    auto balance   = eosio::token(N(eosio.token)).get_balance( user , quant.symbol.name() );
     asset real_balance = balance;
-    accdeposit_table _deposit(_self, user.value);
-    auto acc = _deposit.find( user.value );    
+    accdeposit_table _deposit(_self, user);
+    auto acc = _deposit.find( user );    
     if ( acc != _deposit.end() ) {
         real_balance.amount -= acc->deposit.amount;
         real_balance.amount -= acc->forfeit.amount;     
@@ -42,7 +42,7 @@ void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     if ( miner == _mdeposit.end() ) {
         _mdeposit.emplace( _self, [&]( auto& a ){
             a.minerid = minerid;
-            a.account_name = user;
+            a.account_name = name{user};
             a.deposit = quant;
             a.dep_total = quant;
         });
@@ -57,7 +57,7 @@ void hdddeposit::paydeposit(name user, uint64_t minerid, asset quant) {
     //insert or update accdeposit table
     if ( acc == _deposit.end() ) {
         _deposit.emplace( _self, [&]( auto& a ){
-            a.account_name = user;
+            a.account_name = name{user};
             a.deposit = quant;
         });
     } else {
@@ -102,7 +102,7 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
     }
 
     eosio_assert(is_account(user), "user is not an account.");
-    eosio_assert(quant.symbol == CORE_SYMBOL, "must use YTA for hdd deposit.");
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
 
     minerdeposit_table _mdeposit(_self, _self);
     accdeposit_table   _deposit(_self, user.value);

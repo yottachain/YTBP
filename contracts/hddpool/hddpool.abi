@@ -140,6 +140,28 @@
             ]
         },
         {
+            "name": "newminer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "adminacc",
+                    "type": "name"
+                },
+                {
+                    "name": "dep_acc",
+                    "type": "name"
+                },
+                {
+                    "name": "dep_amount",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
             "name": "addm2pool",
             "base": "",
             "fields": [
@@ -154,6 +176,10 @@
                 {
                     "name": "minerowner",
                     "type": "name"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
                 }
             ]
         },
@@ -246,20 +272,6 @@
             ]
         },
         {
-            "name": "miner2acc",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "owner",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "storepool",
             "base": "",
             "fields": [
@@ -282,57 +294,33 @@
             ]
         },
         {
-            "name": "spoolminers",
-            "base": "",
-            "fields": [
-                {
-                    "name": "pool_id",
-                    "type": "name"
-                },
-                {
-                    "name": "miner_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "miner_owner",
-                    "type": "name"
-                },
-                {
-                    "name": "space",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "miner2pool",
+            "name": "minerinfo",
             "base": "",
             "fields": [
                 {
                     "name": "minerid",
                     "type": "uint64"
                 },
-                {
-                    "name": "pool_id",
-                    "type": "name"
-                }
-            ]
-        },
-        {
-            "name": "newmaccount",
-            "base": "",
-            "fields": [
                 {
                     "name": "owner",
                     "type": "name"
                 },
                 {
-                    "name": "minerid",
-                    "type": "uint64"
+                    "name": "admin",
+                    "type": "name"
                 },
                 {
-                    "name": "caller",
+                    "name": "pool_id",
                     "type": "name"
-                }
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                },                                
+                {
+                    "name": "space_left",
+                    "type": "uint64"
+                }                                
             ]
         },
         {
@@ -462,11 +450,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "newmaccount",
-            "type": "newmaccount",
-            "ricardian_contract": ""
-        },
-        {
             "name": "sellhdd",
             "type": "sellhdd",
             "ricardian_contract": ""
@@ -496,6 +479,11 @@
             "type": "regstrpool",
             "ricardian_contract": ""
         },
+        {
+            "name": "newminer",
+            "type": "newminer",
+            "ricardian_contract": ""
+        },         
         {
             "name": "addm2pool",
             "type": "addm2pool",
@@ -546,15 +534,8 @@
             "key_types": []
         },
         {
-            "name": "spoolminers",
-            "type": "spoolminers",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "miner2pool",
-            "type": "miner2pool",
+            "name": "minerinfo",
+            "type": "minerinfo",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -562,13 +543,6 @@
         {
             "name": "maccount",
             "type": "maccount",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "miner2acc",
-            "type": "miner2acc",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

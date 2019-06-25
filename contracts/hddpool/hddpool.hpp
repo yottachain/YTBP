@@ -63,15 +63,16 @@ public:
   void subbalance(name user, int64_t balance);
   void addhspace(name user, uint64_t space, name caller);
   void subhspace(name user, uint64_t space, name caller);
-  void newmaccount(name owner, uint64_t minerid, name caller);
+  //void newmaccount(name owner, uint64_t minerid, name caller);
   void addmprofit(name owner, uint64_t minerid, uint64_t space, name caller);
   void clearall(name owner);
   void calcmbalance(name owner, uint64_t minerid);
+  void newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount);
 
   //store pool related actions -- start
   void clsallpools();
   void regstrpool(name pool_id, name pool_owner, uint64_t max_space);
-  void addm2pool(uint64_t minerid, name pool_id, name minerowner);
+  void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
 
 private:
@@ -100,16 +101,8 @@ private:
   };
   typedef multi_index<N(maccount), maccount> maccount_index;
 
-  struct miner2acc //scope minerid
-  {
-    uint64_t minerid;             //矿机id
-    name owner;                   //拥有矿机的矿主的账户名  
-    uint64_t  primary_key() const { return minerid; }  
-  };
-  typedef multi_index<N(miner2acc), miner2acc> miner2acc_index;
-
-  //store poll tables  (scope : self) start -----------------
-  //store pool
+  //store poll tables start -----------------
+  //store pool (scope : self)
   struct storepool
   {
     name        pool_id;  //pool id use eos name type  
@@ -119,28 +112,27 @@ private:
     uint64_t    primary_key() const { return pool_id.value; }
   };
   typedef multi_index<N(storepool), storepool> storepool_index;
+  //store poll tables end -------------------
 
-  //storepool's miners ( scope : pool_id )
-  struct spoolminers
-  {
-    name        pool_id;      //pool id use eos name type  
-    uint64_t    minerid;      //矿机id
-    name        miner_owner;  //拥有矿机的矿主的账户名
-    uint64_t    space;        //矿机的生产空间
-    uint64_t    primary_key() const { return minerid; }
-  };
-  typedef multi_index<N(spoolminers), spoolminers> spoolminers_index;
-
-  //miner's storepool ( scope : minerid)
-  struct miner2pool
+  struct minerinfo
   {
     uint64_t  minerid;
+    name      owner;
+    name      admin;
     name      pool_id;
+    uint64_t  max_space;
+    uint64_t  space_left;    
     uint64_t  primary_key() const { return minerid; }
+    uint64_t  by_owner()  const { return owner.value; }
+    uint64_t  by_admin()  const { return admin.value; }
+    uint64_t  by_poolid() const { return pool_id.value; }
   };
-  typedef multi_index<N(miner2pool), miner2pool> miner2pool_index;
-  //store poll tables  (scope : self) end -------------------
 
+  typedef multi_index<N(minerinfo), minerinfo,
+                      indexed_by<N(owner),  const_mem_fun<minerinfo, uint64_t, &minerinfo::by_owner> >,
+                      indexed_by<N(admin),  const_mem_fun<minerinfo, uint64_t, &minerinfo::by_admin> >,
+                      indexed_by<N(poolid), const_mem_fun<minerinfo, uint64_t, &minerinfo::by_poolid> >
+                     > minerinfo_table;   
 
   struct hdd_global_state
   {

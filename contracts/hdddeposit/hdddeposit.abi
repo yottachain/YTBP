@@ -1,6 +1,9 @@
 {
     "version": "eosio::abi/1.0",
-    "types": [],
+   "types": [{
+      "new_type_name": "account_name",
+      "type": "name"
+   }],
     "structs": [
         {
             "name": "acc2deposit",
@@ -58,7 +61,7 @@
             "fields": [
                 {
                     "name": "user",
-                    "type": "name"
+                    "type": "account_name"
                 },
                 {
                     "name": "minerid",
