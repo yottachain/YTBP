@@ -489,17 +489,10 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    auto userhdd_itr = _userhdd.find(owner.value);
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
+      /* 
       uint64_t tmp_t = current_time();
-
-      /*
-      int64_t tmp_last_balance = userhdd_itr->hdd_balance;
-      int64_t new_balance;
-      if(calculate_balance(tmp_last_balance, userhdd_itr->hdd_per_cycle_fee, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hdd_time, tmp_t, new_balance)) {
-         row.hdd_balance = new_balance;
-         row.last_hdd_time = tmp_t;      
-      } */
-
       row.last_hdd_time = tmp_t;
+      */
       row.hdd_balance += balance_delta;
       row.hdd_per_cycle_profit = 0;
    });
@@ -534,8 +527,10 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
    auto userhdd_itr = _userhdd.find(owner.value);
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
+      /* 
       uint64_t tmp_t = current_time();
       row.last_hdd_time = tmp_t;
+      */
       row.hdd_balance += balance_delta;
       row.hdd_per_cycle_profit = 0;
    });
@@ -569,6 +564,70 @@ void hddpool::clearall(name owner)
    */
 }
 
+void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
+{
+   eosio_assert(is_account(owner), "owner invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
+   //maccount_index _maccount(_self, _self);
+   maccount_index _maccount(_self, owner.value);
+   auto it = _maccount.find(minerid);
+   eosio_assert(it != _maccount.end(), "minerid not register");
+
+   int64_t balance_delta = 0;
+   _maccount.modify(it, _self, [&](auto &row) {
+      uint64_t tmp_t = current_time();
+      int64_t tmp_last_balance = it->hdd_balance;
+      int64_t new_balance;
+      if (calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance))
+      {
+         balance_delta = new_balance - row.hdd_balance;
+         row.hdd_balance = new_balance;
+         row.last_hdd_time = tmp_t;
+      }
+      row.hdd_per_cycle_profit = 0;
+   });
+
+   //userhdd_index _userhdd(_self, _self);
+   userhdd_index _userhdd(_self, owner.value);
+   auto userhdd_itr = _userhdd.find(owner.value);
+   eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
+   _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
+      /* 
+      uint64_t tmp_t = current_time();
+      row.last_hdd_time = tmp_t;
+      */
+      row.hdd_balance += balance_delta;
+      row.hdd_per_cycle_profit = 0;
+   });
+
+
+}
+
+void hddpool::mactive(name owner, uint64_t minerid, name caller)
+{
+   eosio_assert(is_account(owner), "owner invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   require_auth( caller );
+
+   //maccount_index _maccount(_self, _self);
+   maccount_index _maccount(_self, owner.value);
+   auto it = _maccount.find(minerid);
+   eosio_assert(it != _maccount.end(), "minerid not register");
+   
+   int64_t profit = 0;
+   //每周期收益 += (生产空间*数据分片大小/1GB）*（记账周期/ 1年）
+   profit = (int64_t)(((double)(it->space * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
+
+   _maccount.modify(it, _self, [&](auto &row) {
+      uint64_t tmp_t = current_time();
+      row.hdd_per_cycle_profit = profit;
+      row.last_hdd_time = tmp_t;
+   });
+}
 
 void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount)
 {
@@ -795,4 +854,6 @@ asset exchange_state::convert(asset from, symbol_type to)
    return from;
 }
 
-EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(clearall)(calcmbalance)(clsallpools)(regstrpool)(newminer)(addm2pool))
+EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(clearall)
+                  (calcmbalance)(clsallpools)(regstrpool)(newminer)(addm2pool)
+                  (mdeactive)(mactive))

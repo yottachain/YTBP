@@ -356,6 +356,42 @@
             ]
         },
         {
+            "name": "mdeactive",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "mactive",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "subbalance",
             "base": "",
             "fields": [
@@ -482,6 +518,16 @@
         {
             "name": "newminer",
             "type": "newminer",
+            "ricardian_contract": ""
+        },        
+        {
+            "name": "mdeactive",
+            "type": "mdeactive",
+            "ricardian_contract": ""
+        },         
+        {
+            "name": "mactive",
+            "type": "mactive",
             "ricardian_contract": ""
         },         
         {

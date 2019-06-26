@@ -74,6 +74,10 @@ public:
   void regstrpool(name pool_id, name pool_owner, uint64_t max_space);
   void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
+
+  void mdeactive(name owner, uint64_t minerid, name caller);
+  void mactive(name owner, uint64_t minerid, name caller);
+  
 private:
   struct userhdd
   {
