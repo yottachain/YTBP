@@ -74,7 +74,6 @@ public:
   void regstrpool(name pool_id, name pool_owner, uint64_t max_space);
   void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
-
 private:
   struct userhdd
   {
@@ -178,10 +177,6 @@ private:
   bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee,
                          int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time,
                          int64_t &new_balance);
-
-  void update_hddofficial(const int64_t _balance,
-                          const int64_t _fee, const int64_t _profit,
-                          const int64_t _space);
 
   void update_total_hdd_balance(int64_t _balance_delta);
 };

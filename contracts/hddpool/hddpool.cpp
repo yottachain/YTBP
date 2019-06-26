@@ -26,8 +26,6 @@ const uint32_t fee_cycle = seconds_in_one_day; //计费周期(秒为单位)
 const uint32_t one_gb = 1024 * 1024 * 1024; //1GB
 const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
-static constexpr eosio::name HDD_OFFICIAL{N(hddofficial)};
-
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name hdd_account{N(hddpool12345)};
@@ -39,7 +37,7 @@ static constexpr eosio::name hdd_deposit{N(hdddeposit12)};
 
 const int64_t inc_hdd_amount = 0;//1000000000;
 
-const int64_t price_delta = 1;
+//const int64_t price_delta = 1;
 
 hddpool::hddpool(account_name s)
     : contract(s),
@@ -210,58 +208,6 @@ void hddpool::update_total_hdd_balance(int64_t _balance_delta)
       _gstate.hdd_total_balance = 0;
 }
 
-void hddpool::update_hddofficial(const int64_t _balance,
-                                 const int64_t _fee, const int64_t _profit,
-                                 const int64_t _space)
-{
-   return;
-
-   //userhdd_index _hbalance(_self, _self);
-   userhdd_index _hbalance(_self, HDD_OFFICIAL.value);
-
-   auto hbalance_itr = _hbalance.find(HDD_OFFICIAL.value);
-   if (hbalance_itr == _hbalance.end())
-   {
-      _hbalance.emplace(_self, [&](auto &row) {
-         row.account_name = HDD_OFFICIAL;
-         row.hdd_balance = inc_hdd_amount;
-         row.hdd_per_cycle_fee = _fee;
-         row.hdd_per_cycle_profit = _profit;
-
-         if (_space >= 0)
-            row.hdd_space = (uint64_t)_space;
-         else
-            row.hdd_space = 0;
-
-         row.last_hdd_time = current_time();
-      });
-   }
-   else
-   {
-      _hbalance.modify(hbalance_itr, _self, [&](auto &row) {
-         //todo  check overflow and time cycle
-         row.hdd_balance += _balance;
-         if (_fee != 0 || _profit != 0)
-         {
-            uint64_t tmp_t = current_time();
-            int64_t tmp_last_balance = hbalance_itr->hdd_balance;
-            int64_t new_balance;
-            if (calculate_balance(tmp_last_balance, hbalance_itr->hdd_per_cycle_fee, hbalance_itr->hdd_per_cycle_profit, hbalance_itr->last_hdd_time, tmp_t, new_balance))
-            {
-               row.hdd_balance = new_balance;
-               row.last_hdd_time = tmp_t;
-            }
-         }
-         row.hdd_per_cycle_fee += _fee;
-         row.hdd_per_cycle_profit += _profit;
-         if (_space >= 0)
-            row.hdd_space += (uint64_t)_space;
-         else
-            row.hdd_space -= (uint64_t)(-_space);
-      });
-   }
-}
-
 void hddpool::buyhdd(name from, name receiver, asset quant)
 {
    require_auth(from);
@@ -314,9 +260,6 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
       });
    }
 
-   update_hddofficial(_hdd_amount, 0, 0, 0);
-   //update_hddofficial(inc_hdd_amount , 0, 0, 0);
-
    update_total_hdd_balance(_hdd_amount);
 }
 
@@ -353,102 +296,9 @@ void hddpool::sellhdd(name user, int64_t amount)
        std::make_tuple(hdd_account, user, quant, std::string("sell hdd")))
        .send();
 
-   update_hddofficial(-amount, 0, 0, 0);
-   //update_hddofficial(-inc_hdd_amount , 0, 0, 0);
-
    update_total_hdd_balance(-amount);
 }
 
-/*
-void hddpool::buyhdd( name user , int64_t amount)
-{
-   require_auth( user );
-   
-   eosio_assert(is_account(user), "user not a account");
-   eosio_assert(is_account(hdd_account), "to not a account");
-   eosio_assert(amount > 0, "must transfer positive quantity");
-
-   asset quant;
-   quant.symbol = CORE_SYMBOL;
-   //quant.amount = amount/10000;
-   quant.amount = ((amount/10000)*_ghddpriceState.price)/100;
-
-   action(
-      permission_level{user, active_permission},
-      token_account, N(transfer),
-      std::make_tuple(user, hdd_account, quant, std::string("buy hdd"))
-   ).send();
-   
-   //userhdd_index _userhdd(_self, _self);
-   userhdd_index _userhdd(_self, user.value);
-   auto it = _userhdd.find(user.value);
-   if(it == _userhdd.end()){
-      _userhdd.emplace(_self, [&](auto &row) {
-         row.account_name = user;
-         row.hdd_balance = amount;
-         //row.hdd_balance = inc_hdd_amount;
-         row.hdd_per_cycle_fee = 0;
-         row.hdd_per_cycle_profit = 0;
-         row.hdd_space = 0;
-         row.last_hdd_time = current_time();
-      });
-   }
-   else {
-      _userhdd.modify(it, _self, [&](auto &row) {
-         row.hdd_balance += amount;
-         //row.hdd_balance += inc_hdd_amount;
-      });  
-   }
-
-   update_hddofficial(amount , 0, 0, 0);
-   //update_hddofficial(inc_hdd_amount , 0, 0, 0);
-
-   update_total_hdd_balance(amount);
-
-   _ghddpriceState.price += price_delta;
-   if(_ghddpriceState.price > 85)
-      _ghddpriceState.price = 85; 
-}
-
-
-void hddpool::sellhdd (name user, int64_t amount)
-{
-   require_auth( user );
-
-   //userhdd_index _userhdd(_self, _self);
-   userhdd_index _userhdd(_self, user.value);
-   auto it = _userhdd.find(user.value);
-   eosio_assert( it != _userhdd.end(), "user not exists in userhdd table." );
-   eosio_assert( it->hdd_balance >= amount, "hdd overdrawn." );
-
-   _userhdd.modify(it, _self, [&](auto &row) {
-        row.hdd_balance -= amount;
-        //row.hdd_balance -= inc_hdd_amount;
-   });   
-
-   //int64_t _yta_amount = (int64_t)((double)amount/10000);
-   int64_t _yta_amount = (int64_t)( (((double)amount/10000)*_ghddpriceState.price)/100  );
-
-   
-   asset quant{_yta_amount, CORE_SYMBOL};
-   action(
-      permission_level{hdd_account, active_permission},
-      token_account, N(transfer),
-      std::make_tuple(hdd_account, user, quant, std::string("sell hdd"))
-   ).send();
-   
-
-   update_hddofficial(-amount , 0, 0, 0);
-   //update_hddofficial(-inc_hdd_amount , 0, 0, 0);
-
-   update_total_hdd_balance(-amount);
-
-   _ghddpriceState.price -= price_delta;
-   if(_ghddpriceState.price < 70)
-      _ghddpriceState.price = 70;
-
-}
-*/
 
 void hddpool::sethfee(name user, int64_t fee, name caller)
 {
@@ -480,8 +330,6 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
       row.hdd_per_cycle_fee = fee;
    });
 
-   //变更总账户的每周期费用
-   update_hddofficial(0, delta_fee, 0, 0);
 }
 
 void hddpool::subbalance(name user, int64_t balance)
@@ -497,8 +345,6 @@ void hddpool::subbalance(name user, int64_t balance)
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_balance -= balance;
    });
-
-   update_hddofficial(-balance, 0, 0, 0);
 
    update_total_hdd_balance(-balance);
 }
@@ -519,7 +365,6 @@ void hddpool::addhspace(name user, uint64_t space, name caller)
       row.hdd_space += space;
    });
 
-   update_hddofficial(0, 0, 0, (int64_t)space);
 }
 
 void hddpool::subhspace(name user, uint64_t space, name caller)
@@ -538,7 +383,6 @@ void hddpool::subhspace(name user, uint64_t space, name caller)
       row.hdd_space -= space;
    });
 
-   update_hddofficial(0, 0, 0, (int64_t)(-space));
 }
 /* 
 void hddpool::newmaccount(name owner, uint64_t minerid, name caller)
@@ -660,8 +504,6 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       row.hdd_per_cycle_profit = 0;
    });
 
-   //变更总账户的每周期费用
-   update_hddofficial(0, 0, profit_delta, 0);
 }
 
 void hddpool::calcmbalance(name owner, uint64_t minerid)
@@ -716,31 +558,6 @@ void hddpool::clearall(name owner)
       _maccount.erase(_maccount.begin());     
    }
    */
-
-   /*
-   if(is_bp_account(N(producer1))) {
-      print( "procuder1 is bp account\n" );
-   }
-   if(is_bp_account(N(producer2))) {
-      print( "procuder2 is bp account\n" );
-   }
-   if(is_bp_account(N(producer4))) {
-      print( "procuder4 is bp account\n" );
-   }      
-   if(is_bp_account(N(producer3))) {
-      print( "procuder3 is bp account\n" );
-   }
-   return;
-*/
-   /*
-   userhdd_index _userhdd( _self , _self );
-   while (_userhdd.begin() != _userhdd.end())
-      _userhdd.erase(_userhdd.begin());   
-
-   maccount_index _maccount( _self , _self );
-   while (_maccount.begin() != _maccount.end())
-      _maccount.erase(_maccount.begin());   
-      */
 
    /*   
    auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
