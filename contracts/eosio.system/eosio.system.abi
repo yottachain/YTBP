@@ -608,7 +608,7 @@
       "key_names" : ["owner"],
       "key_types" : ["uint64"]
     },{
-      "name": "producers2",
+      "name": "producersext",
       "type": "producer_info_ext",
       "index_type": "i64",
       "key_names" : ["owner"],

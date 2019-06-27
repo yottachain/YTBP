@@ -168,7 +168,7 @@ namespace eosiosystem {
                                >  producers_table;
 
    //##YTA-Change  start:  
-   typedef eosio::multi_index< N(producers2), producer_info_ext>  producers_ext_table;
+   typedef eosio::multi_index< N(producersext), producer_info_ext>  producers_ext_table;
    typedef eosio::multi_index< N(producerseq), producers_seq>       producers_seq_table;
    //##YTA-Change  end:  
 
@@ -188,7 +188,7 @@ namespace eosiosystem {
          voters_table           _voters;
          producers_table        _producers;
          //##YTA-Change  start:  
-         producers_ext_table    _producers2;
+         producers_ext_table    _producersext;
          //##YTA-Change  end:           
          global_state_singleton _global;
 
