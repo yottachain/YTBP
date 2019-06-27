@@ -121,6 +121,9 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    } else {
       require_auth( _self );
    }
+
+   eosio_assert(is_account(user), "user not a account.");
+
    //require_auth2(user.value, N(custom));
 
    //userhdd_index _userhdd(_self, _self);
@@ -300,7 +303,7 @@ void hddpool::sellhdd(name user, int64_t amount)
 }
 
 
-void hddpool::sethfee(name user, int64_t fee, name caller)
+void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -312,6 +315,9 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
    eosio_assert(fee != it->hdd_per_cycle_fee, " the fee is the same \n");
+
+   check_userid(user.value, userid);
+
    //每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
    //bool istrue = fee <= (int64_t)(((double)(it->hdd_space * data_slice_size)/(double)one_gb) * ((double)fee_cycle/(double)seconds_in_one_year));
    //eosio_assert(istrue , "the fee verification is not right \n");
@@ -332,15 +338,18 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
 
 }
 
-void hddpool::subbalance(name user, int64_t balance)
+void hddpool::subbalance(name user, int64_t balance, uint64_t userid)
 {
    require_auth(user);
 
    eosio_assert(is_account(user), "user invalidate");
+
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
+
+   check_userid(user.value, userid);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_balance -= balance;
@@ -349,7 +358,7 @@ void hddpool::subbalance(name user, int64_t balance)
    update_total_hdd_balance(-balance);
 }
 
-void hddpool::addhspace(name user, uint64_t space, name caller)
+void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -361,13 +370,15 @@ void hddpool::addhspace(name user, uint64_t space, name caller)
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
 
+   check_userid(user.value, userid);
+
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space += space;
    });
 
 }
 
-void hddpool::subhspace(name user, uint64_t space, name caller)
+void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -378,6 +389,8 @@ void hddpool::subhspace(name user, uint64_t space, name caller)
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
+
+   check_userid(user.value, userid);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space -= space;
@@ -539,6 +552,15 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
 void hddpool::clearall(name owner)
 {
    require_auth(_self);
+
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(863);
+   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+      row.space_left = 50;
+   });  
+
+
+
    
    /*
    maccount_index _maccount(_self, owner.value);
@@ -705,6 +727,8 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.pool_id = pool_id;
       row.owner = minerowner;
+      row.max_space = max_space;
+      row.space_left = max_space;
    });  
 
    _storepool.modify(itstorepool, _self, [&](auto &row) {
@@ -744,8 +768,22 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
          _gstate2.hdd_total_user += 1;
       });
    }
+}
 
-
+bool hddpool::check_userid(uint64_t namevalue, uint64_t userid)
+{
+   userhdd2_index _userhdd2(_self, _self);
+   auto it = _userhdd2.find(namevalue);
+   if(it != _userhdd2.end()) {
+      if(it->userid != userid)
+         return false;
+   } else {
+      _userhdd2.emplace(_self, [&](auto &row) {
+         row.account_name = name{namevalue};
+         row.userid = userid;
+      });
+   }
+   return true;
 }
 
 bool hddpool::is_bp_account(uint64_t uservalue)

@@ -59,10 +59,10 @@ public:
   void buyhdd(name from, name receiver, asset quant);
   //void buyhdd( name user , int64_t amount);
   void sellhdd(name user, int64_t amount);
-  void sethfee(name user, int64_t fee, name caller);
-  void subbalance(name user, int64_t balance);
-  void addhspace(name user, uint64_t space, name caller);
-  void subhspace(name user, uint64_t space, name caller);
+  void sethfee(name user, int64_t fee, name caller, uint64_t userid);
+  void subbalance(name user, int64_t balance, uint64_t userid);
+  void addhspace(name user, uint64_t space, name caller, uint64_t userid);
+  void subhspace(name user, uint64_t space, name caller, uint64_t userid);
   //void newmaccount(name owner, uint64_t minerid, name caller);
   void addmprofit(name owner, uint64_t minerid, uint64_t space, name caller);
   void clearall(name owner);
@@ -81,15 +81,23 @@ public:
 private:
   struct userhdd
   {
-    name account_name;            //账户名
-    int64_t hdd_balance;          //余额
-    int64_t hdd_per_cycle_fee;    //每周期费用
-    int64_t hdd_per_cycle_profit; //每周期收益
-    uint64_t hdd_space;           //占用存储空间
-    uint64_t last_hdd_time;       //上次余额计算时间 microseconds from 1970
-    uint64_t primary_key() const { return account_name.value; }
+    name      account_name;            //账户名
+    int64_t   hdd_balance;          //余额
+    int64_t   hdd_per_cycle_fee;    //每周期费用
+    int64_t   hdd_per_cycle_profit; //每周期收益
+    uint64_t  hdd_space;           //占用存储空间
+    uint64_t  last_hdd_time;       //上次余额计算时间 microseconds from 1970
+    uint64_t  primary_key() const { return account_name.value; }
   };
   typedef multi_index<N(userhdd), userhdd> userhdd_index;
+
+  struct userhdd2
+  {
+    name      account_name;       //账户名
+    uint64_t  userid;             //用户id
+    uint64_t  primary_key() const { return account_name.value; }
+  };
+  typedef multi_index<N(userhdd2), userhdd2> userhdd2_index;
 
   struct maccount
   {
@@ -177,6 +185,8 @@ private:
   hmarket_table _hmarket;
 
   bool is_bp_account(uint64_t uservalue);
+
+  bool check_userid(uint64_t namevalue, uint64_t userid);
 
   bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee,
                          int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time,

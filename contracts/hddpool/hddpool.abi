@@ -17,6 +17,10 @@
                 {
                     "name": "caller",
                     "type": "name"
+                },
+                {
+                    "name": "userid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -352,6 +356,10 @@
                 {
                     "name": "caller",
                     "type": "name"
+                },
+                {
+                    "name": "userid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -402,6 +410,10 @@
                 {
                     "name": "balance",
                     "type": "int64"
+                },
+                {
+                    "name": "userid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -420,6 +432,10 @@
                 {
                     "name": "caller",
                     "type": "name"
+                },
+                {
+                    "name": "userid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -449,6 +465,20 @@
                 },
                 {
                     "name": "last_hdd_time",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "userhdd2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account_name",
+                    "type": "name"
+                },
+                {
+                    "name": "userid",
                     "type": "uint64"
                 }
             ]
@@ -596,6 +626,13 @@
         {
             "name": "userhdd",
             "type": "userhdd",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "userhdd2",
+            "type": "userhdd2",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
