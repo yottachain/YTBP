@@ -8,7 +8,7 @@ namespace eosiosystem {
    //##YTA-Change  start:
    //Change total vote rate from 15% to 1% for test network
    //const int64_t  min_activated_stake   = 150'000'000'0000;
-   const int64_t  min_activated_stake   = 150'000'0000;
+   const int64_t  min_activated_stake   = 5'000'0000;
    //##YTA-Change  end:
    const uint32_t blocks_per_year       = 52*7*24*2*3600;   // half seconds per year
    const uint32_t seconds_per_year      = 52*7*24*3600;
@@ -68,12 +68,8 @@ namespace eosiosystem {
       /// only update block producers once every minute, block_timestamp is in half seconds
       //if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
       /// update block producers once every two minute due to election strategy is more complex than before
-      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 240 ) {
+      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
       //##YTA-Change  end:         
-         print("update_elected_producers -------------------------------------\n");
-         print("--------------------------------------------------------------\n");
-         print("--------------------------------------------------------------\n");
-         print("--------------------------------------------------------------\n");
 
          update_elected_producers( timestamp );
          //update_elected_producers_yta( timestamp );
@@ -100,6 +96,9 @@ namespace eosiosystem {
    using namespace eosio;
    void system_contract::claimrewards( const account_name& owner ) {
       require_auth(owner);
+
+      //@@@@@@@@@@@@@@@@@@@@
+      return;      
 
       const auto& prod = _producers.get( owner );
       eosio_assert( prod.active(), "producer does not have an active key" );

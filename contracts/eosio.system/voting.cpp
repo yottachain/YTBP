@@ -92,6 +92,9 @@ namespace eosiosystem {
    void system_contract::unregprod( const account_name producer ) {
       require_auth( producer );
 
+      ///@@@@@@@@@@@@@@@@@@@@@
+      return;
+
       const auto& prod = _producers.get( producer, "producer not found" );
 
       _producers.modify( prod, 0, [&]( producer_info& info ){
@@ -475,8 +478,6 @@ namespace eosiosystem {
          top_producers.emplace_back( std::pair<eosio::producer_key,uint16_t>({{it->owner, it->producer_key}, it->location}) );
       }
 
-      print("update_elected_producers 1 -------------------------------------\n");
-      print("update_elected_producers top_producers.size() = " , top_producers.size() , "\n");
 
       if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
          return;
@@ -493,10 +494,8 @@ namespace eosiosystem {
 
       bytes packed_schedule = pack(producers);
 
-      print("update_elected_producers 2 -------------------------------------\n");
 
       if( set_proposed_producers( packed_schedule.data(),  packed_schedule.size() ) >= 0 ) {
-         print("update_elected_producers 3 -------------------------------------\n");
          _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
       }
    }
@@ -525,6 +524,11 @@ namespace eosiosystem {
     */
    void system_contract::voteproducer( const account_name voter_name, const account_name proxy, const std::vector<account_name>& producers ) {
       require_auth( voter_name );
+      ///@@@@@@@@@@@@@@@@@@@@@
+      eosio_assert(1 == 2, "can not vote now.");
+      return;
+      ///@@@@@@@@@@@@@@@@@@@@
+
       update_votes( voter_name, proxy, producers, true );
    }
 

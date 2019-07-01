@@ -553,13 +553,21 @@ void hddpool::clearall(name owner)
 {
    require_auth(_self);
 
+   account_name producers[21];
+   uint32_t bytes_populated = get_active_producers(producers, sizeof(account_name) * 21);
+   uint32_t count = bytes_populated / sizeof(account_name);
+   for (uint32_t i = 0; i < count; i++)
+   {
+      print("producer -", (name{producers[i]}), "--\n");   
+   }
+
+   /* 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(863);
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.space_left = 50;
-   });  
-
-
+   });
+   */
 
    
    /*
