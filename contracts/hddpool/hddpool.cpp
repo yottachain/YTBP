@@ -238,8 +238,11 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    _hmarket.modify(market, 0, [&](auto &es) {
       _hdd_amount = (es.convert(quant, HDD_SYMBOL_BANCOR).amount) * 10000;
    });
-   print("_hdd_amount:  ", _hdd_amount, "\n");
-   _ghddpriceState.price = (quant.amount * 100 ) / (_hdd_amount/10000);
+   //print("_hdd_amount:  ", _hdd_amount, "\n");
+   //_ghddpriceState.price = (quant.amount * 100 ) / (_hdd_amount/10000);
+   _ghddpriceState.price = (quant.amount * 10000 * 100000000) / (_hdd_amount);
+   print("_hdd_amount:  ", _hdd_amount, "  price: ", _ghddpriceState.price ,"\n");
+
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, receiver.value);
    auto it = _userhdd.find(receiver.value);
@@ -282,15 +285,16 @@ void hddpool::sellhdd(name user, int64_t amount)
    });
 
    int64_t _yta_amount = (int64_t)((double)amount / 10000);
-   //int64_t _yta_amount = (int64_t)( (((double)amount/10000)*_ghddpriceState.price)/100  );
    //asset tokens_out;
    auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
    _hmarket.modify(itr, 0, [&](auto &es) {
       /// the cast to int64_t of quant is safe because we certify quant is <= quota which is limited by prior purchases
       _yta_amount = es.convert(asset(amount / 10000, HDD_SYMBOL_BANCOR), CORE_SYMBOL).amount;
    });
-   print("_yta_amount:  ", _yta_amount, "\n");
-   _ghddpriceState.price = (_yta_amount * 100 ) / (amount/10000);
+   //print("_yta_amount:  ", _yta_amount, "\n");
+   //_ghddpriceState.price = (_yta_amount * 100 ) / (amount/10000);
+   _ghddpriceState.price = (_yta_amount * 10000 * 100000000) / (amount);
+   print("_yta_amount:  ", _yta_amount, "  price: ", _ghddpriceState.price ,"\n");
 
    asset quant{_yta_amount, CORE_SYMBOL};
    action(
@@ -397,60 +401,6 @@ void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
    });
 
 }
-/* 
-void hddpool::newmaccount(name owner, uint64_t minerid, name caller)
-{
-   eosio_assert(is_account(owner), "owner invalidate");
-   eosio_assert(is_account(caller), "caller not an account");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account");
-   require_auth( caller );
-
-   miner2acc_index _miner2acc(_self, minerid);
-   auto itminer2acc = _miner2acc.find(minerid);
-   eosio_assert(itminer2acc == _miner2acc.end(), "minerid already registered \n");
-   _miner2acc.emplace(_self, [&](auto &row) {
-      row.minerid = minerid;
-      row.owner = owner;
-   });   
-
-   //maccount_index _maccount(_self, _self);
-   maccount_index _maccount(_self, owner.value);
-   if (_maccount.begin() == _maccount.end())
-   {
-      //miner pool inc
-      _gstate3.hdd_macc_user += 1;
-   }
-
-   auto it = _maccount.find(minerid);
-   eosio_assert(it == _maccount.end(), "minerid already exist in maccount table");
-
-   _maccount.emplace(_self, [&](auto &row) {
-      row.minerid = minerid;
-      row.owner = owner;
-      row.space = 0;
-      row.hdd_per_cycle_profit = 0;
-      row.hdd_balance = 0;
-      row.last_hdd_time = current_time();
-   });
-
-   //userhdd_index _userhdd(_self, _self);
-   userhdd_index _userhdd(_self, owner.value);
-   auto userhdd_itr = _userhdd.find(owner.value);
-   if (userhdd_itr == _userhdd.end())
-   {
-      _userhdd.emplace(_self, [&](auto &row) {
-         row.account_name = owner;
-         row.hdd_balance = inc_hdd_amount;
-         row.hdd_per_cycle_fee = 0;
-         row.hdd_per_cycle_profit = 0;
-         row.hdd_space = 0;
-         row.last_hdd_time = current_time();
-
-         _gstate2.hdd_total_user += 1;
-      });
-   }
-}
-*/
 
 void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
@@ -728,8 +678,16 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
 
    require_auth(itminerinfo->admin);
 
-   eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool\n");  
-   
+   eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
+  
+   /* 
+   if(itminerinfo->pool_id.value != 0) {
+      if(itminerinfo->pool_id.value != pool_id.value || itminerinfo->max_space != max_space) {
+         eosio_assert(false, "miner already join to another pool\n");
+      }
+   }
+   */
+
    eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left > max_space),"pool space not enough");
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {

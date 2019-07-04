@@ -273,10 +273,18 @@
          {"name":"last_name_close",               "type":"block_timestamp_type"}
       ]
     },{
+      "name": "eosio_global_state2",
+      "base": "",
+      "fields": [
+         {"name":"perbase_bucket",                "type":"int64"},
+         {"name":"total_unpaid_base_cnt",         "type":"uint32"},
+         {"name":"last_claim_time",               "type":"uint64"}         
+      ]
+    },{
       "name": "eosio_global_count",
       "base": "",
       "fields": [
-         {"name":"total_accounts",                  "type":"uint64"}
+         {"name":"total_accounts",                 "type":"uint64"}
       ]
     },{
       "name": "producer_info",
@@ -295,9 +303,10 @@
       "name": "producer_info_ext",
       "base": "",
       "fields": [
-         {"name":"owner",           "type":"account_name"},
-         {"name":"seq_num",         "type":"uint16"},
-         {"name":"out_votes",       "type":"int64"}
+         {"name":"owner",                   "type":"account_name"},
+         {"name":"seq_num",                 "type":"uint16"},
+         {"name":"out_votes",               "type":"int64"},
+         {"name":"unpaid_base_cnt",         "type":"uint32"}
       ]
     },{
       "name": "producers_seq",
@@ -389,6 +398,10 @@
       "fields": [
         {"name":"owner",   "type":"account_name"}
       ]
+    },{
+      "name": "rewardprods",
+      "base": "",
+      "fields": []
     },{
       "name": "setpriv",
       "base": "",
@@ -573,6 +586,10 @@
       "type": "claimrewards",
       "ricardian_contract": ""
    },{
+      "name": "rewardprods",
+      "type": "rewardprods",
+      "ricardian_contract": ""
+   },{
       "name": "setpriv",
       "type": "setpriv",
       "ricardian_contract": ""
@@ -622,6 +639,12 @@
     },{
       "name": "global",
       "type": "eosio_global_state",
+      "index_type": "i64",
+      "key_names" : [],
+      "key_types" : []
+    },{
+      "name": "globalext",
+      "type": "eosio_global_state2",
       "index_type": "i64",
       "key_names" : [],
       "key_types" : []
