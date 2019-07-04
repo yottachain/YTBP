@@ -114,7 +114,10 @@ namespace eosiosystem {
          producers_seq_table _prod_seq( _self, seq );
          if( _prod_seq.begin() != _prod_seq.end() )
             _prod_seq.erase(_prod_seq.begin()); 
-      }      
+      }   
+
+      _gstateex.total_unpaid_base_cnt = 0;
+   
    }
 
    void system_contract::seqproducer( const account_name producer, uint16_t seq , uint8_t level ) {
@@ -132,7 +135,7 @@ namespace eosiosystem {
       if (it == _producersext.end()) {
          _producersext.emplace(_self, [&](auto &row) {
             row.owner = producer;
-            row.seq_num = seq;
+            row.seq_num = seq;            
          });
          add_producer_seq(producer, seq, level);
       } else {

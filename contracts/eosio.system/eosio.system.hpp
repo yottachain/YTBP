@@ -62,6 +62,14 @@ namespace eosiosystem {
    };
 
    //##YTA-Change  start:
+   struct eosio_global_state2 {
+      int64_t               perbase_bucket = 0;
+      uint32_t              total_unpaid_base_cnt = 0;
+      uint64_t              last_claim_time = 0;
+
+      EOSLIB_SERIALIZE( eosio_global_state2, (perbase_bucket)(total_unpaid_base_cnt)(last_claim_time))
+   };
+
    struct eosio_global_count {
       uint64_t    total_accounts = 1;
 
@@ -94,9 +102,10 @@ namespace eosiosystem {
       account_name          owner;
       uint16_t              seq_num = 1; // from 1 to 21      
       int64_t               out_votes = 0;
+      uint32_t              unpaid_base_cnt = 0;
       uint64_t primary_key()const { return owner; }          
 
-      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes))
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes)(unpaid_base_cnt))
 
    };
 
@@ -125,8 +134,6 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( producers_seq, (seq_num)(is_org)(prods_l1)(prods_l2)(prods_l3)(prods_all) )
 
    };
-
-   //struct remove
    //##YTA-Change  end:
 
    struct voter_info {
@@ -172,10 +179,10 @@ namespace eosiosystem {
    typedef eosio::multi_index< N(producerseq), producers_seq>       producers_seq_table;
    //##YTA-Change  end:  
 
-
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
 
    //##YTA-Change  start:
+   typedef eosio::singleton<N(globalext), eosio_global_state2> global_state2_singleton;
    typedef eosio::singleton<N(gcount), eosio_global_count> global_count_singleton;
    //##YTA-Change  end:
 
@@ -187,13 +194,15 @@ namespace eosiosystem {
       private:
          voters_table           _voters;
          producers_table        _producers;
-         //##YTA-Change  start:  
-         producers_ext_table    _producersext;
-         //##YTA-Change  end:           
          global_state_singleton _global;
-
          eosio_global_state     _gstate;
          rammarket              _rammarket;
+
+         //##YTA-Change  start:  
+         producers_ext_table     _producersext;
+         eosio_global_state2     _gstateex; 
+         global_state2_singleton _globalex;
+         //##YTA-Change  end:           
 
       public:
          system_contract( account_name s );
@@ -280,6 +289,7 @@ namespace eosiosystem {
 
          // functions defined in producer_pay.cpp
          void claimrewards( const account_name& owner );
+         void rewardprods(); 
 
          void setpriv( account_name account, uint8_t ispriv );
 

@@ -13,12 +13,14 @@ namespace eosiosystem {
    :native(s),
     _voters(_self,_self),
     _producers(_self,_self),
-    _producersext(_self,_self),    
     _global(_self,_self),
-    _rammarket(_self,_self)
+    _rammarket(_self,_self),
+    _producersext(_self,_self),    
+    _globalex(_self,_self)
    {
       //print( "construct system\n" );
       _gstate = _global.exists() ? _global.get() : get_default_parameters();
+      _gstateex = _globalex.exists() ? _globalex.get() : eosio_global_state2{};
 
       auto itr = _rammarket.find(S(4,RAMCORE));
 
@@ -49,6 +51,7 @@ namespace eosiosystem {
    system_contract::~system_contract() {
       //print( "destruct system\n" );
       _global.set( _gstate, _self );
+      _globalex.set( _gstateex, _self );
       //eosio_exit(0);
    }
 
@@ -208,5 +211,5 @@ EOSIO_ABI( eosiosystem::system_contract,
      // voting.cpp
      (regproducer)(unregprod)(voteproducer)(regproxy)(clsprods2)(seqproducer)(testnewelec)
      // producer_pay.cpp
-     (onblock)(claimrewards)
+     (onblock)(claimrewards)(rewardprods)
 )
