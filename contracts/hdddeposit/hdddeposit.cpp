@@ -177,48 +177,23 @@ void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
        .send();
 }
 
-void hdddeposit::clearminer(uint64_t minerid) {
+void hdddeposit::delminer(uint64_t minerid) {
     require_auth(_self);
-    /* 
+          
     minerdeposit_table _mdeposit(_self, _self);
-
-    _mdeposit.emplace( _self, [&]( auto& a ){
-        a.minerid = 100001;
-        a.account_name = name{N(usernamefang)};
-        a.deposit = asset{0, CORE_SYMBOL};
-    });
-
-    _mdeposit.emplace( _self, [&]( auto& a ){
-        a.minerid = 100002;
-        a.account_name = name{N(usernamexiao)};
-        a.deposit = asset{0, CORE_SYMBOL};
-    });    
-
-
-    _mdeposit.emplace( _self, [&]( auto& a ){
-        a.minerid = 100003;
-        a.account_name = name{N(usernamefang)};
-        a.deposit = asset{0, CORE_SYMBOL};
-    });    
-
-    _mdeposit.emplace( _self, [&]( auto& a ){
-        a.minerid = 100004;
-        a.account_name = name{N(usernamexiao)};
-        a.deposit = asset{0, CORE_SYMBOL};
-    });   
-    */  
-    
-    minerdeposit_table _mdeposit(_self, _self);
-    const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
-     _mdeposit.erase( miner );
-    
-}
-
-void hdddeposit::clearacc(name user) {
-    require_auth(_self); 
-    accdeposit_table   _deposit(_self, user.value);
-    const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
-    _deposit.erase( acc );
+    auto miner = _mdeposit.find(minerid);
+    if(miner == _mdeposit.end())
+        return;
+    accdeposit_table   _deposit(_self, miner->account_name.value );
+    auto acc = _deposit.find(miner->account_name.value);
+    if(acc != _deposit.end()) {
+        if(acc->deposit.amount >= miner->deposit.amount) {
+            _deposit.modify( acc, 0, [&]( auto& a ) {
+                a.deposit.amount -= miner->deposit.amount;
+            });    
+        }            
+    }
+    _mdeposit.erase( miner );
 }
 
 void hdddeposit::setrate(int64_t rate) {
@@ -251,4 +226,4 @@ bool hdddeposit::is_bp_account(uint64_t uservalue)
 }
 
 
-EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(clearminer)(clearacc)(setrate))
+EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate))

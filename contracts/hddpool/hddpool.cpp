@@ -499,56 +499,42 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
    });
 }
 
-void hddpool::clearall(name owner)
+void hddpool::delminer(uint64_t minerid)
 {
    require_auth(_self);
 
-   print("clearall -----------------\n");   
-   print("clearall -----------------\n");   
-   print("clearall -----------------\n");   
+   action(
+       permission_level{hdd_deposit, active_permission},
+       hdd_deposit, N(delminer),
+       std::make_tuple(minerid))
+       .send(); 
 
-   eosio_assert(1 == 2, "clearall failue");
-   /* 
-   account_name producers[21];
-   uint32_t bytes_populated = get_active_producers(producers, sizeof(account_name) * 21);
-   uint32_t count = bytes_populated / sizeof(account_name);
-   for (uint32_t i = 0; i < count; i++)
-   {
-      print("producer -", (name{producers[i]}), "--\n");   
-   }
-   */
-
-   /* 
    minerinfo_table _minerinfo( _self , _self );
-   auto itminerinfo = _minerinfo.find(863);
-   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
-      row.space_left = 50;
-   });
-   */
+   auto itminerinfo = _minerinfo.find(minerid);
 
-   
-   /*
-   maccount_index _maccount(_self, owner.value);
-   while(_maccount.begin() != _maccount.end()) {
-      auto itmaccount = _maccount.begin();
-      uint64_t minerid = itmaccount->minerid;
-      miner2acc_index _miner2acc (_self, minerid);
-      auto itminer2acc = _miner2acc.find(minerid);
-      if(itminer2acc != _miner2acc.end()) {
-         _miner2acc.erase(itminer2acc);
+   //从该矿机的收益账号下移除该矿机
+   if(itminerinfo->owner.value != 0) {
+      maccount_index _maccount(_self, itminerinfo->owner.value);
+      auto itmaccount = _maccount.find(itminerinfo->owner.value);
+      if(itmaccount != _maccount.end()) {
+         _maccount.erase(itmaccount);     
       }
-      _maccount.erase(_maccount.begin());     
    }
-   */
 
-   /*   
-   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
-
-   if (itr != _hmarket.end())
-   {
-      _hmarket.erase(_hmarket.begin());
+   //归还空间到storepool
+   if(itminerinfo->pool_id.value != 0) {
+      storepool_index _storepool( _self , _self );
+      auto itpool = _storepool.find(itminerinfo->pool_id.value);
+      if(itpool != _storepool.end()) {
+         _storepool.modify(itpool, _self, [&](auto &row) {
+               uint64_t space_left = row.space_left;
+               row.space_left = space_left + itminerinfo->max_space;    
+         });  
+      }
    }
-   */
+
+   //删除该矿机信息
+   _minerinfo.erase( itminerinfo );
 }
 
 void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
@@ -886,6 +872,6 @@ asset exchange_state::convert(asset from, symbol_type to)
    return from;
 }
 
-EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(clearall)
+EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(clsallpools)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
                   (mdeactive)(mactive))

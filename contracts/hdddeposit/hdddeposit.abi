@@ -154,7 +154,7 @@
             ]
         },
         {
-            "name": "clearminer",
+            "name": "delminer",
             "base": "",
             "fields": [
                 {
@@ -163,16 +163,6 @@
                 }
             ]
         },   
-        {
-            "name": "clearacc",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                }
-            ]
-        },
         {
             "name": "setrate",
             "base": "",
@@ -211,13 +201,8 @@
             "ricardian_contract": ""
         },                
         {
-            "name": "clearminer",
-            "type": "clearminer",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "clearacc",
-            "type": "clearacc",
+            "name": "delminer",
+            "type": "delminer",
             "ricardian_contract": ""
         },
         {

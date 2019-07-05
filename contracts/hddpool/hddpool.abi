@@ -111,12 +111,12 @@
             ]
         },
         {
-            "name": "clearall",
+            "name": "delminer",
             "base": "",
             "fields": [
                 {
-                    "name": "owner",
-                    "type": "name"
+                    "name": "minerid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -520,8 +520,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "clearall",
-            "type": "clearall",
+            "name": "delminer",
+            "type": "delminer",
             "ricardian_contract": ""
         },
         {

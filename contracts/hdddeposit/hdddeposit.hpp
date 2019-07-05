@@ -21,8 +21,7 @@ class hdddeposit : public eosio::contract {
         void payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller);
         void drawforfeit(name user, uint8_t acc_type, name caller);
         void cutvote(name user, uint8_t acc_type, name caller);
-        void clearminer(uint64_t minerid);
-        void clearacc(name user);
+        void delminer(uint64_t minerid);
         void setrate(int64_t rate);
 
         inline asset get_deposit_and_forfeit( account_name user )const;
