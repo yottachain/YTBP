@@ -503,6 +503,12 @@ void hddpool::clearall(name owner)
 {
    require_auth(_self);
 
+   print("clearall -----------------\n");   
+   print("clearall -----------------\n");   
+   print("clearall -----------------\n");   
+
+   eosio_assert(1 == 2, "clearall failue");
+   /* 
    account_name producers[21];
    uint32_t bytes_populated = get_active_producers(producers, sizeof(account_name) * 21);
    uint32_t count = bytes_populated / sizeof(account_name);
@@ -510,6 +516,7 @@ void hddpool::clearall(name owner)
    {
       print("producer -", (name{producers[i]}), "--\n");   
    }
+   */
 
    /* 
    minerinfo_table _minerinfo( _self , _self );
@@ -647,19 +654,40 @@ void hddpool::clsallpools()
 
 void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
 {
-   require_auth(_self);
-
    eosio_assert(is_account(pool_owner), "pool_owner invalidate");
+
+   //require_auth(_self);
+   require_auth(pool_owner);
 
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(pool_id.value);
-   eosio_assert(itmstorepool == _storepool.end(), "storepool already registered \n");  
+   eosio_assert(itmstorepool == _storepool.end(), "storepool already registered");  
    _storepool.emplace(_self, [&](auto &row) {
       row.pool_id    = pool_id;
       row.pool_owner = pool_owner;
-      row.max_space  = max_space;
-      row.space_left = max_space;
+      //row.max_space  = max_space;
+      //row.space_left = max_space;
+      row.max_space  = 0;
+      row.space_left = 0;
    });       
+}
+
+void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
+{ 
+   require_auth(_self);  
+   storepool_index _storepool( _self , _self );
+   auto itmstorepool = _storepool.find(pool_id.value);
+   eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
+
+   _storepool.modify(itmstorepool, _self, [&](auto &row) {
+      uint64_t space_used = row.max_space - row.space_left;
+      row.max_space = max_space;
+      if(space_used >= max_space)
+         row.space_left = 0;
+      else
+         row.space_left = max_space - space_used;    
+   });  
+
 }
 
 void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space) 
@@ -859,5 +887,5 @@ asset exchange_state::convert(asset from, symbol_type to)
 }
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(clearall)
-                  (calcmbalance)(clsallpools)(regstrpool)(newminer)(addm2pool)
+                  (calcmbalance)(clsallpools)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
                   (mdeactive)(mactive))

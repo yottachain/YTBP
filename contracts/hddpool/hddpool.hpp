@@ -72,6 +72,7 @@ public:
   //store pool related actions -- start
   void clsallpools();
   void regstrpool(name pool_id, name pool_owner, uint64_t max_space);
+  void chgpoolspace(name pool_id, uint64_t max_space);
   void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
 
