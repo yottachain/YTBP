@@ -107,8 +107,16 @@ namespace eosiosystem {
    void system_contract::clsprods2() {
       require_auth( _self );
 
-      while (_producersext.begin() != _producersext.end())
+      while (_producersext.begin() != _producersext.end()) {
+         auto it = _producersext.begin();
+         //it->out_votes
+         const auto& prod = _producers.get( it->owner, "producer not found" );
+         _producers.modify( prod, 0, [&]( producer_info& info ){
+            info.total_votes -= it->out_votes;
+         });
+         _gstate.total_producer_vote_weight -= it->out_votes;
          _producersext.erase(_producersext.begin()); 
+      }
 
       for( uint16_t seq = 1; seq <= 21; seq++ ) {
          producers_seq_table _prod_seq( _self, seq );
@@ -376,9 +384,9 @@ namespace eosiosystem {
       const auto& prod = _producers.get( producer, "producer not found" );
       //auto it = _producers.find(producer);
       //eosio_assert( it != _producers.end() , "producer not found");
-      
+
+      int64_t vote_delta = 0;
       _producers.modify( prod, 0, [&]( producer_info& info ){
-         int64_t vote_delta = 0;
          auto pitr2 = _producersext.find( producer);
          if( pitr2 != _producersext.end() ) {
             vote_delta = tickets - pitr2->out_votes; 
@@ -389,7 +397,7 @@ namespace eosiosystem {
             update_producers_seq_totalvotes(pitr2->seq_num, producer, info.total_votes); 
          }  
       });
-      _gstate.total_producer_vote_weight += tickets;
+      _gstate.total_producer_vote_weight += vote_delta;
 
    }   
 
