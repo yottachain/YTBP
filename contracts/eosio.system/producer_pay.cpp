@@ -140,9 +140,9 @@ namespace eosiosystem {
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
          auto new_tokens = static_cast<int64_t>(seo_token * YTA_PRECISION * double(usecs_since_last_fill)/double(useconds_per_year));
          print("new_token: ", new_tokens, "\n");
-         auto to_per_base_pay    = new_tokens / 5;
+         auto to_per_base_pay    = static_cast<int64_t>((new_tokens * 3) / 5);
          auto to_producers       = new_tokens - to_per_base_pay;
-         auto to_per_block_pay   = to_producers / 4;
+         auto to_per_block_pay   = to_producers / 2;
          auto to_per_vote_pay    = to_producers - to_per_block_pay;
 
          INLINE_ACTION_SENDER(eosio::token, issue)( N(eosio.token), {{N(eosio),N(active)}},
@@ -214,7 +214,8 @@ namespace eosiosystem {
 
 
    void system_contract::rewardprods( ) {
-      require_auth(_self);
+      //require_auth(_self);
+      require_auth(N(ytarewardusr));
 
       auto ct = current_time();
       //eosio_assert( ct - _gstateex.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
@@ -226,9 +227,9 @@ namespace eosiosystem {
       if( usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0 ) {
          auto new_tokens = static_cast<int64_t>(seo_token * YTA_PRECISION * double(usecs_since_last_fill)/double(useconds_per_year));
          print("new_token: ", new_tokens, "\n");
-         auto to_per_base_pay    = new_tokens / 5;
+         auto to_per_base_pay    = static_cast<int64_t>((new_tokens * 3) / 5);
          auto to_producers       = new_tokens - to_per_base_pay;
-         auto to_per_block_pay   = to_producers / 4;
+         auto to_per_block_pay   = to_producers / 2;
          auto to_per_vote_pay    = to_producers - to_per_block_pay;
 
 
