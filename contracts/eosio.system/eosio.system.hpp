@@ -136,6 +136,33 @@ namespace eosiosystem {
    };
    //##YTA-Change  end:
 
+   //##YTA-Change  start:
+   struct yta_prod_info {
+      account_name         owner;
+      double               total_votes = 0; // total votes
+      eosio::public_key    producer_key; /// a packed public key object
+      int64_t              all_stake = 0;  // total original votes (buy yta amount)
+      bool                 is_active = true;
+      std::string          url;
+      uint16_t             location = 0;
+      bool                 is_in_grace;            //是否处在补齐投票的宽限期
+      uint64_t             grace_start_time = 0;   //宽限期的开始时间
+
+      EOSLIB_SERIALIZE( yta_prod_info, (owner)(total_votes)(producer_key)(all_stake)(is_active)(url)(location)(is_in_grace)(grace_start_time) )      
+
+   };
+
+   struct all_prods_level {
+      std::vector<yta_prod_info>        prods_l1;  //max 21
+      std::vector<yta_prod_info>        prods_l2;  //max 105
+      std::vector<yta_prod_info>        prods_l3;
+     
+      EOSLIB_SERIALIZE( all_prods_level, (prods_l1)(prods_l2)(prods_l3) )      
+   };
+   typedef eosio::singleton<N(all_prods), all_prods_level> all_prods_singleton;
+
+   //##YTA-Change  end:
+
    struct voter_info {
       account_name                owner = 0; /// the voter
       account_name                proxy = 0; /// the proxy set by the voter, if any
@@ -300,6 +327,8 @@ namespace eosiosystem {
          void update_elected_producers( block_timestamp timestamp );
 
 //##YTA-Change  start:  
+         void update_elected_producers_yta2( block_timestamp timestamp );
+
          void update_elected_producers_yta( block_timestamp timestamp );
 
          std::pair<eosio::producer_key,uint16_t>  getProducerForSeq(uint64_t seq_num );

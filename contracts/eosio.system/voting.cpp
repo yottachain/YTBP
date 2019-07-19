@@ -401,6 +401,130 @@ namespace eosiosystem {
 
    }   
 
+   const uint64_t useconds_per_day_v      = 24 * 3600 * uint64_t(1000000);
+
+   void system_contract::update_elected_producers_yta2( block_timestamp block_time ) {
+ 
+      all_prods_singleton _all_prods(_self, _self);
+      all_prods_level     _all_prods_state;
+
+      if (!_all_prods.exists())
+         return;
+
+      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
+         bool is_remove = false;
+         if(!it->is_active)
+            is_remove = true;
+         if(it->total_votes < 50000000000) {
+            if(it->is_in_grace) {
+               if(current_time() - it->grace_start_time > useconds_per_day_v) {
+                  is_remove = true;
+                  it->is_in_grace = false;
+               }
+               
+            } else {
+               it->is_in_grace = true;
+               auto ct = current_time();
+               it->grace_start_time =  ct;
+            }
+         } else {
+            it->is_in_grace = false;
+         }
+
+         if(is_remove) {
+            _all_prods_state.prods_l3.push_back(*it);
+            _all_prods_state.prods_l1.erase(it);
+         }
+      }
+
+      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
+         bool is_remove = false;
+         if(!it->is_active)
+            is_remove = true;
+         if(it->total_votes < 20000000000) {
+            if(it->is_in_grace) {
+               if(current_time() - it->grace_start_time > useconds_per_day_v) {
+                  is_remove = true;
+                  it->is_in_grace = false;
+               }
+               
+            } else {
+               it->is_in_grace = true;
+               auto ct = current_time();
+               it->grace_start_time =  ct;
+            }
+         } else {
+            it->is_in_grace = false;
+         }
+
+         if(is_remove) {
+            _all_prods_state.prods_l3.push_back(*it);
+            _all_prods_state.prods_l2.erase(it);
+         }
+      }
+      
+      std::sort(_all_prods_state.prods_l2.begin(), _all_prods_state.prods_l2.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
+      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
+         if(it->total_votes >= 50000000000) {
+            if(_all_prods_state.prods_l1.size() < 21) {
+               _all_prods_state.prods_l1.push_back(*it);
+               _all_prods_state.prods_l2.erase(it);
+            } else {
+               break;
+            }
+         }
+      }
+
+      std::sort(_all_prods_state.prods_l3.begin(), _all_prods_state.prods_l3.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
+      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end(); it++ ) {
+         if(it->total_votes >= 20000000000) {
+            if(_all_prods_state.prods_l3.size() < 105) {
+               _all_prods_state.prods_l2.push_back(*it);
+               _all_prods_state.prods_l3.erase(it);
+            } else {
+               break;
+            }
+         }
+      }
+
+      _all_prods.set(_all_prods_state, _self);
+
+      ///---------------------------------------------------
+
+      _gstate.last_producer_schedule_update = block_time;
+
+      std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
+      top_producers.reserve(21);
+
+      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
+         top_producers.emplace_back( std::pair<eosio::producer_key,uint16_t>({{it->owner, it->producer_key}, it->location}) );
+      }
+
+      if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
+         if(top_producers.size() < 7)
+            return;
+      }
+
+      /// sort by producer name
+      std::sort( top_producers.begin(), top_producers.end() );
+
+      std::vector<eosio::producer_key> producers;
+
+      producers.reserve(top_producers.size());
+      for( const auto& item : top_producers )
+         producers.push_back(item.first);
+
+      bytes packed_schedule = pack(producers);
+
+
+      if( set_proposed_producers( packed_schedule.data(),  packed_schedule.size() ) >= 0 ) {
+         _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
+      }
+
+
+   }
+
+
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
       _gstate.last_producer_schedule_update = block_time;
  
@@ -536,8 +660,8 @@ namespace eosiosystem {
    void system_contract::voteproducer( const account_name voter_name, const account_name proxy, const std::vector<account_name>& producers ) {
       require_auth( voter_name );
       ///@@@@@@@@@@@@@@@@@@@@@
-      eosio_assert(1 == 2, "can not vote now.");
-      return;
+      //eosio_assert(1 == 2, "can not vote now.");
+      //return;
       ///@@@@@@@@@@@@@@@@@@@@
 
       update_votes( voter_name, proxy, producers, true );
@@ -553,7 +677,7 @@ namespace eosiosystem {
          //##YTA-Change  start:         
          //eosio_assert( producers.size() <= 30, "attempt to vote for too many producers" );
          // One voter can only vote for one producer
-         eosio_assert( producers.size() <= 1, "attempt to vote for too many producers" );
+         eosio_assert( producers.size() <= 30, "attempt to vote for too many producers" );
          //##YTA-Change  end:
          for( size_t i = 1; i < producers.size(); ++i ) {
             eosio_assert( producers[i-1] < producers[i], "producer votes must be unique and sorted" );
