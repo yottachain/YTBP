@@ -381,16 +381,12 @@
         {"name":"producers", "type":"account_name[]"}
       ]
     },{
-      "name": "voter_info",
+      "name": "yta_voter_info",
       "base": "",
       "fields": [
         {"name":"owner",                "type":"account_name"},
-        {"name":"proxy",                "type":"account_name"},
         {"name":"producers",            "type":"account_name[]"},
-        {"name":"staked",               "type":"int64"},
-        {"name":"last_vote_weight",     "type":"float64"},
-        {"name":"proxied_vote_weight",  "type":"float64"},
-        {"name":"is_proxy",             "type":"bool"}
+        {"name":"last_vote_weight",     "type":"int64"}
       ]
     },{
       "name": "claimrewards",
@@ -655,8 +651,8 @@
       "key_names" : [],
       "key_types" : []
     },{
-      "name": "voters",
-      "type": "voter_info",
+      "name": "ytavoters",
+      "type": "yta_voter_info",
       "index_type": "i64",
       "key_names" : ["owner"],
       "key_types" : ["account_name"]

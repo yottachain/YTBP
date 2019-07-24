@@ -7,6 +7,7 @@
 #include <eosiolib/serialize.hpp>
 #include <eosiolib/multi_index.hpp>
 #include <eosio.token/eosio.token.hpp>
+#include <eosio.system/eosio.system.hpp>
 
 using namespace eosio;
 

@@ -169,7 +169,7 @@ namespace eosiosystem {
       std::vector<account_name>   producers; /// the producers approved by this voter if no proxy set
       int64_t                     staked = 0;
 
-      /**
+      /** 
        *  Every time a vote is cast we must first "undo" the last vote weight, before casting the
        *  new vote weight.  Vote weight is calculated as:
        *
@@ -356,5 +356,15 @@ namespace eosiosystem {
          // defined in voting.cpp
          void propagate_weight_change( const voter_info& voter );
    };
+
+   uint16_t getProducerSeq(account_name producer){
+      producers_ext_table _producer_ext(N(eosio), N(eosio));
+      auto prod = _producer_ext.find(producer);
+      if(prod != _producer_ext.end()) {
+         return prod->seq_num;
+      }
+      return 0;
+   }
+
 
 } /// eosiosystem

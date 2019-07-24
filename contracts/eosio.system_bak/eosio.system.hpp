@@ -161,40 +161,19 @@ namespace eosiosystem {
    };
    typedef eosio::singleton<N(all_prods), all_prods_level> all_prods_singleton;
 
-   //##YTA-Change  end:
-
-   struct voter_info {
+   struct yta_voter_info {
       account_name                owner = 0; /// the voter
-      account_name                proxy = 0; /// the proxy set by the voter, if any
       std::vector<account_name>   producers; /// the producers approved by this voter if no proxy set
-      int64_t                     staked = 0;
-
-      /**
-       *  Every time a vote is cast we must first "undo" the last vote weight, before casting the
-       *  new vote weight.  Vote weight is calculated as:
-       *
-       *  stated.amount * 2 ^ ( weeks_since_launch/weeks_per_year)
-       */
-      double                      last_vote_weight = 0; /// the vote weight cast the last time the vote was updated
-
-      /**
-       * Total vote weight delegated to this voter.
-       */
-      double                      proxied_vote_weight= 0; /// the total vote weight delegated to this voter as a proxy
-      bool                        is_proxy = 0; /// whether the voter is a proxy for others
-
-
-      uint32_t                    reserved1 = 0;
-      time                        reserved2 = 0;
-      eosio::asset                reserved3;
+      int64_t                     last_vote_weight = 0;  
 
       uint64_t primary_key()const { return owner; }
 
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
+      EOSLIB_SERIALIZE( yta_voter_info, (owner)(producers)(last_vote_weight) )
    };
 
-   typedef eosio::multi_index< N(voters), voter_info>  voters_table;
+   typedef eosio::multi_index< N(ytavoters), yta_voter_info>  ytavoters_table;
+
+   //##YTA-Change  end:
 
 
    typedef eosio::multi_index< N(producers), producer_info,
@@ -219,7 +198,6 @@ namespace eosiosystem {
 
    class system_contract : public native {
       private:
-         voters_table           _voters;
          producers_table        _producers;
          global_state_singleton _global;
          eosio_global_state     _gstate;
@@ -353,8 +331,31 @@ namespace eosiosystem {
 
          void update_votes( const account_name voter, const account_name proxy, const std::vector<account_name>& producers, bool voting );
 
-         // defined in voting.cpp
-         void propagate_weight_change( const voter_info& voter );
    };
+
+   uint16_t getProducerSeq(account_name producer){
+      producers_ext_table _producer_ext(N(eosio), N(eosio));
+      auto prod = _producer_ext.find(producer);
+      if(prod != _producer_ext.end()) {
+         return prod->seq_num;
+      }
+      return 0;
+   }
+
+   bool is_yta_voter(account_name from, account_name to) {
+      ytavoters_table _voters(N(eosio), N(eosio));
+      auto voter = _voters.find(from);
+      if( voter != _voters.end() ) {
+         return true;
+      } 
+
+      auto voter2 = _voters.find(from);
+      if( voter2 != _voters.end() ) {
+         return true;
+      } 
+
+      return false;
+
+   }
 
 } /// eosiosystem

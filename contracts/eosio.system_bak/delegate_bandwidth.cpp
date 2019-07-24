@@ -354,30 +354,6 @@ namespace eosiosystem {
                { source_stake_from, N(eosio.stake), asset(transfer_amount), std::string("stake bandwidth") } );
          }
       }
-
-      // update voting power
-      {
-         asset total_update = stake_net_delta + stake_cpu_delta;
-         auto from_voter = _voters.find(from);
-         if( from_voter == _voters.end() ) {
-            from_voter = _voters.emplace( from, [&]( auto& v ) {
-                  v.owner  = from;
-                  v.staked = total_update.amount;
-               });
-         } else {
-            _voters.modify( from_voter, 0, [&]( auto& v ) {
-                  v.staked += total_update.amount;
-               });
-         }
-         eosio_assert( 0 <= from_voter->staked, "stake for voting cannot be negative");
-         if( from == N(b1) ) {
-            validate_b1_vesting( from_voter->staked );
-         }
-
-         if( from_voter->producers.size() || from_voter->proxy ) {
-            update_votes( from, from_voter->proxy, from_voter->producers, false );
-         }
-      }
    }
 
    void system_contract::delegatebw( account_name from, account_name receiver,
