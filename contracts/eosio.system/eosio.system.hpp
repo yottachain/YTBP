@@ -102,36 +102,35 @@ namespace eosiosystem {
       account_name          owner;
       uint16_t              seq_num = 1; // from 1 to 21      
       int64_t               out_votes = 0;
+      int64_t               deposit_votes = 0;
       uint32_t              unpaid_base_cnt = 0;
       uint64_t primary_key()const { return owner; }          
 
-      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes)(unpaid_base_cnt))
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes)(deposit_votes)(unpaid_base_cnt))
 
    };
 
    struct prod_meta {
       account_name         owner;
       double               total_votes = 0; // total votes
-      eosio::public_key    producer_key; /// a packed public key object
       int64_t              all_stake = 0;  // total original votes (buy yta amount)
       bool                 is_active = true;
+      uint64_t             last_crash_time = 0;
       std::string          url;
-      uint16_t             location = 0;
 
-      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(producer_key)(all_stake)(is_active)(url)(location) )      
+
+      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(all_stake)(is_active)(last_crash_time)(url) )      
    };
 
    struct producers_seq {
       uint16_t                      seq_num = 1; // from 1 to 21
-      bool                          is_org = false; 
-      prod_meta                     prods_l1;  // only one
-      std::vector<prod_meta>        prods_l2;  //max 5
-      std::vector<prod_meta>        prods_l3;  
+      account_name                  master;
+      std::vector<account_name>     voter_list; /// the SN list that vote current master is dead.
       std::vector<prod_meta>        prods_all;
 
       uint64_t primary_key()const { return seq_num; }          
 
-      EOSLIB_SERIALIZE( producers_seq, (seq_num)(is_org)(prods_l1)(prods_l2)(prods_l3)(prods_all) )
+      EOSLIB_SERIALIZE( producers_seq, (seq_num)(master)(voter_list)(prods_all) )
 
    };
    //##YTA-Change  end:
@@ -159,7 +158,7 @@ namespace eosiosystem {
      
       EOSLIB_SERIALIZE( all_prods_level, (prods_l1)(prods_l2)(prods_l3) )      
    };
-   typedef eosio::singleton<N(all_prods), all_prods_level> all_prods_singleton;
+   typedef eosio::singleton<N(prodslevel), all_prods_level> all_prods_singleton;
 
    //##YTA-Change  end:
 
@@ -327,11 +326,7 @@ namespace eosiosystem {
          void update_elected_producers( block_timestamp timestamp );
 
 //##YTA-Change  start:  
-         void update_elected_producers_yta2( block_timestamp timestamp );
-
          void update_elected_producers_yta( block_timestamp timestamp );
-
-         std::pair<eosio::producer_key,uint16_t>  getProducerForSeq(uint64_t seq_num );
 
          void rm_producer_seq( const account_name producer, uint16_t seq );
 

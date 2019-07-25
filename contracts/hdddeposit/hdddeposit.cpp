@@ -32,7 +32,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
         real_balance.amount -= acc->deposit.amount;
         real_balance.amount -= acc->forfeit.amount;     
     }
-    //to do : also need sub lock_token in futuer
+    //to do : also need sub lock_token in futuer( 也可能不需要，取决于需求)
     //......
 
     eosio_assert( real_balance.amount >= quant.amount, "user balance not enough." );
@@ -152,6 +152,8 @@ void hdddeposit::drawforfeit(name user, uint8_t acc_type, name caller) {
 }
 
 void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
+
+    return;
 
     if(acc_type == 2) {
         eosio_assert(is_account(caller), "caller not a account.");

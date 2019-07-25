@@ -116,6 +116,34 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
    const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
 
    //todo : need consider lock_token situation
+   if( to == N(eosio.stake) || to == hdd_deposit_account ) {
+      //forfeit can not use to delegatebw and vote
+      auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
+      eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
+      eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
+   } else {
+      auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
+      //also need check lock token issue
+      eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
+      eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
+   }
+
+   if( from.balance.amount == value.amount ) {
+      from_acnts.erase( from );
+   } else {
+      from_acnts.modify( from, owner, [&]( auto& a ) {
+          a.balance -= value;
+      });
+   }
+}
+
+/* 
+void token::sub_balance_yta( account_name owner, asset value , account_name to) {
+   accounts from_acnts( _self, owner );
+
+   const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
+
+   //todo : need consider lock_token situation
    if(to == hdd_deposit_account) {
       auto deposit = hdddeposit(hdd_deposit_account).get_deposit(owner);
       eosio_assert( deposit.symbol == value.symbol, "symbol precision mismatch" );
@@ -141,6 +169,7 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
       });
    }
 }
+*/
 //##YTA-Change  end:
 
 void token::add_balance( account_name owner, asset value, account_name ram_payer )
