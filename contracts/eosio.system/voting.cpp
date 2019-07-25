@@ -167,13 +167,14 @@ namespace eosiosystem {
 
    void system_contract::rm_producer_seq(const account_name producer, uint16_t seq) {
       
+      
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
       if (_all_prods.exists()) {
          _all_prods_state = _all_prods.get();
          for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
             if(it1->owner == producer) {
-               _all_prods_state.prods_l2.erase(it1);
+               _all_prods_state.prods_l1.erase(it1);
                break;
             } 
          }
@@ -191,7 +192,7 @@ namespace eosiosystem {
          }
          _all_prods.set(_all_prods_state,_self);
       }
-   
+      
 
       producers_seq_table _prodseq(_self, seq);
       auto ps_itr = _prodseq.find (seq); 
