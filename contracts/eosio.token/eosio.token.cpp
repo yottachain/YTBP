@@ -116,7 +116,9 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
    const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
 
    //todo : need consider lock_token situation
-   if( to == N(eosio.stake) || to == hdd_deposit_account ) {
+   if( to == hdd_deposit_account) {
+      eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
+   } else if( to == N(eosio.stake) ) {
       //forfeit can not use to delegatebw and vote
       auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
       eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );

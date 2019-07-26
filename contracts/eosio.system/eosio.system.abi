@@ -323,6 +323,14 @@
          {"name":"unpaid_base_cnt",         "type":"uint32"}
       ]
     },{
+      "name": "master_sn_info",
+      "base": "",
+      "fields": [
+         {"name":"seq_num",                   "type":"uint16"},
+         {"name":"owner",                     "type":"account_name"},
+         {"name":"url",                       "type":"string"}
+      ]
+    },{
       "name": "producers_seq",
       "base": "",
       "fields": [
@@ -647,6 +655,12 @@
       "type": "producer_info_ext",
       "index_type": "i64",
       "key_names" : ["owner"],
+      "key_types" : ["uint64"]
+    },{
+      "name": "mastersnlist",
+      "type": "master_sn_info",
+      "index_type": "i64",
+      "key_names" : ["seq_num"],
       "key_types" : ["uint64"]
     },{
       "name": "producerseq",

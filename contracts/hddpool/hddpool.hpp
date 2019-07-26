@@ -129,8 +129,8 @@ private:
   struct minerinfo
   {
     uint64_t  minerid;
-    name      owner;
-    name      admin;
+    name      owner;  //收益账号
+    name      admin;  //管理员账号
     name      pool_id;
     uint64_t  max_space;
     uint64_t  space_left;    

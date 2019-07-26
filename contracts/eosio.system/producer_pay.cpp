@@ -272,6 +272,28 @@ namespace eosiosystem {
 
       uint32_t total_unpaid_blocks  =  _gstate.total_unpaid_blocks;
       uint32_t total_unpaid_base_cnt = _gstateex.total_unpaid_base_cnt;
+      
+      /* 
+      //double   total_producer_vote_weight = _gstate.total_producer_vote_weight;
+
+      uint32_t total_unpaid_blocks  =  0;
+      uint32_t total_unpaid_base_cnt = 0;
+      double   total_producer_vote_weight = 0;
+
+      for( auto it = _producers.begin(); it != _producers.end(); it++ ) {
+         total_unpaid_blocks += it->unpaid_blocks;
+         total_producer_vote_weight += it->total_votes;
+      }
+
+      for( auto it = _producersext.begin(); it != _producersext.end(); it++ ) {
+         total_unpaid_base_cnt += it->unpaid_base_cnt;
+      }
+
+      _gstate.total_unpaid_blocks = total_unpaid_blocks;
+      _gstateex.total_unpaid_base_cnt = total_unpaid_base_cnt;
+      _gstate.total_producer_vote_weight = total_producer_vote_weight;
+      */
+
 
       for( auto it = _producers.begin(); it != _producers.end(); it++ ) {
          if(!(it->active()))

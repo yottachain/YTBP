@@ -133,6 +133,17 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( producers_seq, (seq_num)(master)(voter_list)(prods_all) )
 
    };
+
+   struct master_sn_info {
+      uint16_t              seq_num = 1; // from 1 to 21      
+      account_name          owner;
+      std::string           url;
+
+      uint64_t primary_key()const { return seq_num; }          
+
+      EOSLIB_SERIALIZE( master_sn_info, (seq_num)(owner)(url))
+   };
+   typedef eosio::multi_index< N(mastersnlist), master_sn_info>  master_sn_list;
    //##YTA-Change  end:
 
    //##YTA-Change  start:
@@ -335,6 +346,10 @@ namespace eosiosystem {
          void change_producer_seq_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url);
 
          void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);              
+
+         void delproducer( const account_name producer );
+
+         void elect_new_sn_master( uint16_t seq_num );
 //##YTA-Change  end:  
 
          // Implementation details:
