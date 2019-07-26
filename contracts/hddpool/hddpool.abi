@@ -121,9 +121,14 @@
             ]
         },
         {
-            "name": "clsallpools",
+            "name": "delstrpool",
             "base": "",
-            "fields": []
+            "fields": [
+                {
+                    "name": "poolid",
+                    "type": "name"
+                }                
+            ]
         },     
         {
             "name": "regstrpool",
@@ -550,8 +555,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "clsallpools",
-            "type": "clsallpools",
+            "name": "delstrpool",
+            "type": "delstrpool",
             "ricardian_contract": ""
         },
         {

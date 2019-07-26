@@ -627,15 +627,21 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
    });       
 }
 
-void hddpool::clsallpools()
+void hddpool::delstrpool(name poolid)
 {
    require_auth(_self);
 
    storepool_index _storepool( _self , _self );
+   auto itmstorepool = _storepool.find(poolid.value);
+   if(itmstorepool != _storepool.end()) {
+      _storepool.erase(itmstorepool);
+   }
+
+   /* 
    while (_storepool.begin() != _storepool.end()) {
       _storepool.erase(_storepool.begin());      
 
-   }    
+   }  */  
 }
 
 void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
@@ -873,5 +879,5 @@ asset exchange_state::convert(asset from, symbol_type to)
 }
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
-                  (calcmbalance)(clsallpools)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
+                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
                   (mdeactive)(mactive))
