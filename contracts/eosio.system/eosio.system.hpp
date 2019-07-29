@@ -383,10 +383,11 @@ namespace eosiosystem {
       return true;
    }
 
-   uint16_t getProducerSeq(account_name producer){
+   uint16_t getProducerSeq(account_name producer, account_name &shadow){
       producers_ext_table _producer_ext(N(eosio), N(eosio));
       auto prod = _producer_ext.find(producer);
       if(prod != _producer_ext.end()) {
+         shadow = prod->shadow;
          return prod->seq_num;
       }
       return 0;

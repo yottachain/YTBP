@@ -108,8 +108,9 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
 
     if(acc_type == 2) {
         eosio_assert(is_account(caller), "caller not a account.");
-        eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-        require_auth( caller );
+        //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+        //require_auth( caller );
+        check_bp_account(caller.value, minerid);
     } else {
         require_auth( _self );
     }
@@ -189,64 +190,16 @@ void hdddeposit::drawforfeit(name user, uint8_t acc_type, name caller) {
     ((void)user);
     ((void)acc_type);
     ((void)caller);
-    /* 
-    if(acc_type == 2) {
-        eosio_assert(is_account(caller), "caller not a account.");
-        eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-        require_auth( caller );
-    } else {
-        require_auth( _self );
-    }
-
-    eosio_assert(is_account(user), "user is not an account.");
-    accdeposit_table   _deposit(_self, user.value);
-    const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
-
-    asset quant{acc.forfeit.amount, CORE_SYMBOL};
-    action(
-       permission_level{user, active_permission},
-       token_account, N(transfer),
-       std::make_tuple(user, hdd_deposit_account, quant, std::string("draw forfeit")))
-       .send();
-    
-    _deposit.modify( acc, 0, [&]( auto& a ) {
-        a.forfeit.amount = 0;
-    });   
-    */   
-
 }
 
 void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
     ((void)user);
     ((void)acc_type);
     ((void)caller);
-
-
-    /* 
-    if(acc_type == 2) {
-        eosio_assert(is_account(caller), "caller not a account.");
-        eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-        require_auth( caller );
-    } else {
-        require_auth( _self );
-    }
-
-    eosio_assert(is_account(user), "user is not an account.");
-    accdeposit_table   _deposit(_self, user.value);
-    const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
-
-    asset quantb{acc.forfeit.amount/2, CORE_SYMBOL};
-    asset quantw{acc.forfeit.amount/2, CORE_SYMBOL};
-    
-    action(
-       permission_level{user, active_permission},
-       system_account, N(undelegatebw),
-       std::make_tuple(user, user, quantb, quantw))
-       .send();
-    */   
 }
 
 
+/* 
 bool hdddeposit::is_bp_account(uint64_t uservalue)
 {
    account_name producers[21];
@@ -259,6 +212,19 @@ bool hdddeposit::is_bp_account(uint64_t uservalue)
    }
    return false;
 }
+*/
+
+void hdddeposit::check_bp_account(account_name bpacc, uint64_t id) {
+    account_name shadow;
+    uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
+    eosio_assert(seq_num > 0 && seq_num < 22, "invalidate account");
+    if(id != 0) {
+      eosio_assert( (id%21) == (seq_num-1), "can not access this id");
+    }
+    //require_auth(shadow);
+    require_auth(bpacc);
+}
+
 
 
 EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate))

@@ -185,9 +185,9 @@ private:
 
   hmarket_table _hmarket;
 
-  bool is_bp_account(uint64_t uservalue);
-
-  bool check_userid(uint64_t namevalue, uint64_t userid);
+  //bool is_bp_account(uint64_t uservalue);
+  void check_bp_account(account_name bpacc, uint64_t id);
+  void check_userid(uint64_t namevalue, uint64_t userid);
 
   bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee,
                          int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time,

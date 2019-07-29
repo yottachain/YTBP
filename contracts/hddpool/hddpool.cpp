@@ -7,6 +7,8 @@
 #include <eosiolib/serialize.hpp>
 #include <eosiolib/multi_index.hpp>
 #include <eosio.token/eosio.token.hpp>
+#include <eosio.system/eosio.system.hpp>
+
 
 #include <cmath>
 #include <string>
@@ -115,8 +117,9 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    }
    else if(acc_type == 2) {
       eosio_assert(is_account(caller), "caller not a account.");
-      eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-      require_auth( caller );
+      //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+      //require_auth( caller );
+      check_bp_account(caller.value, 0);
 
    } else {
       require_auth( _self );
@@ -311,8 +314,8 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   require_auth( caller );
+   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   //require_auth( caller );
 
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
@@ -321,6 +324,7 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
    eosio_assert(fee != it->hdd_per_cycle_fee, " the fee is the same \n");
 
    check_userid(user.value, userid);
+   check_bp_account(caller.value, userid);
 
    //每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
    //bool istrue = fee <= (int64_t)(((double)(it->hdd_space * data_slice_size)/(double)one_gb) * ((double)fee_cycle/(double)seconds_in_one_year));
@@ -366,8 +370,8 @@ void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   require_auth( caller );
+   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   //require_auth( caller );
 
   //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
@@ -375,6 +379,7 @@ void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
 
    check_userid(user.value, userid);
+   check_bp_account(caller.value, userid);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space += space;
@@ -386,8 +391,8 @@ void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   require_auth( caller );
+   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   //require_auth( caller );
 
    //userhdd_index _userhdd(_self, _self);
    userhdd_index _userhdd(_self, user.value);
@@ -395,6 +400,7 @@ void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
 
    check_userid(user.value, userid);
+   check_bp_account(caller.value, userid);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space -= space;
@@ -406,8 +412,9 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 {
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   require_auth( caller );
+   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   //require_auth( caller );
+   check_bp_account(caller.value, minerid);
 
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
@@ -541,8 +548,9 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
 {
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   require_auth( caller );
+   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   //require_auth( caller );
+   check_bp_account(caller.value, minerid);
 
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
@@ -583,8 +591,9 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
 {
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   require_auth( caller );
+   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+   //require_auth( caller );
+   check_bp_account(caller.value, minerid);
 
    //maccount_index _maccount(_self, _self);
    maccount_index _maccount(_self, owner.value);
@@ -646,6 +655,8 @@ void hddpool::delstrpool(name poolid)
 
 void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
 {
+   ((void)max_space);
+   
    eosio_assert(is_account(pool_owner), "pool_owner invalidate");
 
    //require_auth(_self);
@@ -756,22 +767,21 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    }
 }
 
-bool hddpool::check_userid(uint64_t namevalue, uint64_t userid)
+void hddpool::check_userid(uint64_t namevalue, uint64_t userid)
 {
    userhdd2_index _userhdd2(_self, _self);
    auto it = _userhdd2.find(namevalue);
    if(it != _userhdd2.end()) {
-      if(it->userid != userid)
-         return false;
+      eosio_assert(it->userid == userid, "invalidate userid");      
    } else {
       _userhdd2.emplace(_self, [&](auto &row) {
          row.account_name = name{namevalue};
          row.userid = userid;
       });
    }
-   return true;
 }
 
+/*
 bool hddpool::is_bp_account(uint64_t uservalue)
 {
    account_name producers[21];
@@ -784,6 +794,19 @@ bool hddpool::is_bp_account(uint64_t uservalue)
    }
    return false;
 }
+*/
+
+void hddpool::check_bp_account(account_name bpacc, uint64_t id) {
+    account_name shadow;
+    uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
+    eosio_assert(seq_num > 0 && seq_num < 22, "invalidate account");
+    if(id != 0) {
+      eosio_assert( (id%21) == (seq_num-1), "can not access this id");
+    }
+    //require_auth(shadow);
+    require_auth(bpacc);
+}
+
 
 asset exchange_state::convert_to_exchange(connector &c, asset in)
 {
