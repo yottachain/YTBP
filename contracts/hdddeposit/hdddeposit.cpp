@@ -63,6 +63,13 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
             a.dep_total += quant;
         });
     }
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }
 }
 
 void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
@@ -87,6 +94,14 @@ void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
     _deposit.modify( acc, 0, [&]( auto& a ) {
         a.deposit.amount -= quant.amount;
     });
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }
+
 }
 
 void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller) {
@@ -124,6 +139,14 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
        token_account, N(transfer),
        std::make_tuple(user, hdd_deposit_account, quant, std::string("draw forfeit")))
        .send();
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }
+
 }
 
 void hdddeposit::delminer(uint64_t minerid) {
@@ -163,6 +186,9 @@ void hdddeposit::setrate(int64_t rate) {
 
 
 void hdddeposit::drawforfeit(name user, uint8_t acc_type, name caller) {
+    ((void)user);
+    ((void)acc_type);
+    ((void)caller);
     /* 
     if(acc_type == 2) {
         eosio_assert(is_account(caller), "caller not a account.");
@@ -191,6 +217,10 @@ void hdddeposit::drawforfeit(name user, uint8_t acc_type, name caller) {
 }
 
 void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
+    ((void)user);
+    ((void)acc_type);
+    ((void)caller);
+
 
     /* 
     if(acc_type == 2) {

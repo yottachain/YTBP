@@ -320,7 +320,8 @@
          {"name":"seq_num",                 "type":"uint16"},
          {"name":"out_votes",               "type":"int64"},
          {"name":"deposit_votes",           "type":"int64"},
-         {"name":"unpaid_base_cnt",         "type":"uint32"}
+         {"name":"unpaid_base_cnt",         "type":"uint32"},
+         {"name":"shadow",                  "type":"account_name"}
       ]
     },{
       "name": "master_sn_info",
@@ -371,6 +372,7 @@
       "base": "",
       "fields": [
         {"name":"producer",     "type":"account_name"},
+        {"name":"shadow",       "type":"account_name"},
         {"name":"seq",          "type":"uint16"},
         {"name":"level",        "type":"uint8"}
       ]
@@ -405,6 +407,12 @@
         {"name":"voter",     "type":"account_name"},
         {"name":"proxy",     "type":"account_name"},
         {"name":"producers", "type":"account_name[]"}
+      ]
+    },{
+      "name": "changevotes",
+      "base": "",
+      "fields": [
+        {"name":"voter_name",     "type":"account_name"}
       ]
     },{
       "name": "voter_info",
@@ -606,6 +614,10 @@
    },{
       "name": "voteproducer",
       "type": "voteproducer",
+      "ricardian_contract": ""
+   },{
+      "name": "changevotes",
+      "type": "changevotes",
       "ricardian_contract": ""
    },{
       "name": "claimrewards",

@@ -104,9 +104,10 @@ namespace eosiosystem {
       int64_t               out_votes = 0;
       int64_t               deposit_votes = 0;
       uint32_t              unpaid_base_cnt = 0;
+      account_name          shadow = 0;
       uint64_t primary_key()const { return owner; }          
 
-      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes)(deposit_votes)(unpaid_base_cnt))
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes)(deposit_votes)(unpaid_base_cnt)(shadow))
 
    };
 
@@ -309,11 +310,13 @@ namespace eosiosystem {
 //##YTA-Change  start:  
          void clsprods2();
 
-         void seqproducer( const account_name producer, uint16_t seq , uint8_t level );
+         void seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level );
 
          void tmpvotennn( const account_name producer, int64_t tickets );
 
-         void testnewelec();         
+         void testnewelec();       
+
+         void changevotes( const account_name voter_name );  
 //##YTA-Change  end:           
 
          void setram( uint64_t max_ram_size );
@@ -366,6 +369,19 @@ namespace eosiosystem {
          // defined in voting.cpp
          void propagate_weight_change( const voter_info& voter );
    };
+
+   bool isActiveVoter( account_name owner ) {
+      voters_table voters(N(eosio), N(eosio));
+      auto voter = voters.find(owner);
+      if( voter == voters.end() ) {
+         return false;
+      }
+      if( voter->producers.size() == 0 ) {
+         return false;
+      }
+
+      return true;
+   }
 
    uint16_t getProducerSeq(account_name producer){
       producers_ext_table _producer_ext(N(eosio), N(eosio));

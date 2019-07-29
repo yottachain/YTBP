@@ -14,11 +14,13 @@
 #include <eosiolib/singleton.hpp>
 #include <eosiolib/transaction.hpp>
 #include <eosio.token/eosio.token.hpp>
+#include <hdddeposit/hdddeposit.hpp>
 
 #include <algorithm>
 #include <cmath>
 
 const uint64_t useconds_per_day_v      = 24 * 3600 * uint64_t(1000000);
+const account_name hdd_deposit_account = N(hdddeposit12);
 
 namespace eosiosystem {
    using eosio::indexed_by;
@@ -209,7 +211,7 @@ namespace eosiosystem {
       });
    }
 
-   void system_contract::seqproducer( const account_name producer, uint16_t seq , uint8_t level ) {
+   void system_contract::seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level ) {
       require_auth( _self );
       
       //const auto& prod = _producers.get( producer, "producer not found" );
@@ -224,13 +226,15 @@ namespace eosiosystem {
       if (it == _producersext.end()) {
          _producersext.emplace(_self, [&](auto &row) {
             row.owner = producer;
-            row.seq_num = seq;            
+            row.seq_num = seq;
+            row.shadow = shadow;            
          });
          add_producer_seq(producer, seq, level);
       } else {
          uint16_t old_seq = it->seq_num;   
          _producersext.modify(it, _self, [&](auto &row) {
             row.seq_num = seq;
+            row.shadow = shadow;            
          });
          rm_producer_seq(producer, old_seq);
          add_producer_seq(producer, seq, level);
@@ -377,6 +381,11 @@ namespace eosiosystem {
 
    void system_contract::change_producer_seq_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url) {
       
+      if(!isactive) {
+         delproducer(producer);
+         return;
+      }
+
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
       if (_all_prods.exists()) {
@@ -855,6 +864,19 @@ namespace eosiosystem {
       update_votes( voter_name, proxy, producers, true );
    }
 
+//##YTA-Change  start:
+   void system_contract::changevotes( const account_name voter_name ) {
+         require_auth( voter_name );
+         auto from_voter = _voters.find(voter_name);
+         if( from_voter == _voters.end() ) {
+            return;
+         }
+         if( from_voter->producers.size() || from_voter->proxy ) {
+            update_votes( voter_name, from_voter->proxy, from_voter->producers, false );
+         }
+   }         
+//##YTA-Change  end:
+
    void system_contract::update_votes( const account_name voter_name, const account_name proxy, const std::vector<account_name>& producers, bool voting ) {
       //validate input
       if ( proxy ) {
@@ -889,6 +911,7 @@ namespace eosiosystem {
       }
 
       auto new_vote_weight = stake2vote( voter->staked );
+      new_vote_weight += hdddeposit(hdd_deposit_account).get_deposit(voter_name).amount;
       if( voter->is_proxy ) {
          new_vote_weight += voter->proxied_vote_weight;
       }
