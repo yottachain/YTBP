@@ -110,7 +110,7 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
         eosio_assert(is_account(caller), "caller not a account.");
         //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
         //require_auth( caller );
-        check_bp_account(caller.value, minerid);
+        check_bp_account(caller.value, minerid, true);
     } else {
         require_auth( _self );
     }
@@ -214,11 +214,11 @@ bool hdddeposit::is_bp_account(uint64_t uservalue)
 }
 */
 
-void hdddeposit::check_bp_account(account_name bpacc, uint64_t id) {
+void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate account");
-    if(id != 0) {
+    if(isCheckId) {
       eosio_assert( (id%21) == (seq_num-1), "can not access this id");
     }
     //require_auth(shadow);

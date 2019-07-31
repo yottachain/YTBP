@@ -32,7 +32,7 @@ class hdddeposit : public eosio::contract {
     private:
 
         //bool is_bp_account(uint64_t uservalue);
-        void check_bp_account(account_name bpacc, uint64_t id);
+        void check_bp_account(account_name bpacc, uint64_t id, bool isCheckId);
 
         //记录某个账户缴纳的押金总量和当前需要缴纳的罚款总量
         struct acc2deposit {
