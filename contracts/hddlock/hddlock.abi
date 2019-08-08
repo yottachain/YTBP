@@ -1,0 +1,42 @@
+{
+    "version": "eosio::abi/1.0",
+   "types": [{
+      "new_type_name": "account_name",
+      "type": "name"
+   }],
+    "structs": [
+        {
+            "name": "init",
+            "base": "",
+            "fields": [
+            ]
+        },
+        {
+            "name": "addrule",
+            "base": "",
+            "fields": [
+                {"name":"id",           "type":"uint64"},
+                {"name":"times",        "type":"uint64[]"},
+                {"name":"percentage",   "type":"uint8[]"},
+                {"name":"desc",         "type":"string"}
+            ]
+        }
+
+    ],
+    "actions": [
+        {
+            "name": "init",
+            "type": "init",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "addrule",
+            "type": "addrule",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+    ],
+    "ricardian_clauses": [],
+    "variants": []
+}
