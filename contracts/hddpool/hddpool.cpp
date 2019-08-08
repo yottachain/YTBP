@@ -510,6 +510,25 @@ void hddpool::delminer(uint64_t minerid)
 {
    require_auth(_self);
 
+    
+    /* 
+   minerinfo_table _minerinfo1( _self , _self );
+   std::vector<uint64_t> minlist;
+   uint64_t size = 0;
+   for(auto it=_minerinfo1.begin(); it!=_minerinfo1.end(); it++) {
+      if(it->max_space == 0) {
+         minlist.push_back(it->minerid);
+         //print("minerid: ----- ", it->minerid, "\n");
+         size++;
+      }
+   }
+
+   for(auto it2 = minlist.begin(); it2 != minlist.end(); it2++) {
+      minerid = *it2;
+      //print("minerid: ----- ", minerid, "\n");
+   */   
+      
+
    action(
        permission_level{hdd_deposit, active_permission},
        hdd_deposit, N(delminer),
@@ -518,6 +537,8 @@ void hddpool::delminer(uint64_t minerid)
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
+
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo table");
 
    //从该矿机的收益账号下移除该矿机
    if(itminerinfo->owner.value != 0) {
@@ -542,6 +563,9 @@ void hddpool::delminer(uint64_t minerid)
 
    //删除该矿机信息
    _minerinfo.erase( itminerinfo );
+
+   //break;
+   //}
 }
 
 void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
@@ -695,7 +719,7 @@ void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
 
 void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space) 
 {
-   eosio_assert(is_account(minerowner), "pool_owner invalidate");
+   eosio_assert(is_account(minerowner), "minerowner invalidate");
 
    storepool_index _storepool(_self, _self);
    auto itstorepool = _storepool.find(pool_id.value);
@@ -799,7 +823,7 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
-    eosio_assert(seq_num > 0 && seq_num < 22, "invalidate account");
+    eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");
     if(isCheckId) {
       eosio_assert( (id%21) == (seq_num-1), "can not access this id");
     }
