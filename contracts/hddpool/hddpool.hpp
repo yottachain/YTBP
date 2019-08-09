@@ -78,6 +78,9 @@ public:
 
   void mdeactive(name owner, uint64_t minerid, name caller);
   void mactive(name owner, uint64_t minerid, name caller);
+  void incdeposit(uint64_t minerid, name dep_acc, asset dep_amount);
+  void decdeposit(uint64_t minerid, name dep_acc, asset dep_amount);
+  void chgmspace(uint64_t minerid, name adminacc, uint64_t max_space);
   
 private:
   struct userhdd
@@ -194,4 +197,6 @@ private:
                          int64_t &new_balance);
 
   void update_total_hdd_balance(int64_t _balance_delta);
+
+  //void new_user_hdd(userhdd_index& userhdd, );
 };
