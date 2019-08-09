@@ -89,6 +89,8 @@ void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
 
     _mdeposit.modify( miner, 0, [&]( auto& a ) {
         a.deposit.amount -= quant.amount;
+        a.dep_total.amount -= quant.amount;
+
     });
 
     _deposit.modify( acc, 0, [&]( auto& a ) {
