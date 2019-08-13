@@ -100,6 +100,21 @@ hddpool::~hddpool()
    _ghddprice.set(_ghddpriceState, _self);
 }
 
+void hddpool::new_user_hdd(userhdd_index& userhdd, name user, int64_t balance)
+{
+      userhdd.emplace(_self, [&](auto &row) {
+         row.account_name = user;
+         row.hdd_balance = balance;
+         row.hdd_per_cycle_fee = 0;
+         row.hdd_per_cycle_profit = 0;
+         row.hdd_space = 0;
+         row.last_hdd_time = current_time();
+
+         _gstate2.hdd_total_user += 1;
+      });
+
+}
+
 void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 {
    if(acc_type == 1) {
@@ -120,16 +135,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    auto it = _userhdd.find(user.value);
    if (it == _userhdd.end())
    {
-      _userhdd.emplace(_self, [&](auto &row) {
-         row.account_name = user;
-         row.hdd_balance = inc_hdd_amount;
-         row.hdd_per_cycle_fee = 0;
-         row.hdd_per_cycle_profit = 0;
-         row.hdd_space = 0;
-         row.last_hdd_time = current_time();
-
-         _gstate2.hdd_total_user += 1;
-      });
+      new_user_hdd(_userhdd, user, inc_hdd_amount);
       print("{\"balance\":", inc_hdd_amount, "}");
    }
    else
@@ -176,9 +182,14 @@ bool hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, i
    new_balance = oldbalance;
    int64_t delta = (int64_t)(tick * (hdd_per_cycle_profit - hdd_per_cycle_fee));
    //avoid under zero
-   if (delta < 0 && oldbalance <= -delta)
-      delta = -oldbalance;
-
+   if (delta < 0 && oldbalance <= -delta) {
+      if(oldbalance < 0) {
+         delta = 0;
+      } else {
+         delta = -oldbalance;
+      }
+   }
+      
    new_balance += delta;
 
    update_total_hdd_balance(delta);
@@ -226,16 +237,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    auto it = _userhdd.find(receiver.value);
    if (it == _userhdd.end())
    {
-      _userhdd.emplace(_self, [&](auto &row) {
-         row.account_name = receiver;
-         row.hdd_balance = _hdd_amount;
-         row.hdd_per_cycle_fee = 0;
-         row.hdd_per_cycle_profit = 0;
-         row.hdd_space = 0;
-         row.last_hdd_time = current_time();
-
-         _gstate2.hdd_total_user += 1;
-      });
+      new_user_hdd(_userhdd, receiver, _hdd_amount);
    }
    else
    {
@@ -454,7 +456,9 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
 
 void hddpool::delminer(uint64_t minerid)
 {
-   require_auth(_self);
+   //require_auth(_self);
+   require_auth(N(hddpooladmin));
+
 
     
     /* 
@@ -639,7 +643,8 @@ void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
 
 void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
 { 
-   require_auth(_self);  
+   //require_auth(_self);  
+   require_auth(N(hddpooladmin));
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(pool_id.value);
    eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
@@ -715,16 +720,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    auto userhdd_itr = _userhdd.find(minerowner.value);
    if (userhdd_itr == _userhdd.end())
    {
-      _userhdd.emplace(_self, [&](auto &row) {
-         row.account_name = minerowner;
-         row.hdd_balance = inc_hdd_amount;
-         row.hdd_per_cycle_fee = 0;
-         row.hdd_per_cycle_profit = 0;
-         row.hdd_space = 0;
-         row.last_hdd_time = current_time();
-
-         _gstate2.hdd_total_user += 1;
-      });
+      new_user_hdd(_userhdd, minerowner, inc_hdd_amount);
    }
 }
 
