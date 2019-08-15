@@ -230,7 +230,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    });
    //print("_hdd_amount:  ", _hdd_amount, "\n");
    //_ghddpriceState.price = (quant.amount * 100 ) / (_hdd_amount/10000);
-   _ghddpriceState.price = (quant.amount * 10000 * 100000000) / (_hdd_amount);
+   _ghddpriceState.price = (int64_t)(((double)(quant.amount * 10000) / _hdd_amount ) * 100000000);
    print("_hdd_amount:  ", _hdd_amount, "  price: ", _ghddpriceState.price ,"\n");
 
    userhdd_index _userhdd(_self, receiver.value);
@@ -268,7 +268,7 @@ void hddpool::sellhdd(name user, int64_t amount)
       /// the cast to int64_t of quant is safe because we certify quant is <= quota which is limited by prior purchases
       _yta_amount = es.convert(asset(amount / 10000, HDD_SYMBOL_BANCOR), CORE_SYMBOL).amount;
    });
-   _ghddpriceState.price = (_yta_amount * 10000 * 100000000) / (amount);
+   _ghddpriceState.price = (int64_t) (((double)(_yta_amount * 10000 ) / amount ) * 100000000);
    print("_yta_amount:  ", _yta_amount, "  price: ", _ghddpriceState.price ,"\n");
 
    asset quant{_yta_amount, CORE_SYMBOL};
@@ -459,8 +459,31 @@ void hddpool::delminer(uint64_t minerid)
    //require_auth(_self);
    require_auth(N(hddpooladmin));
 
+   /*
+   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
 
-    
+   if (itr != _hmarket.end())
+   {
+      auto system_token_supply = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(CORE_SYMBOL).name()).amount;
+      if (system_token_supply > 0)
+      {
+         _hmarket.modify(itr, _self, [&](auto &m) {
+            m.supply.amount = 100000000000000ll;
+            m.supply.symbol = HDDCORE_SYMBOL_BANCOR;
+            m.base.balance.amount = 40000000000000ll / 10;
+            m.base.weight = 0.5;
+            m.base.balance.symbol = HDD_SYMBOL_BANCOR;
+            ;
+            m.quote.balance.amount = 28000000000000ll / 10;
+            m.quote.balance.symbol = CORE_SYMBOL;
+            m.quote.weight = 0.5;
+         });
+      }
+   }
+
+   return;
+   */
+
     /* 
    minerinfo_table _minerinfo1( _self , _self );
    std::vector<uint64_t> minlist;
