@@ -459,6 +459,18 @@ void hddpool::delminer(uint64_t minerid)
    //require_auth(_self);
    require_auth(N(hddpooladmin));
 
+/*
+   minerinfo_table _minerinfo2( _self , _self );
+   std::vector<uint64_t> minlist2;
+   uint64_t size2 = 0;
+   for(auto it=_minerinfo2.begin(); it!=_minerinfo2.end(); it++) {
+         size2++;
+   }
+   print("size: ----- ", size2 , "\n");
+
+   return;   
+*/
+
    /*
    auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
 
@@ -483,8 +495,8 @@ void hddpool::delminer(uint64_t minerid)
 
    return;
    */
-
-    /* 
+ 
+  /*
    minerinfo_table _minerinfo1( _self , _self );
    std::vector<uint64_t> minlist;
    uint64_t size = 0;
@@ -496,11 +508,12 @@ void hddpool::delminer(uint64_t minerid)
       }
    }
 
+   size = 0;
    for(auto it2 = minlist.begin(); it2 != minlist.end(); it2++) {
       minerid = *it2;
       //print("minerid: ----- ", minerid, "\n");
    */   
-      
+         
 
    action(
        permission_level{hdd_deposit, active_permission},
@@ -537,8 +550,12 @@ void hddpool::delminer(uint64_t minerid)
    //删除该矿机信息
    _minerinfo.erase( itminerinfo );
 
-   //break;
-   //}
+   /*
+   size++;
+   if(size >= 10)
+      break;   
+   }
+   */
 }
 
 void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
