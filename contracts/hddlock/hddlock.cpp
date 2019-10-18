@@ -21,6 +21,7 @@ void hddlock::init() {
 
 void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::vector<uint8_t>& percentage, std::string& desc) 
 {
+    require_auth(_self);
 
     eosio_assert(times.size() >= 2, "invalidate size of times array");
     eosio_assert(times.size() == percentage.size(), "times and percentage in different size.");
