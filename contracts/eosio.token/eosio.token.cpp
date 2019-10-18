@@ -5,8 +5,10 @@
 
 #include "eosio.token.hpp"
 #include <hdddeposit/hdddeposit.hpp>
+#include <hddlock/hddlock.hpp>
 
 const account_name hdd_deposit_account = N(hdddeposit12);
+const account_name hdd_lock_account = N(hddlock12345);
 
 namespace eosio {
 
@@ -124,10 +126,13 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
       eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
       eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
    } else {
-      auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
+      auto frozen_asset = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
       //also need check lock token issue
-      eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
-      eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
+      //auto lock_asset = hddlock(hdd_lock_account).get_lock_asset(owner);
+      //eosio_assert( frozen_asset.symbol == lock_asset.symbol, "symbol precision mismatch" );
+      //frozen_asset.amount = hddlock(hdd_lock_account).get_lock_asset(owner).amount;
+      eosio_assert( frozen_asset.symbol == value.symbol, "symbol precision mismatch" );
+      eosio_assert( from.balance.amount - frozen_asset.amount >= value.amount, "overdrawn balance" );
    }
 
    if( from.balance.amount == value.amount ) {
