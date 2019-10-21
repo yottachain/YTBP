@@ -454,21 +454,30 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
    });
 }
 
-void hddpool::delminer(uint64_t minerid)
+void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 {
-   //require_auth(_self);
-   require_auth(N(hddpooladmin));
-            
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo table");
+
+   if(acc_type == 1) {
+      eosio_assert(is_account(caller), "caller not a account.");
+      check_bp_account(caller.value, minerid, true);
+
+   } else if(acc_type == 2) {
+      require_auth(itminerinfo->admin);
+   } else {
+      //require_auth(_self);
+      require_auth(N(hddpooladmin));
+   }
+
+
    action(
        permission_level{hdd_deposit, active_permission},
        hdd_deposit, N(delminer),
        std::make_tuple(minerid))
        .send(); 
-
-   minerinfo_table _minerinfo( _self , _self );
-   auto itminerinfo = _minerinfo.find(minerid);
-
-   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo table");
 
    //从该矿机的收益账号下移除该矿机
    if(itminerinfo->owner.value != 0) {
@@ -493,13 +502,6 @@ void hddpool::delminer(uint64_t minerid)
 
    //删除该矿机信息
    _minerinfo.erase( itminerinfo );
-
-   /*
-   size++;
-   if(size >= 10)
-      break;   
-   }
-   */
 }
 
 void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
