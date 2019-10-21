@@ -458,63 +458,7 @@ void hddpool::delminer(uint64_t minerid)
 {
    //require_auth(_self);
    require_auth(N(hddpooladmin));
-
-/*
-   minerinfo_table _minerinfo2( _self , _self );
-   std::vector<uint64_t> minlist2;
-   uint64_t size2 = 0;
-   for(auto it=_minerinfo2.begin(); it!=_minerinfo2.end(); it++) {
-         size2++;
-   }
-   print("size: ----- ", size2 , "\n");
-
-   return;   
-*/
-
-   /*
-   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
-
-   if (itr != _hmarket.end())
-   {
-      auto system_token_supply = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(CORE_SYMBOL).name()).amount;
-      if (system_token_supply > 0)
-      {
-         _hmarket.modify(itr, _self, [&](auto &m) {
-            m.supply.amount = 100000000000000ll;
-            m.supply.symbol = HDDCORE_SYMBOL_BANCOR;
-            m.base.balance.amount = 40000000000000ll / 10;
-            m.base.weight = 0.5;
-            m.base.balance.symbol = HDD_SYMBOL_BANCOR;
-            ;
-            m.quote.balance.amount = 28000000000000ll / 10;
-            m.quote.balance.symbol = CORE_SYMBOL;
-            m.quote.weight = 0.5;
-         });
-      }
-   }
-
-   return;
-   */
- 
-  /*
-   minerinfo_table _minerinfo1( _self , _self );
-   std::vector<uint64_t> minlist;
-   uint64_t size = 0;
-   for(auto it=_minerinfo1.begin(); it!=_minerinfo1.end(); it++) {
-      if(it->max_space == 0) {
-         minlist.push_back(it->minerid);
-         //print("minerid: ----- ", it->minerid, "\n");
-         size++;
-      }
-   }
-
-   size = 0;
-   for(auto it2 = minlist.begin(); it2 != minlist.end(); it2++) {
-      minerid = *it2;
-      //print("minerid: ----- ", minerid, "\n");
-   */   
-         
-
+            
    action(
        permission_level{hdd_deposit, active_permission},
        hdd_deposit, N(delminer),
@@ -562,8 +506,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
 {
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
-   //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-   //require_auth( caller );
+
    check_bp_account(caller.value, minerid, true);
 
    //maccount_index _maccount(_self, _self);
@@ -692,12 +635,9 @@ void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
    _storepool.modify(itmstorepool, _self, [&](auto &row) {
       uint64_t space_used = row.max_space - row.space_left;
       row.max_space = max_space;
-      if(space_used >= max_space)
-         row.space_left = 0;
-      else
-         row.space_left = max_space - space_used;    
+      eosio_assert(space_used <= max_space, "invalid max_spave");
+      row.space_left = max_space - space_used;    
    });  
-
 }
 
 void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space) 

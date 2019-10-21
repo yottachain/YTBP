@@ -78,7 +78,7 @@ public:
 
   void mdeactive(name owner, uint64_t minerid, name caller);
   void mactive(name owner, uint64_t minerid, name caller);
-  //void mredeposit(uint64_t minerid, name dep_acc, asset dep_amount);
+
   //void mchgspace(uint64_t minerid, name adminacc, uint64_t max_space);
   
 private:
