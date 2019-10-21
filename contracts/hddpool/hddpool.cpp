@@ -466,7 +466,7 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
       check_bp_account(caller.value, minerid, true);
 
    } else if(acc_type == 2) {
-      require_auth(itminerinfo->admin);
+      //require_auth(itminerinfo->admin);
    } else {
       //require_auth(_self);
       require_auth(N(hddpooladmin));
