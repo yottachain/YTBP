@@ -86,7 +86,7 @@ void token::transfer( account_name from,
 
 
     //##YTA-Change  start:  
-    if( quantity.symbol != CORE_SYMBOL )  // no need to calculate hdd_deposit and hdd_lock anmout when stake operatation  
+    if( quantity.symbol != CORE_SYMBOL )  // no need to consider hdd_deposit and hdd_lock issue  
       sub_balance( from, quantity );
     else
       sub_balance_yta( from, quantity, to );
