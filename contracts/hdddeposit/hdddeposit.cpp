@@ -49,18 +49,13 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     //insert or update minerdeposit table
     minerdeposit_table _mdeposit(_self, _self);
     auto miner = _mdeposit.find( minerid );
+    eosio_assert(miner == _mdeposit.end(), "already deposit.");
     if ( miner == _mdeposit.end() ) {
         _mdeposit.emplace( _self, [&]( auto& a ){
             a.minerid = minerid;
             a.account_name = name{user};
             a.deposit = quant;
             a.dep_total = quant;
-        });
-    } else {
-        _mdeposit.modify( miner, 0, [&]( auto& a ) {
-            eosio_assert(a.account_name == user, "must use same account to increase deposit.");
-            a.deposit += quant;
-            a.dep_total += quant;
         });
     }
 
@@ -72,7 +67,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     }
 }
 
-void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
+void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset quant) {
 
     require_auth(_self); // need hdd official account to sign this action.
 
@@ -82,19 +77,39 @@ void hdddeposit::undeposit(name user, uint64_t minerid, asset quant) {
     minerdeposit_table _mdeposit(_self, _self);
     accdeposit_table   _deposit(_self, user.value);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
-    eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
     eosio_assert(miner.account_name == user, "must use same account to decrease deposit.");
     const auto& acc = _deposit.get( user.value, "no deposit record for this user.");
-    eosio_assert( acc.deposit.amount >= quant.amount, "overdrawn deposit." );
 
-    _mdeposit.modify( miner, 0, [&]( auto& a ) {
-        a.deposit.amount -= quant.amount;
-        a.dep_total.amount -= quant.amount;
-    });
+    if(!is_increace) {
+        eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
+        eosio_assert( acc.deposit.amount >= quant.amount, "overdrawn deposit." );
+        
+        _mdeposit.modify( miner, 0, [&]( auto& a ) {
+            a.deposit.amount -= quant.amount;
+            a.dep_total.amount -= quant.amount;
+        });
 
-    _deposit.modify( acc, 0, [&]( auto& a ) {
-        a.deposit.amount -= quant.amount;
-    });
+        _deposit.modify( acc, 0, [&]( auto& a ) {
+            a.deposit.amount -= quant.amount;
+        });
+    } else {
+        auto balance   = eosio::token(N(eosio.token)).get_balance( user , quant.symbol.name() );
+        asset real_balance = balance;
+        real_balance.amount -= acc.deposit.amount;
+        real_balance.amount -= acc.forfeit.amount;     
+        eosio_assert( real_balance.amount >= quant.amount, "user balance not enough." );
+        _mdeposit.modify( miner, 0, [&]( auto& a ) {
+            a.deposit.amount += quant.amount;
+            if(a.deposit.amount > a.dep_total.amount)
+                a.dep_total.amount = a.deposit.amount; 
+        });
+
+        _deposit.modify( acc, 0, [&]( auto& a ) {
+            a.deposit.amount += quant.amount;
+        });
+
+    }
+
 
     if( eosiosystem::isActiveVoter(user) ) {
         action(
@@ -167,6 +182,14 @@ void hdddeposit::delminer(uint64_t minerid) {
             });    
         }            
     }
+
+    if( eosiosystem::isActiveVoter(miner->account_name) ) {
+        action(
+            permission_level{miner->account_name, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(miner->account_name)).send();
+    }
+
     _mdeposit.erase( miner );
 }
 
@@ -200,21 +223,6 @@ void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
 }
 
 
-/* 
-bool hdddeposit::is_bp_account(uint64_t uservalue)
-{
-   account_name producers[21];
-   uint32_t bytes_populated = get_active_producers(producers, sizeof(account_name) * 21);
-   uint32_t count = bytes_populated / sizeof(account_name);
-   for (uint32_t i = 0; i < count; i++)
-   {
-      if (producers[i] == uservalue)
-         return true;
-   }
-   return false;
-}
-*/
-
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
@@ -228,4 +236,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeposit)(undeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate))
+EOSIO_ABI( hdddeposit, (paydeposit)(chgdeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate))

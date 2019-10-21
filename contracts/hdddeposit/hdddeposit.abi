@@ -74,7 +74,7 @@
             ]
         },
         {
-            "name": "undeposit",
+            "name": "chgdeposit",
             "base": "",
             "fields": [
                 {
@@ -84,6 +84,10 @@
                 {
                     "name": "minerid",
                     "type": "uint64"
+                },
+                {
+                    "name": "is_increace",
+                    "type": "bool"
                 },
                 {
                     "name": "quant",
@@ -181,8 +185,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "undeposit",
-            "type": "undeposit",
+            "name": "chgdeposit",
+            "type": "chgdeposit",
             "ricardian_contract": ""
         },
         {
