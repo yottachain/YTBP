@@ -712,6 +712,8 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
 
+   require_auth(itminerinfo->admin);
+
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       storepool_index _storepool( _self , _self );
       auto itmstorepool = _storepool.find(row.pool_id.value);
@@ -730,8 +732,6 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
       eosio_assert(space_used <= max_space, "invalid max_space");      
       row.space_left = max_space - space_used;
    });
-
-   
 }
 
 
