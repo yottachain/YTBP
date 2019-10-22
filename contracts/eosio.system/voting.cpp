@@ -857,8 +857,8 @@ namespace eosiosystem {
    void system_contract::voteproducer( const account_name voter_name, const account_name proxy, const std::vector<account_name>& producers ) {
       require_auth( voter_name );
       ///@@@@@@@@@@@@@@@@@@@@@
-      eosio_assert(1 == 2, "can not vote now.");
-      return;
+      //eosio_assert(1 == 2, "can not vote now.");
+      //return;
       ///@@@@@@@@@@@@@@@@@@@@
 
       update_votes( voter_name, proxy, producers, true );
