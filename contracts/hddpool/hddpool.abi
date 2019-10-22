@@ -247,6 +247,20 @@
             ]
         },
         {
+            "name": "mchgstrpool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "new_poolid",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "hdd_global_state",
             "base": "",
             "fields": [
@@ -610,7 +624,18 @@
             "name": "addm2pool",
             "type": "addm2pool",
             "ricardian_contract": ""
+        },
+        {
+            "name": "mchgspace",
+            "type": "mchgspace",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "mchgstrpool",
+            "type": "mchgstrpool",
+            "ricardian_contract": ""
         }                    
+
     ],
     "tables": [
         {

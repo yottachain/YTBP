@@ -706,6 +706,38 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    }
 }
 
+void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
+{
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+
+   storepool_index _storepool(_self, _self);
+   auto itstorepool = _storepool.find(new_poolid.value);
+   eosio_assert(itstorepool != _storepool.end(), "storepool not registered");
+
+   //require_auth(itminerinfo->admin);
+   require_auth(itstorepool->pool_owner);
+
+   //归还旧矿池空间
+   auto itstorepool_old = _storepool.find(itminerinfo->pool_id.value);
+   eosio_assert(itstorepool_old != _storepool.end(), "original storepool not registered");
+   _storepool.modify(itstorepool_old, _self, [&](auto &row) {
+      row.space_left += itminerinfo->max_space;
+      if(row.space_left > row.max_space) {
+         row.space_left = row.max_space;
+      }
+   });  
+
+   //加入新矿池，并判断是新矿池配额是否足够容纳新矿机   
+   eosio_assert(itstorepool->space_left >= itminerinfo->max_space, "new pool space not enough");
+   _storepool.modify(itstorepool, _self, [&](auto &row) {
+      row.space_left -= itminerinfo->max_space;
+   });  
+
+}
+
+
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
 {
    minerinfo_table _minerinfo( _self , _self );
@@ -871,5 +903,5 @@ asset exchange_state::convert(asset from, symbol_type to)
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
-                  (mchgspace)
+                  (mchgspace)(mchgstrpool)
                   (mdeactive)(mactive))
