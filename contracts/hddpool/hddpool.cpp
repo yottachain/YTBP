@@ -637,7 +637,7 @@ void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
    _storepool.modify(itmstorepool, _self, [&](auto &row) {
       uint64_t space_used = row.max_space - row.space_left;
       row.max_space = max_space;
-      eosio_assert(space_used <= max_space, "invalid max_spave");
+      eosio_assert(space_used <= max_space, "invalid max_space");
       row.space_left = max_space - space_used;    
    });  
 }
@@ -705,6 +705,35 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
       new_user_hdd(_userhdd, minerowner, inc_hdd_amount);
    }
 }
+
+void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
+{
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+
+   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+      storepool_index _storepool( _self , _self );
+      auto itmstorepool = _storepool.find(row.pool_id.value);
+      eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
+      _storepool.modify(itmstorepool, _self, [&](auto &rowpool) {
+         if(max_space  > row.max_space) {
+            eosio_assert(rowpool.space_left >= (max_space - row.max_space), "exceed storepool's max space");      
+            rowpool.space_left -= (max_space - row.max_space);
+         } else {
+            rowpool.space_left += (row.max_space - max_space);
+         }
+      });  
+
+      uint64_t space_used = row.max_space - row.space_left;
+      row.max_space = max_space;
+      eosio_assert(space_used <= max_space, "invalid max_space");      
+      row.space_left = max_space - space_used;
+   });
+
+   
+}
+
 
 void hddpool::check_userid(uint64_t namevalue, uint64_t userid)
 {
@@ -842,4 +871,5 @@ asset exchange_state::convert(asset from, symbol_type to)
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
+                  (mchgspace)
                   (mdeactive)(mactive))

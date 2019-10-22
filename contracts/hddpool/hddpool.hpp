@@ -79,17 +79,23 @@ public:
   void mdeactive(name owner, uint64_t minerid, name caller);
   void mactive(name owner, uint64_t minerid, name caller);
 
-  //void mchgspace(uint64_t minerid, name adminacc, uint64_t max_space);
+  //change miner info related actions
+  void mchgadminacc(uint64_t minerid, name new_adminacc);
+  void mchgonweracc(uint64_t minerid, name new_owneracc);
+  void mchadepacc(uint64_t minerid, name new_depacc);
+  void mchgstrpool(uint64_t minerid, name new_poolid);
+  void mchgspace(uint64_t minerid, uint64_t max_space);
+
   
 private:
   struct userhdd
   {
-    name      account_name;            //账户名
+    name      account_name;         //账户名
     int64_t   hdd_balance;          //余额
     int64_t   hdd_per_cycle_fee;    //每周期费用
     int64_t   hdd_per_cycle_profit; //每周期收益
-    uint64_t  hdd_space;           //占用存储空间
-    uint64_t  last_hdd_time;       //上次余额计算时间 microseconds from 1970
+    uint64_t  hdd_space;            //占用存储空间
+    uint64_t  last_hdd_time;        //上次余额计算时间 microseconds from 1970
     uint64_t  primary_key() const { return account_name.value; }
   };
   typedef multi_index<N(userhdd), userhdd> userhdd_index;

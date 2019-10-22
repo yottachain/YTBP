@@ -233,6 +233,20 @@
             ]
         },
         {
+            "name": "mchgspace",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "hdd_global_state",
             "base": "",
             "fields": [
