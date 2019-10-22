@@ -733,6 +733,12 @@ void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
    eosio_assert(itstorepool->space_left >= itminerinfo->max_space, "new pool space not enough");
    _storepool.modify(itstorepool, _self, [&](auto &row) {
       row.space_left -= itminerinfo->max_space;
+   }); 
+   
+
+   //修改minerinfo表中该矿机的矿机id 
+   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+      row.pool_id = new_poolid;
    });  
 
 }
