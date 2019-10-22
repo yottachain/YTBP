@@ -69,10 +69,13 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 
 void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset quant) {
 
-    require_auth(_self); // need hdd official account to sign this action.
+    //require_auth(_self); // need hdd official account to sign this action.
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+
+    require_auth(user); // need hdd official account to sign this action.
+
 
     minerdeposit_table _mdeposit(_self, _self);
     accdeposit_table   _deposit(_self, user.value);
