@@ -232,17 +232,27 @@ void hdddeposit::mchadepacc(uint64_t minerid, name new_depacc) {
     }
     eosio_assert( real_balance.amount >= miner.dep_total.amount, "new deposit user balance not enough" );
 
+    //变更原抵押账户的投票数
+    if( eosiosystem::isActiveVoter(miner.account_name) ) {
+        action(
+            permission_level{miner.account_name, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(miner.account_name)).send();
+    }
+
+    //变更原抵押账户的押金数量
     _deposit_old.modify( acc_old, 0, [&]( auto& a ) {
         eosio_assert( a.deposit.amount >= miner.deposit.amount, "original deposit data corrupt" );
         a.deposit.amount -= miner.deposit.amount;
     });  
 
+    //将矿机的押金数量重新恢复到未扣罚金的初始额度
     _mdeposit.modify( miner, 0, [&]( auto& a ) {
         a.account_name = new_depacc;
         a.deposit = a.dep_total;
     });
 
-    //insert or update accdeposit table
+    //变更新抵押账户的押金数量
     if ( acc_new == _deposit_new.end() ) {
         _deposit_new.emplace( _self, [&]( auto& a ){
             a.account_name = new_depacc;
@@ -253,6 +263,15 @@ void hdddeposit::mchadepacc(uint64_t minerid, name new_depacc) {
             a.deposit += miner.dep_total;
         });
     }
+
+    //变更新抵押账户的投票数
+    if( eosiosystem::isActiveVoter(new_depacc) ) {
+        action(
+            permission_level{new_depacc, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(new_depacc)).send();
+    }
+
 }
 
 
