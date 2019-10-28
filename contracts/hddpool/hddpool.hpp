@@ -82,7 +82,6 @@ public:
   //change miner info related actions
   void mchgadminacc(uint64_t minerid, name new_adminacc);
   void mchgonweracc(uint64_t minerid, name new_owneracc);
-  void mchadepacc(uint64_t minerid, name new_depacc);
   void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
 

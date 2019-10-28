@@ -772,9 +772,67 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    });
 }
 
+void hddpool::mchgadminacc(uint64_t minerid, name new_adminacc)
+{
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+
+   require_auth(itminerinfo->admin);
+
+   eosio_assert(is_account(new_adminacc), "new admin is not an account.");
+
+   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+      row.admin = new_adminacc;
+   });
+
+}
+
+void hddpool::mchgonweracc(uint64_t minerid, name new_owneracc)
+{
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+
+   require_auth(itminerinfo->admin);
+
+   eosio_assert(is_account(new_owneracc), "new owner is not an account.");
+
+   _minerinfo.modify(itminerinfo, _self, [&](auto &rowminer) {
+      //变更矿机表的收益账户名称
+      rowminer.owner = new_owneracc;
+      
+      //如果每周期收益计算是挂在收益账户名下的时候，需要考虑更该新旧收益账号的每周期收益字段
+      //目前是挂在收益计算是挂在矿机名下，所以不需要
+      maccount_index _maccount_old(_self, rowminer.owner.value);
+      auto itmaccount_old = _maccount_old.find(minerid);
+      eosio_assert(itmaccount_old != _maccount_old.end(), "miner was not complete registration");
+
+      maccount_index _maccount_new(_self, new_owneracc.value);
+      auto itmaccount_new = _maccount_new.find(minerid);
+      eosio_assert(itmaccount_new == _maccount_new.end(), "new owner already own this miner");
+
+      //将该矿机加入新的收益账户的矿机收益列表中   
+      _maccount_new.emplace(_self, [&](auto &row) {
+         row.minerid = minerid;
+         row.owner = new_owneracc;
+         row.space = itmaccount_old->space;
+         row.hdd_per_cycle_profit = itmaccount_old->hdd_per_cycle_profit;
+         row.hdd_balance = itmaccount_old->hdd_balance;
+         row.last_hdd_time = itmaccount_old->last_hdd_time;
+      });
+
+      //将该矿机从旧的收益账户的矿机收益列表中删除
+      _maccount_old.erase(itmaccount_old);
+
+   });
+}
+
+
 
 void hddpool::check_userid(uint64_t namevalue, uint64_t userid)
 {
+   return;
    userhdd2_index _userhdd2(_self, _self);
    auto it = _userhdd2.find(namevalue);
    if(it != _userhdd2.end()) {
@@ -803,6 +861,7 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+   return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");
@@ -909,5 +968,5 @@ asset exchange_state::convert(asset from, symbol_type to)
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
-                  (mchgspace)(mchgstrpool)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgonweracc)
                   (mdeactive)(mactive))

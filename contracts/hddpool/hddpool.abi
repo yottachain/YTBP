@@ -261,6 +261,34 @@
             ]
         },
         {
+            "name": "mchgadminacc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "new_adminacc",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "mchgonweracc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "new_owneracc",
+                    "type": "name"
+                }
+            ]
+        },        
+        {
             "name": "hdd_global_state",
             "base": "",
             "fields": [
@@ -634,8 +662,17 @@
             "name": "mchgstrpool",
             "type": "mchgstrpool",
             "ricardian_contract": ""
-        }                    
-
+        },
+        {
+            "name": "mchgadminacc",
+            "type": "mchgadminacc",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "mchgonweracc",
+            "type": "mchgonweracc",
+            "ricardian_contract": ""
+        }
     ],
     "tables": [
         {
