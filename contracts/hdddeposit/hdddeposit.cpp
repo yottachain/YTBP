@@ -212,6 +212,50 @@ void hdddeposit::setrate(int64_t rate) {
 
 }
 
+void hdddeposit::mchadepacc(uint64_t minerid, name new_depacc) {
+    eosio_assert(is_account(new_depacc), "invalidate new deposit user account");
+    require_auth(new_depacc);
+
+    minerdeposit_table _mdeposit(_self, _self);
+    const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid");
+    eosio_assert(miner.account_name != new_depacc, "must use different account to change deposit user");
+    accdeposit_table   _deposit_old(_self, miner.account_name.value);
+    const auto& acc_old = _deposit_old.get( miner.account_name, "no deposit record for original deposit user");
+
+    auto balance   = eosio::token(N(eosio.token)).get_balance( new_depacc , CORE_SYMBOL );
+    asset real_balance = balance;
+    accdeposit_table _deposit_new(_self, new_depacc);
+    auto acc_new = _deposit_new.find( new_depacc );    
+    if ( acc_new != _deposit_new.end() ) {
+        real_balance.amount -= acc_new->deposit.amount;
+        real_balance.amount -= acc_new->forfeit.amount;     
+    }
+    eosio_assert( real_balance.amount >= miner.dep_total.amount, "new deposit user balance not enough" );
+
+    _deposit_old.modify( acc_old, 0, [&]( auto& a ) {
+        eosio_assert( a.deposit.amount >= miner.deposit.amount, "original deposit data corrupt" );
+        a.deposit.amount -= miner.deposit.amount;
+    });  
+
+    _mdeposit.modify( miner, 0, [&]( auto& a ) {
+        a.account_name = new_depacc;
+        a.deposit = a.dep_total;
+    });
+
+    //insert or update accdeposit table
+    if ( acc_new == _deposit_new.end() ) {
+        _deposit_new.emplace( _self, [&]( auto& a ){
+            a.account_name = new_depacc;
+            a.deposit = miner.dep_total;
+        });
+    } else {
+        _deposit_new.modify( acc_new, 0, [&]( auto& a ) {
+            a.deposit += miner.dep_total;
+        });
+    }
+}
+
+
 
 void hdddeposit::drawforfeit(name user, uint8_t acc_type, name caller) {
     ((void)user);
@@ -227,6 +271,7 @@ void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
 
 
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+    return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");
@@ -239,4 +284,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeposit)(chgdeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate))
+EOSIO_ABI( hdddeposit, (paydeposit)(chgdeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate)(mchadepacc))
