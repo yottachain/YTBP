@@ -212,7 +212,7 @@ void hdddeposit::setrate(int64_t rate) {
 
 }
 
-void hdddeposit::mchadepacc(uint64_t minerid, name new_depacc) {
+void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     eosio_assert(is_account(new_depacc), "invalidate new deposit user account");
     require_auth(new_depacc);
 
@@ -222,7 +222,7 @@ void hdddeposit::mchadepacc(uint64_t minerid, name new_depacc) {
     accdeposit_table   _deposit_old(_self, miner.account_name.value);
     const auto& acc_old = _deposit_old.get( miner.account_name, "no deposit record for original deposit user");
 
-    auto balance   = eosio::token(N(eosio.token)).get_balance( new_depacc , CORE_SYMBOL );
+    auto balance   = eosio::token(N(eosio.token)).get_balance( new_depacc , asset(0,CORE_SYMBOL).symbol.name() );
     asset real_balance = balance;
     accdeposit_table _deposit_new(_self, new_depacc);
     auto acc_new = _deposit_new.find( new_depacc );    
@@ -303,4 +303,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeposit)(chgdeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate)(mchadepacc))
+EOSIO_ABI( hdddeposit, (paydeposit)(chgdeposit)(payforfeit)(drawforfeit)(cutvote)(delminer)(setrate)(mchgdepacc))

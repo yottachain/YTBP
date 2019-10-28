@@ -178,7 +178,7 @@
             ]
         },
         {
-            "name": "mchadepacc",
+            "name": "mchgdepacc",
             "base": "",
             "fields": [
                 {
@@ -229,8 +229,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "mchadepacc",
-            "type": "mchadepacc",
+            "name": "mchgdepacc",
+            "type": "mchgdepacc",
             "ricardian_contract": ""
         }
     ],
