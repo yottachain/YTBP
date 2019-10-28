@@ -788,7 +788,7 @@ void hddpool::mchgadminacc(uint64_t minerid, name new_adminacc)
 
 }
 
-void hddpool::mchgonweracc(uint64_t minerid, name new_owneracc)
+void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
 {
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
@@ -799,9 +799,6 @@ void hddpool::mchgonweracc(uint64_t minerid, name new_owneracc)
    eosio_assert(is_account(new_owneracc), "new owner is not an account.");
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &rowminer) {
-      //变更矿机表的收益账户名称
-      rowminer.owner = new_owneracc;
-      
       //如果每周期收益计算是挂在收益账户名下的时候，需要考虑更该新旧收益账号的每周期收益字段
       //目前是挂在收益计算是挂在矿机名下，所以不需要
       maccount_index _maccount_old(_self, rowminer.owner.value);
@@ -824,6 +821,9 @@ void hddpool::mchgonweracc(uint64_t minerid, name new_owneracc)
 
       //将该矿机从旧的收益账户的矿机收益列表中删除
       _maccount_old.erase(itmaccount_old);
+
+      //变更矿机表的收益账户名称
+      rowminer.owner = new_owneracc;
 
    });
 }
@@ -968,5 +968,5 @@ asset exchange_state::convert(asset from, symbol_type to)
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgonweracc)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)
                   (mdeactive)(mactive))

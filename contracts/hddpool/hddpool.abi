@@ -275,7 +275,7 @@
             ]
         },
         {
-            "name": "mchgonweracc",
+            "name": "mchgowneracc",
             "base": "",
             "fields": [
                 {
@@ -669,8 +669,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "mchgonweracc",
-            "type": "mchgonweracc",
+            "name": "mchgowneracc",
+            "type": "mchgowneracc",
             "ricardian_contract": ""
         }
     ],
