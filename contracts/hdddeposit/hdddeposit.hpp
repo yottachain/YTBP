@@ -24,6 +24,8 @@ class hdddeposit : public eosio::contract {
         void delminer(uint64_t minerid);
         void setrate(int64_t rate);
 
+        void mchadepacc(uint64_t minerid, name new_depacc);
+
         inline asset get_deposit_and_forfeit( account_name user )const;
         inline asset get_deposit( account_name user )const;
         inline asset get_forfeit( account_name user)const;
