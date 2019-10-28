@@ -13,14 +13,14 @@
 #include <eosiolib/privileged.hpp>
 #include <eosiolib/singleton.hpp>
 #include <eosiolib/transaction.hpp>
-#include <eosio.token/eosio.token.hpp>
-#include <hdddeposit/hdddeposit.hpp>
+//#include <eosio.token/eosio.token.hpp>
+//#include <hdddeposit/hdddeposit.hpp>
 
 #include <algorithm>
 #include <cmath>
 
 const uint64_t useconds_per_day_v      = 24 * 3600 * uint64_t(1000000);
-const account_name hdd_deposit_account = N(hdddeposit12);
+//const account_name hdd_deposit_account = N(hdddeposit12);
 
 namespace eosiosystem {
    using eosio::indexed_by;

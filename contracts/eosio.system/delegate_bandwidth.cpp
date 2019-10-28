@@ -13,7 +13,13 @@
 #include <eosiolib/transaction.hpp>
 
 #include <eosio.token/eosio.token.hpp>
+//##YTA-Change  start:  
+#include <hdddeposit/hdddeposit.hpp>
+#include <hddlock/hddlock.hpp>
 
+const account_name hdd_deposit_account = N(hdddeposit12);
+const account_name hdd_lock_account = N(hddlock12345);
+//##YTA-Change  end:  
 
 #include <cmath>
 #include <map>
@@ -392,7 +398,19 @@ namespace eosiosystem {
       eosio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
       eosio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
 
-      eosio_assert( transfer == false, "transfer not supported" );
+//##YTA-Change  start:
+      //eosio_assert( transfer == false, "transfer not supported" );
+      if(transfer) {
+         auto balance   = eosio::token(N(eosio.token)).get_balance( from , asset(0,CORE_SYMBOL).symbol.name() );
+         auto frozen_asset = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(from);
+         //also need check lock token issue
+         auto lock_asset = hddlock(hdd_lock_account).get_lock_asset(from);
+         eosio_assert( frozen_asset.symbol == lock_asset.symbol, "deposit and lock symbol precision mismatch" );
+         frozen_asset += lock_asset;
+         eosio_assert( frozen_asset.symbol == CORE_SYMBOL, "deposit symbol not core symbol" );
+         eosio_assert( (balance - frozen_asset) >= (stake_net_quantity + stake_cpu_quantity), "overdrawn balance for transfer bw" );
+      }
+//##YTA-Change  end:      
 
       changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
    } // delegatebw
