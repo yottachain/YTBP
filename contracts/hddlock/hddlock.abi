@@ -12,6 +12,12 @@
             ]
         },
         {
+            "name": "clearall",
+            "base": "",
+            "fields": [
+            ]
+        },
+        {
             "name": "addrule",
             "base": "",
             "fields": [
@@ -92,13 +98,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "addrule",
-            "type": "addrule",
+            "name": "clearall",
+            "type": "clearall",
             "ricardian_contract": ""
         },
         {
             "name": "addrule",
             "type": "addrule",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "locktransfer",
+            "type": "locktransfer",
             "ricardian_contract": ""
         }
     ],

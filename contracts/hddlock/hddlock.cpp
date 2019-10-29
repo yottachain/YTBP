@@ -65,5 +65,15 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
 }
 
 
+void hddlock::clearall() {
+    require_auth(_self);
 
-EOSIO_ABI( hddlock, (init)(addrule)(locktransfer))
+    lockrule_table _lockrule( _self , _self );
+
+    while (_lockrule.begin() != _lockrule.end()) {
+      _lockrule.erase(_lockrule.begin());      
+   }  
+}
+
+
+EOSIO_ABI( hddlock, (init)(addrule)(locktransfer)(clearall))

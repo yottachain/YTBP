@@ -22,6 +22,8 @@ class hddlock : public eosio::contract {
         void addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::vector<uint8_t>& percentage, std::string& desc);
         void locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, std::string memo);
 
+        void clearall();
+
         inline asset get_lock_asset( account_name user )const;
 
     private:
