@@ -19,6 +19,30 @@ void hddlock::init() {
 
 }
 
+void hddlock::addaccbig(account_name user, std::string& desc) {
+    require_auth(_self);
+
+    accbig_table _accbig( _self , _self );
+    auto itmaccbig = _accbig.find(user);
+    eosio_assert(itmaccbig == _accbig.end(), "user already registered as big account");  
+
+    _accbig.emplace(_self, [&](auto &row) {
+        row.user = user;
+        row.desc = desc;
+    });       
+}
+
+void hddlock::rmvaccbig(account_name user) {
+    require_auth(_self);
+
+    accbig_table _accbig( _self , _self );
+    auto itmaccbig = _accbig.find(user);
+    if(itmaccbig != _accbig.end()) {
+        _accbig.erase(itmaccbig);
+    }
+}
+
+
 void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::vector<uint8_t>& percentage, std::string& desc) 
 {
     require_auth(_self);
@@ -38,10 +62,14 @@ void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::ve
     });          
 }
 
-void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, std::string memo) 
+void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, asset amount, std::string memo) 
 {
     require_auth(from);
     eosio_assert( quantity.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
+
+    accbig_table _accbig( _self , _self );
+    auto itmaccbig = _accbig.find(from);
+    eosio_assert(itmaccbig != _accbig.end(), "from can not locktransfer");  
 
     lockrule_table _lockrule(_self, _self);
     auto itrule = _lockrule.find(lockruleid);
@@ -50,7 +78,7 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
     action(
        permission_level{from, active_permission},
        token_account, N(transfer),
-       std::make_tuple(from, to, quantity, memo))
+       std::make_tuple(from, to, amount, memo))
        .send();
 
     acclock_table _acclock(_self, to);
@@ -76,4 +104,4 @@ void hddlock::clearall() {
 }
 
 
-EOSIO_ABI( hddlock, (init)(addrule)(locktransfer)(clearall))
+EOSIO_ABI( hddlock, (init)(addrule)(locktransfer)(clearall)(addaccbig)(rmvaccbig))

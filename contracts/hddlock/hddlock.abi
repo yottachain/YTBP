@@ -12,6 +12,21 @@
             ]
         },
         {
+            "name": "addaccbig",
+            "base": "",
+            "fields": [
+                {"name":"user",         "type":"account_name"},
+                {"name":"desc",         "type":"string"}
+            ]
+        },
+        {
+            "name": "rmvaccbig",
+            "base": "",
+            "fields": [
+                {"name":"user",         "type":"account_name"}
+            ]
+        },
+        {
             "name": "clearall",
             "base": "",
             "fields": [
@@ -57,6 +72,7 @@
                 {"name":"from",         "type":"account_name"},
                 {"name":"to",           "type":"account_name"},
                 {"name":"quantity",     "type":"asset"},
+                {"name":"amount",       "type":"asset"},
                 {"name":"memo",         "type":"string"}
             ]
         },        
@@ -87,6 +103,20 @@
                 {
                     "name": "time",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "accbig",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "desc",
+                    "type": "string"
                 }
             ]
         }
@@ -127,7 +157,14 @@
             "index_type": "i64",
             "key_names": [],
             "key_types": []
-        }
+        },
+        {
+            "name": "accbig",
+            "type": "accbig",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }        
     ],
     "ricardian_clauses": [],
     "variants": []

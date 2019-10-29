@@ -20,9 +20,11 @@ class hddlock : public eosio::contract {
 
         void init();
         void addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::vector<uint8_t>& percentage, std::string& desc);
-        void locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, std::string memo);
+        void locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, asset amount, std::string memo);
 
         void clearall();
+        void addaccbig(account_name user, std::string& desc);
+        void rmvaccbig(account_name user);
 
         inline asset get_lock_asset( account_name user )const;
 
@@ -33,7 +35,7 @@ class hddlock : public eosio::contract {
             std::vector<uint64_t>   times;
             std::vector<uint8_t>    percentage;
             std::string             desc;
-            uint64_t    primary_key()const { return lockruleid; }
+            uint64_t                primary_key()const { return lockruleid; }
         };
         typedef multi_index<N(lockrule), lockrule> lockrule_table; 
 
@@ -44,10 +46,16 @@ class hddlock : public eosio::contract {
             account_name    from;
             std::string     memo;
             uint64_t        time;
-            uint64_t    primary_key()const { return time; }
+            uint64_t        primary_key()const { return time; }
         };
         typedef multi_index<N(acclock), acclock> acclock_table; 
 
+        struct accbig {
+            account_name    user;
+            std::string     desc;
+            uint64_t    primary_key()const { return user; }
+        };
+        typedef multi_index<N(accbig), accbig> accbig_table; 
 };
 
 
