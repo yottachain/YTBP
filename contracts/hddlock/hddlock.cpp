@@ -62,10 +62,23 @@ void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::ve
     });          
 }
 
+void hddlock::rmvrule(uint64_t lockruleid)
+{
+    require_auth(_self);
+
+    lockrule_table _lockrule(_self, _self);
+    auto itrule = _lockrule.find(lockruleid);
+    eosio_assert(itrule != _lockrule.end(), "the lockruleid not exist");  
+    _lockrule.erase(itrule);      
+
+}
+
+
 void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, asset amount, std::string memo) 
 {
     require_auth(from);
     eosio_assert( quantity.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
+    eosio_assert( amount.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
 
     accbig_table _accbig( _self , _self );
     auto itmaccbig = _accbig.find(from);
@@ -74,6 +87,8 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
     lockrule_table _lockrule(_self, _self);
     auto itrule = _lockrule.find(lockruleid);
     eosio_assert(itrule != _lockrule.end(), "lockruleid not existed in rule table");  
+
+    eosio_assert(quantity.amount >= amount.amount, "overdrawn quantity");  
 
     action(
        permission_level{from, active_permission},
@@ -93,15 +108,14 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
 }
 
 
-void hddlock::clearall() {
+void hddlock::clearall(account_name user) {
     require_auth(_self);
 
-    lockrule_table _lockrule( _self , _self );
-
-    while (_lockrule.begin() != _lockrule.end()) {
-      _lockrule.erase(_lockrule.begin());      
-   }  
+    acclock_table _acclock(_self, user);
+    while (_acclock.begin() != _acclock.end()) {
+      _acclock.erase(_acclock.begin());      
+    }  
 }
 
 
-EOSIO_ABI( hddlock, (init)(addrule)(locktransfer)(clearall)(addaccbig)(rmvaccbig))
+EOSIO_ABI( hddlock, (init)(addrule)(rmvrule)(locktransfer)(clearall)(addaccbig)(rmvaccbig))
