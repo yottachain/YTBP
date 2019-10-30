@@ -122,11 +122,6 @@ namespace eosiosystem {
          _producersext.erase(_producersext.begin()); 
       }
 
-      producers_seq_table _prod_seq( _self, _self );
-      while (_prod_seq.begin() != _prod_seq.end()) {
-         _prod_seq.erase(_prod_seq.begin()); 
-      }
-
       _gstateex.total_unpaid_base_cnt = 0;
 
       all_prods_singleton _all_prods(_self, _self);
@@ -140,10 +135,6 @@ namespace eosiosystem {
          _all_prods.set(_all_prods_state,_self);
       }
 
-      master_sn_list _snlist( _self, _self );
-      while (_snlist.begin() != _snlist.end()) {
-         _snlist.erase(_snlist.begin()); 
-      }
    }
 
    void system_contract::delproducer( const account_name producer ) {
@@ -164,51 +155,8 @@ namespace eosiosystem {
          return;
       }
 
-      bool needNewSnMaster = false;
-      master_sn_list _snlist(_self, _self);
-      auto sn_itr = _snlist.find (seq_num); 
-      if( sn_itr != _snlist.end() ) {
-         if(sn_itr->owner == producer) {
-            needNewSnMaster = true;
-         }
-      }
       rm_producer_seq(producer, seq_num);
 
-      if( needNewSnMaster ) {
-         elect_new_sn_master( seq_num );
-      }
-   }
-
-   void system_contract::elect_new_sn_master( uint16_t seq_num ) {
-      producers_seq_table _prodseq(_self, _self);
-      auto ps_itr = _prodseq.find (seq_num); 
-      if( ps_itr == _prodseq.end() )
-         return;
-
-      //account_name newMaster = 0;
-      _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
-         std::sort(info.prods_all.begin(), info.prods_all.end(), [&](prod_meta lhs, prod_meta rhs){return lhs.total_votes > rhs.total_votes;}); 
-         for( auto it =info.prods_all.begin(); it != info.prods_all.end(); it++ ) {
-            if( it->is_active && (current_time()-it->last_crash_time) > useconds_per_day_v ) {
-               //newMaster = it->owner;
-               info.master = it->owner;
-               master_sn_list _snlist(_self, _self);
-               auto sn_itr = _snlist.find (seq_num); 
-               if( sn_itr == _snlist.end() ) {
-                  _snlist.emplace(_self, [&](auto &row) {
-                     row.seq_num = seq_num;
-                     row.owner = it->owner;
-                     row.url = it->url;
-                  });
-               } else {
-                  _snlist.modify(sn_itr, _self, [&](auto &row) {
-                     row.owner = it->owner;
-                     row.url = it->url;
-                  });
-               }
-            }
-         }
-      });
    }
 
    void system_contract::seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level ) {
@@ -268,39 +216,7 @@ namespace eosiosystem {
          }
          _all_prods.set(_all_prods_state,_self);
       }
-      
-
-      producers_seq_table _prodseq(_self, _self);
-      auto ps_itr = _prodseq.find (seq); 
-      if( ps_itr != _prodseq.end() ) {
-         _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
-            if(info.master == producer) {
-               info.master = 0;
-            }
-
-            for( auto itall =  info.prods_all.begin(); itall !=  info.prods_all.end(); itall++ ) {
-               if(itall->owner == producer) {
-                  info.prods_all.erase(itall);
-                  break;
-               } 
-            }  
-
-            for( auto itvoter =  info.voter_list.begin(); itvoter !=  info.voter_list.end(); itvoter++ ) {
-               if( *itvoter == producer ) {
-                  info.voter_list.erase(itvoter);
-                  break;
-               } 
-            }  
-         });
-      }
-
-      master_sn_list _snlist(_self, _self);
-      auto sn_itr = _snlist.find (seq); 
-      if( sn_itr != _snlist.end() ) {
-         if(sn_itr->owner == producer) {
-            _snlist.erase(sn_itr);
-         }
-      }
+   
    }
 
    void system_contract::add_producer_seq( const account_name producer, uint16_t seq , uint8_t level ) {
@@ -334,49 +250,6 @@ namespace eosiosystem {
       }
       _all_prods.set(_all_prods_state,_self);
       
-
-      producers_seq_table _prodseq(_self, _self);
-      prod_meta prodm;
-      prodm.owner = producer;
-      prodm.total_votes = prod.total_votes;
-      prodm.all_stake = (int64_t)prod.total_votes;
-      prodm.is_active = prod.is_active;
-      prodm.url = prod.url;
-      prodm.last_crash_time = 0;
-      auto ps_itr = _prodseq.find (seq);
-      if( ps_itr == _prodseq.end() ) {
-         _prodseq.emplace(_self, [&](auto &row) {
-            row.seq_num = seq;
-            row.prods_all.push_back(prodm);
-            if(level == 1) {
-               row.master = producer;
-            }
-         });
-      } else {
-         _prodseq.modify(ps_itr, _self, [&](auto &row) {
-            row.prods_all.push_back(prodm);
-            if(level == 1) {
-               row.master = producer;
-            }
-         });
-      }
-
-      if(level == 1) {
-         master_sn_list _snlist(_self, _self);
-         auto sn_itr = _snlist.find (seq); 
-         if( sn_itr == _snlist.end() ) {
-            _snlist.emplace(_self, [&](auto &row) {
-               row.seq_num = seq;
-               row.owner = producer;
-               row.url = prod.url;
-            });
-         } else {
-            _snlist.modify(sn_itr, _self, [&](auto &row) {
-               row.owner = producer;
-               row.url = prod.url;
-            });
-         }
-      }
    }
 
    void system_contract::change_producer_seq_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url) {
@@ -420,36 +293,6 @@ namespace eosiosystem {
          _all_prods.set(_all_prods_state,_self);
       }
 
-      auto it = _producersext.find(producer);
-      if (it == _producersext.end()) 
-         return;
-      uint16_t seq = it->seq_num;
-      producers_seq_table _prodseq(_self, _self);
-      auto ps_itr = _prodseq.find (seq);
-      if( ps_itr == _prodseq.end() )
-         return;
-      _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
-         for( auto itall =  info.prods_all.begin(); itall !=  info.prods_all.end(); itall++ ) {
-            if(itall->owner == producer) {
-               itall->is_active = isactive;
-               if(seturl)
-                  itall->url = url;                  
-               break;
-            } 
-         }   
-      });
-
-      master_sn_list _snlist(_self, _self);
-      auto sn_itr = _snlist.find (seq); 
-      if( sn_itr != _snlist.end() ) {
-         if(sn_itr->owner == producer) {
-            if(seturl) {
-               _snlist.modify(sn_itr, _self, [&](auto &row) {
-                  row.url = url;
-               });
-            }
-         }
-      }      
    }
 
    void system_contract::update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes) {
@@ -481,21 +324,6 @@ namespace eosiosystem {
          }
          _all_prods.set(_all_prods_state,_self);
       }
-
-      producers_seq_table _prodseq(_self, _self);
-      auto ps_itr = _prodseq.find (seq_num);  
-      if( ps_itr == _prodseq.end() )
-         return;      
-      _prodseq.modify( ps_itr, _self, [&]( producers_seq& info ){
-         for(auto it = info.prods_all.begin(); it != info.prods_all.end(); it++) {
-            if(it->owner == owner) {
-               it->total_votes = total_votes;
-               it->all_stake = (int64_t)total_votes;
-               break;
-            }
-         }         
-
-      });
    }
 
    void system_contract::testnewelec() {

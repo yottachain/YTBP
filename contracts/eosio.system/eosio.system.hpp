@@ -110,41 +110,6 @@ namespace eosiosystem {
       EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(out_votes)(deposit_votes)(unpaid_base_cnt)(shadow))
 
    };
-
-   struct prod_meta {
-      account_name         owner;
-      double               total_votes = 0; // total votes
-      int64_t              all_stake = 0;  // total original votes (buy yta amount)
-      bool                 is_active = true;
-      uint64_t             last_crash_time = 0;
-      std::string          url;
-
-
-      EOSLIB_SERIALIZE( prod_meta, (owner)(total_votes)(all_stake)(is_active)(last_crash_time)(url) )      
-   };
-
-   struct producers_seq {
-      uint16_t                      seq_num = 1; // from 1 to 21
-      account_name                  master;
-      std::vector<account_name>     voter_list; /// the SN list that vote current master is dead.
-      std::vector<prod_meta>        prods_all;
-
-      uint64_t primary_key()const { return seq_num; }          
-
-      EOSLIB_SERIALIZE( producers_seq, (seq_num)(master)(voter_list)(prods_all) )
-
-   };
-
-   struct master_sn_info {
-      uint16_t              seq_num = 1; // from 1 to 21      
-      account_name          owner;
-      std::string           url;
-
-      uint64_t primary_key()const { return seq_num; }          
-
-      EOSLIB_SERIALIZE( master_sn_info, (seq_num)(owner)(url))
-   };
-   typedef eosio::multi_index< N(mastersnlist), master_sn_info>  master_sn_list;
    //##YTA-Change  end:
 
    //##YTA-Change  start:
@@ -214,7 +179,6 @@ namespace eosiosystem {
 
    //##YTA-Change  start:  
    typedef eosio::multi_index< N(producersext), producer_info_ext>  producers_ext_table;
-   typedef eosio::multi_index< N(producerseq), producers_seq>       producers_seq_table;
    //##YTA-Change  end:  
 
    typedef eosio::singleton<N(global), eosio_global_state> global_state_singleton;
@@ -351,8 +315,6 @@ namespace eosiosystem {
          void update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes);              
 
          void delproducer( const account_name producer );
-
-         void elect_new_sn_master( uint16_t seq_num );
 //##YTA-Change  end:  
 
          // Implementation details:

@@ -32,17 +32,6 @@
         {"name":"weight", "type":"weight_type"}
       ]
     },{
-      "name": "prod_meta",
-      "base": "",
-      "fields": [
-        {"name":"owner",            "type":"account_name"},
-        {"name":"total_votes",      "type":"float64"},
-        {"name":"all_stake",        "type":"int64"},
-        {"name":"is_active",        "type":"bool"},
-        {"name":"last_crash_time",  "type":"uint64"},
-        {"name":"url",              "type":"string"}
-      ]
-    },{
       "name": "yta_prod_info",
       "base": "",
       "fields": [
@@ -322,23 +311,6 @@
          {"name":"deposit_votes",           "type":"int64"},
          {"name":"unpaid_base_cnt",         "type":"uint32"},
          {"name":"shadow",                  "type":"account_name"}
-      ]
-    },{
-      "name": "master_sn_info",
-      "base": "",
-      "fields": [
-         {"name":"seq_num",                   "type":"uint16"},
-         {"name":"owner",                     "type":"account_name"},
-         {"name":"url",                       "type":"string"}
-      ]
-    },{
-      "name": "producers_seq",
-      "base": "",
-      "fields": [
-         {"name":"seq_num",          "type":"uint16"},
-         {"name":"master",           "type":"account_name"},
-         {"name":"voter_list",       "type":"account_name[]"},
-         {"name":"prods_all",        "type":"prod_meta[]"}
       ]
     },{
       "name": "all_prods_level",
@@ -667,18 +639,6 @@
       "type": "producer_info_ext",
       "index_type": "i64",
       "key_names" : ["owner"],
-      "key_types" : ["uint64"]
-    },{
-      "name": "mastersnlist",
-      "type": "master_sn_info",
-      "index_type": "i64",
-      "key_names" : ["seq_num"],
-      "key_types" : ["uint64"]
-    },{
-      "name": "producerseq",
-      "type": "producers_seq",
-      "index_type": "i64",
-      "key_names" : ["seq_num"],
       "key_types" : ["uint64"]
     },{
       "name": "prodslevel",
