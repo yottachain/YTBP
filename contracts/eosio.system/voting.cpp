@@ -314,6 +314,7 @@ namespace eosiosystem {
 
       _all_prods_state = _all_prods.get();
 
+      bool ischanged = false;
 
       for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end();) {
          bool is_remove = false;
@@ -325,20 +326,26 @@ namespace eosiosystem {
                if(current_time() - it->grace_start_time > useconds_per_day_v) {
                   is_remove = true;
                   it->is_in_grace = false;
+                  ischanged = true;
                }
                
             } else {
                it->is_in_grace = true;
                auto ct = current_time();
                it->grace_start_time =  ct;
+               ischanged = true;
             }
          } else {
-            it->is_in_grace = false;
+            if(it->is_in_grace) {
+               ischanged = true;
+               it->is_in_grace = false;
+            }
          }
 
          if(is_remove) {
             _all_prods_state.prods_l3.push_back(*it);
             it = _all_prods_state.prods_l1.erase(it);
+            ischanged = true;
          } else {
             ++it;
          }
@@ -354,20 +361,28 @@ namespace eosiosystem {
                if(current_time() - it->grace_start_time > useconds_per_day_v) {
                   is_remove = true;
                   it->is_in_grace = false;
+                  ischanged = true;
+
                }
                
             } else {
                it->is_in_grace = true;
                auto ct = current_time();
                it->grace_start_time =  ct;
+               ischanged = true;
+
             }
          } else {
-            it->is_in_grace = false;
+            if(it->is_in_grace) {
+               ischanged = true;
+               it->is_in_grace = false;
+            }
          }
 
          if(is_remove) {
             _all_prods_state.prods_l3.push_back(*it);
             it =  _all_prods_state.prods_l2.erase(it);
+            ischanged = true;
          } else {
             ++it;
          }
@@ -379,6 +394,7 @@ namespace eosiosystem {
             if(_all_prods_state.prods_l1.size() < 21) {
                _all_prods_state.prods_l1.push_back(*it);
                it = _all_prods_state.prods_l2.erase(it);
+               ischanged = true;
             } else {
                break;
             }
@@ -394,6 +410,7 @@ namespace eosiosystem {
             if(_all_prods_state.prods_l2.size() < 105) {
                _all_prods_state.prods_l2.push_back(*it);
                it = _all_prods_state.prods_l3.erase(it);
+               ischanged = true;
             } else {
                break;
             }
@@ -402,7 +419,10 @@ namespace eosiosystem {
          }
       }
 
-      _all_prods.set(_all_prods_state, _self);
+      if(ischanged) 
+      {
+         _all_prods.set(_all_prods_state, _self);
+      }
 
       ///---------------------------------------------------
 

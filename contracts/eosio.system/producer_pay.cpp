@@ -56,6 +56,8 @@ namespace eosiosystem {
        * At startup the initial producer may not be one that is registered / elected
        * and therefore there may be no producer object for them.
        */
+      ((void)producer);
+      /*
       auto prod = _producers.find(producer);
       if ( prod != _producers.end() ) {
          _gstate.total_unpaid_blocks++;
@@ -63,24 +65,13 @@ namespace eosiosystem {
                p.unpaid_blocks++;
          });
       }
-
-      //##YTA-Change  start:  
-      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
-         for( auto it = _producersext.begin(); it != _producersext.end(); it++ ) {
-            _producersext.modify( it, 0, [&](auto& p ) {
-                  p.unpaid_base_cnt++;
-            });
-            _gstateex.total_unpaid_base_cnt++;  
-         }
-      }
-      //##YTA-Change  end:  
-
+      */
 
       //##YTA-Change  start:         
       /// only update block producers once every minute, block_timestamp is in half seconds
       //if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
       /// update block producers once every two minute due to election strategy is more complex than before
-      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {
+      if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 240 ) {
       //##YTA-Change  end:         
 
          update_elected_producers( timestamp );
@@ -122,6 +113,20 @@ namespace eosiosystem {
       //require_auth(_self);
       require_auth(N(ytarewardusr));
 
+      all_prods_singleton _all_prods(_self, _self);
+      all_prods_level     _all_prods_state;
+
+      if (!_all_prods.exists())
+         return;
+
+      _all_prods_state = _all_prods.get();
+
+      int64_t num_main_producers = _all_prods_state.prods_l1.size();
+      int64_t num_producers = _all_prods_state.prods_l1.size() + _all_prods_state.prods_l2.size();
+      if(num_main_producers < 1)
+         return;
+
+
       auto ct = current_time();
       //eosio_assert( ct - _gstateex.last_claim_time > useconds_per_day, "already claimed rewards within past day" );
       _gstateex.last_claim_time = ct;
@@ -141,18 +146,8 @@ namespace eosiosystem {
          INLINE_ACTION_SENDER(eosio::token, issue)( N(eosio.token), {{N(eosio),N(active)}},
                                                     {N(eosio), asset(new_tokens), std::string("issue tokens for producer pay")} );
 
-
          INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(hddbasefound), asset(to_per_base_pay), "fund per-base bucket" } );
-
-
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.bpay), asset(to_per_block_pay), "fund per-block bucket" } );
-
-
-         INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio),N(active)},
-                                                       { N(eosio), N(eosio.vpay), asset(to_per_vote_pay), "fund per-vote bucket" } );
-
+                                                       { N(eosio), N(hddbasefound), asset(new_tokens), "fund total bucket" } );
 
          _gstateex.perbase_bucket   += to_per_base_pay;
          _gstate.pervote_bucket     += to_per_vote_pay;
@@ -164,97 +159,86 @@ namespace eosiosystem {
       int64_t producer_total_base_pay = _gstateex.perbase_bucket;
       int64_t producer_total_block_pay = _gstate.perblock_bucket;
       int64_t producer_total_vote_pay = _gstate.pervote_bucket;
+      int64_t producer_total_pay = producer_total_base_pay + producer_total_block_pay + producer_total_vote_pay;
 
       print("producer_total_base_pay -- ", producer_total_base_pay , "\n");
       print("producer_total_block_pay -- ", producer_total_block_pay , "\n");
       print("producer_total_vote_pay -- ", producer_total_vote_pay , "\n");
 
-
       int64_t producer_already_base_pay = 0;
       int64_t producer_already_block_pay = 0;
       int64_t producer_already_vote_pay = 0;
 
+      int64_t producer_already_total_pay = 0;
 
-      uint32_t total_unpaid_blocks  =  _gstate.total_unpaid_blocks;
-      uint32_t total_unpaid_base_cnt = _gstateex.total_unpaid_base_cnt;
-      
-      /* 
-      //double   total_producer_vote_weight = _gstate.total_producer_vote_weight;
-
-      uint32_t total_unpaid_blocks  =  0;
-      uint32_t total_unpaid_base_cnt = 0;
-      double   total_producer_vote_weight = 0;
-
-      for( auto it = _producers.begin(); it != _producers.end(); it++ ) {
-         total_unpaid_blocks += it->unpaid_blocks;
-         total_producer_vote_weight += it->total_votes;
+      double total_vote_weight = 0;
+      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++) {
+         total_vote_weight += it->total_votes;
+      }
+      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++) {
+         total_vote_weight += it->total_votes;
       }
 
-      for( auto it = _producersext.begin(); it != _producersext.end(); it++ ) {
-         total_unpaid_base_cnt += it->unpaid_base_cnt;
-      }
-
-      _gstate.total_unpaid_blocks = total_unpaid_blocks;
-      _gstateex.total_unpaid_base_cnt = total_unpaid_base_cnt;
-      _gstate.total_producer_vote_weight = total_producer_vote_weight;
-      */
-
-
-      for( auto it = _producers.begin(); it != _producers.end(); it++ ) {
-         if(!(it->active()))
-            continue;
-         auto& prodex = _producersext.get(it->owner);
+      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++) {
          int64_t producer_per_base_pay = 0;
-         if( _gstateex.total_unpaid_base_cnt > 0 ) {
-            producer_per_base_pay = (_gstateex.perbase_bucket * prodex.unpaid_base_cnt) / total_unpaid_base_cnt;
-         }
+         producer_per_base_pay =  _gstateex.perbase_bucket / num_producers;
+
          int64_t producer_per_block_pay = 0;
-         if( _gstate.total_unpaid_blocks > 0 ) {
-            producer_per_block_pay = (_gstate.perblock_bucket * it->unpaid_blocks) / total_unpaid_blocks;
-         }
+         producer_per_block_pay = _gstate.perblock_bucket / num_main_producers;
+
          int64_t producer_per_vote_pay = 0;
-         if( _gstate.total_producer_vote_weight > 0 ) {
-            producer_per_vote_pay  = int64_t((_gstate.pervote_bucket * it->total_votes ) / _gstate.total_producer_vote_weight);
+         if( total_vote_weight > 0 ) {
+            producer_per_vote_pay  = int64_t((_gstate.pervote_bucket * it->total_votes ) / total_vote_weight);
          }
 
          print("producer_per_base_pay -- ", producer_per_base_pay , "\n");
          print("producer_per_block_pay -- ", producer_per_block_pay , "\n");
          print("producer_per_vote_pay -- ", producer_per_vote_pay , "\n");
 
+         int64_t producer_per_total_pay = 0;
+         producer_per_total_pay = producer_per_base_pay + producer_per_block_pay + producer_per_vote_pay;
 
-         _gstate.total_unpaid_blocks -= it->unpaid_blocks;
-         _gstateex.total_unpaid_base_cnt -= prodex.unpaid_base_cnt;
-
-         _producers.modify( it, 0, [&](auto& p) {
-             p.last_claim_time = ct;
-             p.unpaid_blocks = 0;
-         });
-
-         _producersext.modify( prodex, 0, [&](auto& p) {
-             p.unpaid_base_cnt = 0;
-         });   
-
-         
-         if( producer_per_base_pay > 0 && ((producer_per_base_pay + producer_already_base_pay) <= producer_total_base_pay) ) {
+         if( producer_per_total_pay > 0 && ((producer_per_total_pay + producer_already_total_pay) <= producer_total_pay) ) {
+            producer_already_total_pay += producer_per_total_pay;
             producer_already_base_pay += producer_per_base_pay;
+            producer_already_block_pay += producer_per_block_pay;
+            producer_already_vote_pay += producer_per_total_pay;
             INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(hddbasefound),N(active)},
-                                                          { N(hddbasefound), it->owner, asset(producer_per_base_pay), std::string("producer base pay") } );
+                                                          { N(hddbasefound), it->owner, asset(producer_per_total_pay), std::string("main producer daily pay") } );
          }
 
-         if( producer_per_block_pay > 0 && ((producer_per_block_pay + producer_already_block_pay) <= producer_total_block_pay) ) {
-            producer_already_block_pay += producer_per_block_pay;            
-            INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.bpay),N(active)},
-                                                        { N(eosio.bpay), it->owner, asset(producer_per_block_pay), std::string("producer block pay") } );
-         }
-
-         if( producer_per_vote_pay > 0 && ((producer_per_vote_pay + producer_already_vote_pay) <= producer_total_vote_pay) ) {
-            producer_already_vote_pay += producer_per_vote_pay;            
-            INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(eosio.vpay),N(active)},
-                                                       { N(eosio.vpay), it->owner, asset(producer_per_vote_pay), std::string("producer vote pay") } );
-         }
-         
       }
-      
+
+
+      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++) {
+         int64_t producer_per_base_pay = 0;
+         producer_per_base_pay =  _gstateex.perbase_bucket / num_producers;
+
+         int64_t producer_per_vote_pay = 0;
+         if( total_vote_weight > 0 ) {
+            producer_per_vote_pay  = int64_t((_gstate.pervote_bucket * it->total_votes ) / total_vote_weight);
+         }
+
+         int64_t producer_per_block_pay = 0;
+
+         print("producer_per_base_pay -- ", producer_per_base_pay , "\n");
+         print("producer_per_block_pay -- ", producer_per_block_pay , "\n");
+         print("producer_per_vote_pay -- ", producer_per_vote_pay , "\n");
+
+         int64_t producer_per_total_pay = 0;
+         producer_per_total_pay = producer_per_base_pay + producer_per_block_pay + producer_per_vote_pay;
+
+         if( producer_per_total_pay > 0 && ((producer_per_total_pay + producer_already_total_pay) <= producer_total_pay) ) {
+            producer_already_total_pay += producer_per_total_pay;
+            producer_already_base_pay += producer_per_base_pay;
+            producer_already_block_pay += producer_per_block_pay;
+            producer_already_vote_pay += producer_per_total_pay;
+            INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(hddbasefound),N(active)},
+                                                          { N(hddbasefound), it->owner, asset(producer_per_total_pay), std::string("producer daily pay") } );
+         }
+
+      }
+
 
       _gstateex.perbase_bucket    -= producer_already_base_pay;
       _gstate.pervote_bucket      -= producer_already_vote_pay;
