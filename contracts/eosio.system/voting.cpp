@@ -20,6 +20,7 @@
 #include <cmath>
 
 const uint64_t useconds_per_day_v      = 24 * 3600 * uint64_t(1000000);
+//const uint64_t useconds_per_day_v      = 10 * uint64_t(1000000);
 //const account_name hdd_deposit_account = N(hdddeposit12);
 
 namespace eosiosystem {
@@ -41,31 +42,6 @@ namespace eosiosystem {
    void system_contract::regproducer( const account_name producer, const eosio::public_key& producer_key, const std::string& url, uint16_t location ) {
       eosio_assert( url.size() < 512, "url too long" );
       eosio_assert( producer_key != eosio::public_key(), "public key should not be the default value" );
-      /* 
-      require_auth( producer );
-
-      auto prod = _producers.find( producer );
-
-      if ( prod != _producers.end() ) {
-         _producers.modify( prod, producer, [&]( producer_info& info ){
-               info.producer_key = producer_key;
-               info.is_active    = true;
-               info.url          = url;
-               info.location     = location;
-            });
-         
-         change_producer_yta_info(producer, producer_key, true, true, url);
-      } else {
-         _producers.emplace( producer, [&]( producer_info& info ){
-               info.owner         = producer;
-               info.total_votes   = 0;
-               info.producer_key  = producer_key;
-               info.is_active     = true;
-               info.url           = url;
-               info.location      = location;
-         });
-      }
-      */
 
       require_auth( _self );
 
@@ -324,8 +300,8 @@ namespace eosiosystem {
    void system_contract::testnewelec() {
       require_auth( _self );
 
-      block_timestamp block_time;
-      update_elected_producers_yta( block_time );
+      //block_timestamp block_time;
+      //update_elected_producers_yta( block_time );
    }
 
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
@@ -338,80 +314,13 @@ namespace eosiosystem {
 
       _all_prods_state = _all_prods.get();
 
-/* 
-      for(int i = 0 ; i < 3 ; i++) {
-         yta_prod_info info;
-         info.total_votes = 50000000000;
-         info.all_stake = 50000000000;
-         info.is_active = true;
-         info.is_in_grace = false;
-         _all_prods_state.prods_l1.push_back(info);
-      }
-      _all_prods_state.prods_l1[0].owner = N(producer1);
-      _all_prods_state.prods_l1[0].is_active = false;
-      _all_prods_state.prods_l1[1].owner = N(producer2);
-      _all_prods_state.prods_l1[1].is_in_grace = true;
-      _all_prods_state.prods_l1[1].total_votes = 10000000000;
-      _all_prods_state.prods_l1[2].owner = N(producer3);
-
-
-      for(int i = 0 ; i < 6 ; i++) {
-         yta_prod_info info;
-         info.total_votes = 20000000000;
-         info.all_stake = 20000000000;
-         info.is_active = true;
-         info.is_in_grace = false;
-         _all_prods_state.prods_l2.push_back(info);
-      }
-      _all_prods_state.prods_l2[0].owner = N(producer11);
-      _all_prods_state.prods_l2[1].owner = N(producer12);
-      _all_prods_state.prods_l2[2].owner = N(producer13);
-      _all_prods_state.prods_l2[3].owner = N(producer14);
-      _all_prods_state.prods_l2[3].is_in_grace = true;
-      _all_prods_state.prods_l2[3].total_votes = 15000000000;
-      _all_prods_state.prods_l2[4].owner = N(producer15);
-      _all_prods_state.prods_l2[5].owner = N(producer1a);
-
-      for(int i = 0 ; i < 2 ; i++) {
-         yta_prod_info info;
-         info.total_votes = 10000000000;
-         info.all_stake = 10000000000;
-         info.is_active = true;
-         info.is_in_grace = false;
-         _all_prods_state.prods_l3.push_back(info);
-      }
-      _all_prods_state.prods_l3[0].owner = N(producer21);
-      _all_prods_state.prods_l3[0].total_votes = 21000000000;
-      _all_prods_state.prods_l3[1].owner = N(producer22);
-
-      print("before-----------------------------------\n");
-      print("level 1-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 2-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 3-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-
-      print("level 1 again-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-*/      
 
       for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end();) {
          bool is_remove = false;
          if(!it->is_active)
             is_remove = true;
 
-         //print("-----level1 down--", (name{it->owner}), "---",(int64_t)it->total_votes ,"\n");   
          if((int64_t)it->total_votes < 50000000000) {
-            //print("-----level1 down--", (name{it->owner}), "votes not enough\n");
             if(it->is_in_grace) {
                if(current_time() - it->grace_start_time > useconds_per_day_v) {
                   is_remove = true;
@@ -435,29 +344,12 @@ namespace eosiosystem {
          }
       }
 
-/* 
-      print("step 1-----------------------------------\n");
-      print("level 1-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 2-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 3-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-*/
 
       for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end();) {
          bool is_remove = false;
          if(!it->is_active)
             is_remove = true;
-         //print("-----level2 down--", (name{it->owner}), "---",(int64_t)it->total_votes ,"\n");   
          if((int64_t)it->total_votes < 20000000000) {
-            //print("-----level2 down--", (name{it->owner}), "votes not enough\n");
             if(it->is_in_grace) {
                if(current_time() - it->grace_start_time > useconds_per_day_v) {
                   is_remove = true;
@@ -480,27 +372,10 @@ namespace eosiosystem {
             ++it;
          }
       }
-
-/* 
-      print("step 2-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 2-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 3-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-*/
       
       std::sort(_all_prods_state.prods_l2.begin(), _all_prods_state.prods_l2.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
       for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end();) {
-         //print("-----level2 up--", (name{it->owner}), "---",(int64_t)it->total_votes ,"\n");            
          if((int64_t)it->total_votes >= 50000000000) {
-            //print("-----level2 up--", (name{it->owner}), "votes execeed\n");
             if(_all_prods_state.prods_l1.size() < 21) {
                _all_prods_state.prods_l1.push_back(*it);
                it = _all_prods_state.prods_l2.erase(it);
@@ -512,26 +387,10 @@ namespace eosiosystem {
          }
       }
 
-/* 
-      print("step 3-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 2-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 3-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-*/
 
       std::sort(_all_prods_state.prods_l3.begin(), _all_prods_state.prods_l3.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
       for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end();) {
-         //print("-----level3 up--", (name{it->owner}), "---",(int64_t)it->total_votes ,"\n");                     
          if((int64_t)it->total_votes >= 20000000000 && it->is_active) {
-            //print("-----level3 up--", (name{it->owner}), "votes execeed\n");
             if(_all_prods_state.prods_l2.size() < 105) {
                _all_prods_state.prods_l2.push_back(*it);
                it = _all_prods_state.prods_l3.erase(it);
@@ -545,24 +404,9 @@ namespace eosiosystem {
 
       _all_prods.set(_all_prods_state, _self);
 
-/* 
-      print("after-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l1.begin(); it != _all_prods_state.prods_l1.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 2-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      print("level 3-----------------------------------\n");
-      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end(); it++ ) {
-         print("producer - ", (name{it->owner}), "--", (int64_t)it->total_votes,  " --\n");
-      }
-      return;
-*/      
-
       ///---------------------------------------------------
 
+      //return;
       _gstate.last_producer_schedule_update = block_time;
 
       std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
@@ -573,7 +417,7 @@ namespace eosiosystem {
       }
 
       if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
-         if(top_producers.size() < 7)
+         if(top_producers.size() < 15)
             return;
       }
 
@@ -657,8 +501,8 @@ namespace eosiosystem {
    void system_contract::voteproducer( const account_name voter_name, const account_name proxy, const std::vector<account_name>& producers ) {
       require_auth( voter_name );
       ///@@@@@@@@@@@@@@@@@@@@@
-      eosio_assert(1 == 2, "can not vote now.");
-      return;
+      //eosio_assert(1 == 2, "can not vote now.");
+      //return;
       ///@@@@@@@@@@@@@@@@@@@@
 
       update_votes( voter_name, proxy, producers, true );
