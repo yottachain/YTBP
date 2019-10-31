@@ -54,7 +54,7 @@ namespace eosiosystem {
                info.location     = location;
             });
          
-         change_producer_seq_info(producer, producer_key, true, true, url);
+         change_producer_yta_info(producer, producer_key, true, true, url);
       } else {
          _producers.emplace( producer, [&]( producer_info& info ){
                info.owner         = producer;
@@ -79,7 +79,7 @@ namespace eosiosystem {
                info.location     = location;
             });
          
-         change_producer_seq_info(producer, producer_key, true, true, url);
+         change_producer_yta_info(producer, producer_key, true, true, url);
       } else {
          _producers.emplace( _self, [&]( producer_info& info ){
                info.owner         = producer;
@@ -94,18 +94,16 @@ namespace eosiosystem {
    }
 
    void system_contract::unregprod( const account_name producer ) {
-      require_auth( producer );
-
-      ///@@@@@@@@@@@@@@@@@@@@@
+      eosio_assert(1 == 2, "unregprod is disabled");
       return;
 
+      require_auth( producer );
       const auto& prod = _producers.get( producer, "producer not found" );
-
       _producers.modify( prod, 0, [&]( producer_info& info ){
             info.deactivate();
       });
 
-      change_producer_seq_info(producer, public_key(), false, false, "");
+      change_producer_yta_info(producer, public_key(), false, false, "");
    }
 //##YTA-Change  start: 
    void system_contract::clsprods2() {
@@ -146,17 +144,13 @@ namespace eosiosystem {
       }
 
       auto itpex = _producersext.find(producer);
-      uint16_t seq_num = 0;
       if( itpex != _producersext.end() ) {
          _gstateex.total_unpaid_base_cnt -= itpex->unpaid_base_cnt;
-         seq_num = itpex->seq_num;
          _producersext.erase(itpex);
       } else {
          return;
       }
-
-      rm_producer_seq(producer, seq_num);
-
+      rm_producer_yta(producer);
    }
 
    void system_contract::seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level ) {
@@ -175,23 +169,22 @@ namespace eosiosystem {
          _producersext.emplace(_self, [&](auto &row) {
             row.owner = producer;
             row.seq_num = seq;
+            row.level = level;
             row.shadow = shadow;            
          });
-         add_producer_seq(producer, seq, level);
+         add_producer_yta(producer, level);
       } else {
-         uint16_t old_seq = it->seq_num;   
          _producersext.modify(it, _self, [&](auto &row) {
             row.seq_num = seq;
+            row.level = level;
             row.shadow = shadow;            
          });
-         rm_producer_seq(producer, old_seq);
-         add_producer_seq(producer, seq, level);
+         rm_producer_yta(producer);
+         add_producer_yta(producer, level);
       }
    }
 
-   void system_contract::rm_producer_seq(const account_name producer, uint16_t seq) {
-      
-      
+   void system_contract::rm_producer_yta(const account_name producer) {
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
       if (_all_prods.exists()) {
@@ -219,7 +212,7 @@ namespace eosiosystem {
    
    }
 
-   void system_contract::add_producer_seq( const account_name producer, uint16_t seq , uint8_t level ) {
+   void system_contract::add_producer_yta( const account_name producer, uint8_t level ) {
       
       //need retrive from system producers table
       const auto& prod = _producers.get( producer, "producer not found" );
@@ -242,8 +235,10 @@ namespace eosiosystem {
       prodyta.total_votes = prod.total_votes;
       prodyta.url = prod.url;
       if(level == 1) {
+         eosio_assert( _all_prods_state.prods_l1.size() < 21, "too many level one bp");
          _all_prods_state.prods_l1.push_back(prodyta);
       } else if(level == 2) {
+         eosio_assert( _all_prods_state.prods_l2.size() < 105, "too many level two bp");
          _all_prods_state.prods_l2.push_back(prodyta);
       } else {
          _all_prods_state.prods_l3.push_back(prodyta);
@@ -252,7 +247,7 @@ namespace eosiosystem {
       
    }
 
-   void system_contract::change_producer_seq_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url) {
+   void system_contract::change_producer_yta_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url) {
       
       if(!isactive) {
          delproducer(producer);
@@ -295,7 +290,7 @@ namespace eosiosystem {
 
    }
 
-   void system_contract::update_producers_seq_totalvotes( uint16_t seq_num, account_name owner, double total_votes) {
+   void system_contract::update_producers_yta_totalvotes( account_name owner, double total_votes) {
 
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
@@ -332,29 +327,6 @@ namespace eosiosystem {
       block_timestamp block_time;
       update_elected_producers_yta( block_time );
    }
-
-   void system_contract::tmpvotennn( const account_name producer, int64_t tickets ) {
-      require_auth( _self );
-
-      const auto& prod = _producers.get( producer, "producer not found" );
-      //auto it = _producers.find(producer);
-      //eosio_assert( it != _producers.end() , "producer not found");
-
-      int64_t vote_delta = 0;
-      _producers.modify( prod, 0, [&]( producer_info& info ){
-         auto pitr2 = _producersext.find( producer);
-         if( pitr2 != _producersext.end() ) {
-            vote_delta = tickets - pitr2->out_votes; 
-            info.total_votes += vote_delta;
-            _producersext.modify( pitr2, 0, [&]( producer_info_ext& info2){
-               info2.out_votes = tickets;
-            });
-            update_producers_seq_totalvotes(pitr2->seq_num, producer, info.total_votes); 
-         }  
-      });
-      _gstate.total_producer_vote_weight += vote_delta;
-
-   }   
 
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
  
@@ -808,7 +780,7 @@ namespace eosiosystem {
          auto pitr2 = _producersext.find( pd.first );
          if( pitr2 != _producersext.end() ) {
             //pitr2->seq_num   
-            update_producers_seq_totalvotes(pitr2->seq_num, pd.first, total_votes); 
+            update_producers_yta_totalvotes(pd.first, total_votes); 
          }  else {
             if(voting) {
                eosio_assert( !pd.second.second /* not from new set */, "producer is not registered" ); //data corruption
