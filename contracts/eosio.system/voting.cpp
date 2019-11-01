@@ -21,7 +21,8 @@
 
 const uint64_t useconds_per_day_v      = 24 * 3600 * uint64_t(1000000);
 //const uint64_t useconds_per_day_v      = 10 * uint64_t(1000000);
-//const account_name hdd_deposit_account = N(hdddeposit12);
+#define LEVEL_ONE_MAX 21
+#define LEVEL_TWO_MAX 105
 
 namespace eosiosystem {
    using eosio::indexed_by;
@@ -211,10 +212,10 @@ namespace eosiosystem {
       prodyta.total_votes = prod.total_votes;
       prodyta.url = prod.url;
       if(level == 1) {
-         eosio_assert( _all_prods_state.prods_l1.size() < 21, "too many level one bp");
+         eosio_assert( _all_prods_state.prods_l1.size() < LEVEL_ONE_MAX, "too many level one bp");
          _all_prods_state.prods_l1.push_back(prodyta);
       } else if(level == 2) {
-         eosio_assert( _all_prods_state.prods_l2.size() < 105, "too many level two bp");
+         eosio_assert( _all_prods_state.prods_l2.size() < LEVEL_TWO_MAX, "too many level two bp");
          _all_prods_state.prods_l2.push_back(prodyta);
       } else {
          _all_prods_state.prods_l3.push_back(prodyta);
@@ -387,35 +388,38 @@ namespace eosiosystem {
             ++it;
          }
       }
-      
-      std::sort(_all_prods_state.prods_l2.begin(), _all_prods_state.prods_l2.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
-      for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end();) {
-         if((int64_t)it->total_votes >= 50000000000) {
-            if(_all_prods_state.prods_l1.size() < 21) {
-               _all_prods_state.prods_l1.push_back(*it);
-               it = _all_prods_state.prods_l2.erase(it);
-               ischanged = true;
+
+      if(_all_prods_state.prods_l1.size() < LEVEL_ONE_MAX) {
+         std::sort(_all_prods_state.prods_l2.begin(), _all_prods_state.prods_l2.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
+         for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end();) {
+            if((int64_t)it->total_votes >= 50000000000) {
+               if(_all_prods_state.prods_l1.size() < LEVEL_ONE_MAX) {
+                  _all_prods_state.prods_l1.push_back(*it);
+                  it = _all_prods_state.prods_l2.erase(it);
+                  ischanged = true;
+               } else {
+                  break;
+               }
             } else {
-               break;
+               ++it;
             }
-         } else {
-            ++it;
          }
-      }
+      }     
 
-
-      std::sort(_all_prods_state.prods_l3.begin(), _all_prods_state.prods_l3.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
-      for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end();) {
-         if((int64_t)it->total_votes >= 20000000000 && it->is_active) {
-            if(_all_prods_state.prods_l2.size() < 105) {
-               _all_prods_state.prods_l2.push_back(*it);
-               it = _all_prods_state.prods_l3.erase(it);
-               ischanged = true;
+      if(_all_prods_state.prods_l2.size() < LEVEL_TWO_MAX) {
+         std::sort(_all_prods_state.prods_l3.begin(), _all_prods_state.prods_l3.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
+         for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end();) {
+            if((int64_t)it->total_votes >= 20000000000 && it->is_active) {
+               if(_all_prods_state.prods_l2.size() < LEVEL_TWO_MAX) {
+                  _all_prods_state.prods_l2.push_back(*it);
+                  it = _all_prods_state.prods_l3.erase(it);
+                  ischanged = true;
+               } else {
+                  break;
+               }
             } else {
-               break;
+               ++it;
             }
-         } else {
-            ++it;
          }
       }
 
