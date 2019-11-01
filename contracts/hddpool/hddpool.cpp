@@ -28,11 +28,19 @@ const uint32_t fee_cycle = seconds_in_one_day; //计费周期(秒为单位)
 const uint32_t one_gb = 1024 * 1024 * 1024; //1GB
 const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
+//以下空间量按照16k一个分片大小为单位
+const uint64_t max_userspace = 64 * 1024 * 1024 * uint64_t(1024 * 50);  //50P 最大用户存储空间量
+const uint64_t max_minerspace = 64 * 1024 * uint64_t(1024 * 100); //100T 单个矿机最大的采购空间量
+//const uint32_t per_profit_space = 64 * 1024; //1G //每次增加的采购空间容量
+
+
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name hdd_account{N(hddpool12345)};
 static constexpr eosio::name hdd_deposit{N(hdddeposit12)};
 
+static constexpr int64_t max_hdd_amount    = (1LL << 62) - 1;
+bool is_hdd_amount_within_range(int64_t amount) { return -max_hdd_amount <= amount && amount <= max_hdd_amount; }
 
 #define HDD_SYMBOL_BANCOR S(4, HDD)
 #define HDDCORE_SYMBOL_BANCOR S(4, HDDCORE)
@@ -160,12 +168,15 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
                int64_t new_balance_m = 0;
                if (calculate_balance(tmp_last_balance_m, 0, it_m->hdd_per_cycle_profit, it_m->last_hdd_time, tmp_t_m, new_balance_m))
                {
+                  eosio_assert(is_hdd_amount_within_range(new_balance_m), "magnitude of miner hddbalance must be less than 2^62");
                   balance_delta_m = new_balance_m - row_m.hdd_balance;
                   row_m.hdd_balance = new_balance_m;
                   row_m.last_hdd_time = tmp_t;
                }
             });
             row.hdd_balance += balance_delta_m;
+            eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
+
          }
          print("{\"balance\":", it->hdd_balance, "}");
       });
@@ -203,6 +214,8 @@ void hddpool::update_total_hdd_balance(int64_t _balance_delta)
 
    if (_gstate.hdd_total_balance < 0)
       _gstate.hdd_total_balance = 0;
+
+   eosio_assert(is_hdd_amount_within_range(_gstate.hdd_total_balance), "magnitude of hdd_total_balance must be less than 2^62");
 }
 
 void hddpool::buyhdd(name from, name receiver, asset quant)
@@ -223,26 +236,31 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
        std::make_tuple(from, hdd_account, quant, std::string("buy hdd")))
        .send();
 
-   int64_t _hdd_amount = quant.amount * 10000;
+   int64_t _hdd_amount = quant.amount * 10000;   
    const auto &market = _hmarket.get(HDDCORE_SYMBOL_BANCOR, "hdd market does not exist");
    _hmarket.modify(market, 0, [&](auto &es) {
       _hdd_amount = (es.convert(quant, HDD_SYMBOL_BANCOR).amount) * 10000;
    });
    //print("_hdd_amount:  ", _hdd_amount, "\n");
    //_ghddpriceState.price = (quant.amount * 100 ) / (_hdd_amount/10000);
-   _ghddpriceState.price = (int64_t)(((double)(quant.amount * 10000) / _hdd_amount ) * 100000000);
+   eosio_assert(is_hdd_amount_within_range(_hdd_amount), "magnitude of _hdd_amount must be less than 2^62");
+   eosio_assert(is_hdd_amount_within_range(quant.amount * 10000), "magnitude of [quant.amount * 10000] must be less than 2^62");
+
+   _ghddpriceState.price = (int64_t)( ( (double)(quant.amount * 10000) / _hdd_amount ) * 100000000);
    print("_hdd_amount:  ", _hdd_amount, "  price: ", _ghddpriceState.price ,"\n");
 
    userhdd_index _userhdd(_self, receiver.value);
    auto it = _userhdd.find(receiver.value);
    if (it == _userhdd.end())
    {
+      eosio_assert(is_hdd_amount_within_range(_hdd_amount), "magnitude of user hddbalance must be less than 2^62");
       new_user_hdd(_userhdd, receiver, _hdd_amount);
    }
    else
    {
       _userhdd.modify(it, _self, [&](auto &row) {
          row.hdd_balance += _hdd_amount;
+         eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");      
       });
    }
 
@@ -253,6 +271,8 @@ void hddpool::sellhdd(name user, int64_t amount)
 {
    require_auth(user);
 
+   eosio_assert(is_hdd_amount_within_range(amount), "magnitude of user hdd amount must be less than 2^62");      
+
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table.");
@@ -260,6 +280,7 @@ void hddpool::sellhdd(name user, int64_t amount)
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_balance -= amount;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");      
    });
 
    int64_t _yta_amount = (int64_t)((double)amount / 10000);
@@ -321,6 +342,8 @@ void hddpool::subbalance(name user, int64_t balance, uint64_t userid)
 
    eosio_assert(is_account(user), "user invalidate");
 
+   eosio_assert(is_hdd_amount_within_range(balance), "magnitude of hddbalance must be less than 2^62");      
+
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
@@ -329,7 +352,8 @@ void hddpool::subbalance(name user, int64_t balance, uint64_t userid)
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_balance -= balance;
-   });
+      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
+   });   
 
    update_total_hdd_balance(-balance);
 }
@@ -348,6 +372,7 @@ void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space += space;
+      eosio_assert(row.hdd_space <= max_userspace , "overflow max_userspace");
    });
 
 }
@@ -365,7 +390,11 @@ void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
    check_bp_account(caller.value, userid, true);
 
    _userhdd.modify(it, _self, [&](auto &row) {
-      row.hdd_space -= space;
+      //eosio_assert(row.hdd_space >= space , "overdraw user hdd_space");
+      if(row.hdd_space >= space)
+         row.hdd_space -= space;
+      else 
+         row.hdd_space = 0;
    });
 
 }
@@ -403,6 +432,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       int64_t new_balance;
       if (calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance))
       {
+         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
          balance_delta = new_balance - row.hdd_balance;
          row.hdd_balance = new_balance;
          row.last_hdd_time = tmp_t;
@@ -417,6 +447,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
       row.hdd_balance += balance_delta;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
       row.hdd_per_cycle_profit = 0;
    });
 
@@ -438,6 +469,7 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
       int64_t new_balance;
       if (calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance))
       {
+         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
          balance_delta = new_balance - row.hdd_balance;
          row.hdd_balance = new_balance;
          row.last_hdd_time = tmp_t;
@@ -450,6 +482,7 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
       row.hdd_balance += balance_delta;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
       row.hdd_per_cycle_profit = 0;
    });
 }
@@ -523,6 +556,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
       int64_t new_balance;
       if (calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance))
       {
+         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
          balance_delta = new_balance - row.hdd_balance;
          row.hdd_balance = new_balance;
          row.last_hdd_time = tmp_t;
@@ -535,6 +569,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
       row.hdd_balance += balance_delta;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
       row.hdd_per_cycle_profit = 0;
    });
 
@@ -659,7 +694,9 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    require_auth(itminerinfo->admin);
 
    eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
-  
+
+   eosio_assert(max_space <= max_minerspace, "miner max_space overflow\n");  
+
    /* 
    if(itminerinfo->pool_id.value != 0) {
       if(itminerinfo->pool_id.value != pool_id.value || itminerinfo->max_space != max_space) {
