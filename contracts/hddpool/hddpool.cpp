@@ -316,10 +316,12 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
    check_userid(user.value, userid);
    check_bp_account(caller.value, userid, true);
 
+   eosio_assert(is_hdd_amount_within_range(fee), "magnitude of fee must be less than 2^62");      
+
+
    //每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
-   //bool istrue = fee <= (int64_t)(((double)(it->hdd_space * data_slice_size)/(double)one_gb) * ((double)fee_cycle/(double)seconds_in_one_year));
-   //eosio_assert(istrue , "the fee verification is not right \n");
-   int64_t delta_fee = 0;
+   bool istrue = fee <= (int64_t)(((double)(it->hdd_space * data_slice_size)/(double)one_gb) * ((double)fee_cycle/(double)seconds_in_one_year) * 100000000);
+   eosio_assert(istrue , "the fee verification is not right \n");
    _userhdd.modify(it, _self, [&](auto &row) {
       //设置每周期费用之前可能需要将以前的余额做一次计算，然后更改last_hdd_time
       uint64_t tmp_t = current_time();
@@ -330,7 +332,6 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
          row.hdd_balance = new_balance;
          row.last_hdd_time = tmp_t;
       }
-      delta_fee = fee - it->hdd_per_cycle_fee;
       row.hdd_per_cycle_fee = fee;
    });
 
@@ -897,6 +898,7 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+   //return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");
