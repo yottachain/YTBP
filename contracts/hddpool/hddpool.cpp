@@ -125,8 +125,9 @@ void hddpool::new_user_hdd(userhdd_index& userhdd, name user, int64_t balance)
 
 void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 {
+   eosio_assert(is_account(user), "user not a account.");
+
    if(acc_type == 1) {
-      eosio_assert(is_account(user), "user not a account.");
       require_auth( user );
    }
    else if(acc_type == 2) {
@@ -136,8 +137,6 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    } else {
       require_auth( _self );
    }
-
-   eosio_assert(is_account(user), "user not a account.");
 
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
@@ -337,11 +336,20 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
 
 }
 
-void hddpool::subbalance(name user, int64_t balance, uint64_t userid)
+void hddpool::subbalance(name user, int64_t balance, uint64_t userid, uint8_t acc_type, name caller)
 {
-   require_auth(user);
-
    eosio_assert(is_account(user), "user invalidate");
+
+   if(acc_type == 1) {
+      require_auth( user );
+   }
+   else if(acc_type == 2) {
+      eosio_assert(is_account(caller), "caller not a account.");
+      check_bp_account(caller.value, userid, false);
+
+   } else {
+      require_auth( _self );
+   }
 
    eosio_assert(is_hdd_amount_within_range(balance), "magnitude of hddbalance must be less than 2^62");      
 

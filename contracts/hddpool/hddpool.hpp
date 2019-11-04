@@ -60,7 +60,7 @@ public:
   //void buyhdd( name user , int64_t amount);
   void sellhdd(name user, int64_t amount);
   void sethfee(name user, int64_t fee, name caller, uint64_t userid);
-  void subbalance(name user, int64_t balance, uint64_t userid);
+  void subbalance(name user, int64_t balance, uint64_t userid, uint8_t acc_type, name caller);
   void addhspace(name user, uint64_t space, name caller, uint64_t userid);
   void subhspace(name user, uint64_t space, name caller, uint64_t userid);
   //void newmaccount(name owner, uint64_t minerid, name caller);

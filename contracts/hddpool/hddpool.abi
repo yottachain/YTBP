@@ -497,7 +497,16 @@
                 {
                     "name": "userid",
                     "type": "uint64"
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
                 }
+
             ]
         },
         {
