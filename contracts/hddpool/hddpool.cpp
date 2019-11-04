@@ -156,6 +156,9 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
             row.hdd_balance = new_balance;
             row.last_hdd_time = tmp_t;
          }
+         
+         /* 
+         //--- 去掉遍历该账户下所有矿机并计算收益的操作，以避免事务超过最大CPU时限。外部系统需要自行调用相关的action分别计算某个矿机的收益
          //计算该账户下所有矿机的收益
          maccount_index _maccount(_self, user.value);
          for (auto it_m = _maccount.begin(); it_m != _maccount.end(); it_m++)
@@ -177,6 +180,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
             eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
 
          }
+         */
          print("{\"balance\":", it->hdd_balance, "}");
       });
    }
