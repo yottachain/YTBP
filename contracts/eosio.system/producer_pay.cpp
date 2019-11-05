@@ -110,7 +110,6 @@ namespace eosiosystem {
 
 
    void system_contract::rewardprods( ) {
-      //require_auth(_self);
       require_auth(N(ytarewardusr));
 
       all_prods_singleton _all_prods(_self, _self);
