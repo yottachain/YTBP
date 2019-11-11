@@ -108,9 +108,9 @@ hddpool::~hddpool()
    _ghddprice.set(_ghddpriceState, _self);
 }
 
-void hddpool::new_user_hdd(userhdd_index& userhdd, name user, int64_t balance)
+void hddpool::new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer)
 {
-      userhdd.emplace(_self, [&](auto &row) {
+      userhdd.emplace(payer, [&](auto &row) {
          row.account_name = user;
          row.hdd_balance = balance;
          row.hdd_per_cycle_fee = 0;
@@ -127,13 +127,15 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 {
    eosio_assert(is_account(user), "user not a account.");
 
+   account_name payer = _self;
+
    if(acc_type == 1) {
       require_auth( user );
+      payer = user.value;
    }
    else if(acc_type == 2) {
       eosio_assert(is_account(caller), "caller not a account.");
       check_bp_account(caller.value, 0, false);
-
    } else {
       require_auth( _self );
    }
@@ -142,7 +144,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    auto it = _userhdd.find(user.value);
    if (it == _userhdd.end())
    {
-      new_user_hdd(_userhdd, user, inc_hdd_amount);
+      new_user_hdd(_userhdd, user, inc_hdd_amount, payer);
       print("{\"balance\":", inc_hdd_amount, "}");
    }
    else
@@ -257,7 +259,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    if (it == _userhdd.end())
    {
       eosio_assert(is_hdd_amount_within_range(_hdd_amount), "magnitude of user hddbalance must be less than 2^62");
-      new_user_hdd(_userhdd, receiver, _hdd_amount);
+      new_user_hdd(_userhdd, receiver, _hdd_amount, from);
    }
    else
    {
@@ -629,7 +631,8 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
        std::make_tuple(dep_acc, minerid, dep_amount))
        .send(); 
 
-   _minerinfo.emplace(_self, [&](auto &row) {
+   //_minerinfo.emplace(_self, [&](auto &row) {
+   _minerinfo.emplace(dep_acc.value, [&](auto &row) {      
       row.minerid    = minerid;
       row.admin      = adminacc;
       row.max_space  = 0;
@@ -754,7 +757,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    auto userhdd_itr = _userhdd.find(minerowner.value);
    if (userhdd_itr == _userhdd.end())
    {
-      new_user_hdd(_userhdd, minerowner, inc_hdd_amount);
+      new_user_hdd(_userhdd, minerowner, inc_hdd_amount, _self);
    }
 }
 
@@ -912,7 +915,6 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
-   //return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");

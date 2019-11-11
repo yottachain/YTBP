@@ -36,7 +36,8 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 
     //insert or update accdeposit table
     if ( acc == _deposit.end() ) {
-        _deposit.emplace( _self, [&]( auto& a ){
+        //_deposit.emplace( _self, [&]( auto& a ){
+        _deposit.emplace( user, [&]( auto& a ){
             a.account_name = name{user};
             a.deposit = quant;
         });
