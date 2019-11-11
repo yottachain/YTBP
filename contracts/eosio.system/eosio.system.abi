@@ -38,9 +38,7 @@
         {"name":"owner",            "type":"account_name"},
         {"name":"total_votes",      "type":"float64"},
         {"name":"producer_key",     "type":"public_key"},
-        {"name":"all_stake",        "type":"int64"},
         {"name":"is_active",        "type":"bool"},
-        {"name":"url",              "type":"string"},
         {"name":"location",         "type":"uint16"},
         {"name":"is_in_grace",      "type":"bool"},
         {"name":"grace_start_time", "type":"uint64"}

@@ -56,7 +56,7 @@ namespace eosiosystem {
                info.location     = location;
             });
          
-         change_producer_yta_info(producer, producer_key, true, true, url);
+         change_producer_yta_info(producer, producer_key, true);
       } else {
          _producers.emplace( _self, [&]( producer_info& info ){
                info.owner         = producer;
@@ -80,7 +80,7 @@ namespace eosiosystem {
             info.deactivate();
       });
 
-      change_producer_yta_info(producer, public_key(), false, false, "");
+      change_producer_yta_info(producer, public_key(), false);
    }
 //##YTA-Change  start: 
    void system_contract::clsprods2() {
@@ -202,7 +202,7 @@ namespace eosiosystem {
          _all_prods_state = all_prods_level{};
       }
       yta_prod_info prodyta;
-      prodyta.all_stake = (int64_t)prod.total_votes;
+      //prodyta.all_stake = (int64_t)prod.total_votes;
       prodyta.grace_start_time = 0;
       prodyta.is_active = prod.is_active;
       prodyta.is_in_grace = false;
@@ -210,7 +210,7 @@ namespace eosiosystem {
       prodyta.owner = producer;
       prodyta.producer_key = prod.producer_key;
       prodyta.total_votes = prod.total_votes;
-      prodyta.url = prod.url;
+      //prodyta.url = prod.url;
       if(level == 1) {
          eosio_assert( _all_prods_state.prods_l1.size() < LEVEL_ONE_MAX, "too many level one bp");
          _all_prods_state.prods_l1.push_back(prodyta);
@@ -224,7 +224,7 @@ namespace eosiosystem {
       
    }
 
-   void system_contract::change_producer_yta_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url) {
+   void system_contract::change_producer_yta_info( const account_name producer, const eosio::public_key& producer_key, bool isactive) {
       
       if(!isactive) {
          delproducer(producer);
@@ -239,8 +239,6 @@ namespace eosiosystem {
             if(it1->owner == producer) {
                it1->is_active = isactive;
                it1->producer_key = producer_key;
-               if(seturl)
-                  it1->url = url;               
                break;
             } 
          }
@@ -248,8 +246,6 @@ namespace eosiosystem {
             if(it2->owner == producer) {
                it2->is_active = isactive;
                it2->producer_key = producer_key;
-               if(seturl)
-                  it2->url = url;               
                break;
             } 
          }
@@ -257,8 +253,6 @@ namespace eosiosystem {
             if(it3->owner == producer) {
                it3->is_active = isactive;
                it3->producer_key = producer_key;
-               if(seturl)
-                  it3->url = url;               
                break;
             } 
          }
@@ -276,21 +270,21 @@ namespace eosiosystem {
          for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
             if(it1->owner == owner) {
                it1->total_votes = total_votes;
-               it1->all_stake = (int64_t)total_votes;
+               //it1->all_stake = (int64_t)total_votes;
                break;
             } 
          }
          for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
             if(it2->owner == owner) {
                it2->total_votes = total_votes;
-               it2->all_stake = (int64_t)total_votes;
+               //it2->all_stake = (int64_t)total_votes;
                break;
             } 
          }
          for( auto it3=  _all_prods_state.prods_l3.begin(); it3 !=  _all_prods_state.prods_l3.end(); it3++ ) {
             if(it3->owner == owner) {
                it3->total_votes = total_votes;
-               it3->all_stake = (int64_t)total_votes;
+               //it3->all_stake = (int64_t)total_votes;
                break;
             } 
          }

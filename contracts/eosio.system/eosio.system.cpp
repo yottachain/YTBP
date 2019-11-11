@@ -96,7 +96,7 @@ namespace eosiosystem {
       _producers.modify( prod, 0, [&](auto& p) {
             p.deactivate();
          });
-      change_producer_yta_info(producer, public_key(), false, false , "");   
+      change_producer_yta_info(producer, public_key(), false);   
    }
 
    void system_contract::bidname( account_name bidder, account_name newname, asset bid ) {

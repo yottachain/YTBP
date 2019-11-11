@@ -118,14 +118,12 @@ namespace eosiosystem {
       account_name         owner;
       double               total_votes = 0; // total votes
       eosio::public_key    producer_key; /// a packed public key object
-      int64_t              all_stake = 0;  // total original votes (buy yta amount) -- depracated
       bool                 is_active = true;
-      std::string          url;
       uint16_t             location = 0;
       bool                 is_in_grace;            //是否处在补齐投票的宽限期
       uint64_t             grace_start_time = 0;   //宽限期的开始时间
 
-      EOSLIB_SERIALIZE( yta_prod_info, (owner)(total_votes)(producer_key)(all_stake)(is_active)(url)(location)(is_in_grace)(grace_start_time) )      
+      EOSLIB_SERIALIZE( yta_prod_info, (owner)(total_votes)(producer_key)(is_active)(location)(is_in_grace)(grace_start_time) )      
 
    };
 
@@ -311,7 +309,7 @@ namespace eosiosystem {
 
          void add_producer_yta( const account_name producer, uint8_t level );
 
-         void change_producer_yta_info( const account_name producer, const eosio::public_key& producer_key, bool isactive, bool seturl, const std::string& url);
+         void change_producer_yta_info( const account_name producer, const eosio::public_key& producer_key, bool isactive);
 
          void update_producers_yta_totalvotes( account_name owner, double total_votes);              
 
