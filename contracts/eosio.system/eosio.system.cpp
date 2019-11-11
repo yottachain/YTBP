@@ -91,6 +91,8 @@ namespace eosiosystem {
 
    void system_contract::rmvproducer( account_name producer ) {
       require_auth( _self );
+      //require_auth(N(ytaadminuser));
+            
       auto prod = _producers.find( producer );
       eosio_assert( prod != _producers.end(), "producer not found" );
       _producers.modify( prod, 0, [&](auto& p) {

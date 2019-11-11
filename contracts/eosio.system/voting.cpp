@@ -44,7 +44,9 @@ namespace eosiosystem {
       eosio_assert( url.size() < 512, "url too long" );
       eosio_assert( producer_key != eosio::public_key(), "public key should not be the default value" );
 
-      require_auth( _self );
+      //require_auth( _self );
+      require_auth(N(ytaadminuser));
+
 
       auto prod = _producers.find( producer );
 
@@ -84,7 +86,8 @@ namespace eosiosystem {
    }
 //##YTA-Change  start: 
    void system_contract::clsprods2() {
-      require_auth( _self );
+      //require_auth( _self );
+      require_auth(N(ytaadminuser));
 
       while (_producersext.begin() != _producersext.end()) {
          auto it = _producersext.begin();
@@ -130,7 +133,8 @@ namespace eosiosystem {
    }
 
    void system_contract::seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level ) {
-      require_auth( _self );
+      //require_auth( _self );
+      require_auth(N(ytaadminuser));
       
       //const auto& prod = _producers.get( producer, "producer not found" );
       auto itp = _producers.find(producer);
@@ -297,7 +301,8 @@ namespace eosiosystem {
    }
 
    void system_contract::reprodlevel() {
-      require_auth( _self );
+      //require_auth( _self );
+      require_auth(N(ytaadminuser));
 
       update_producer_level();
    }
