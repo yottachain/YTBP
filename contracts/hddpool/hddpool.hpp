@@ -155,17 +155,17 @@ private:
 
   struct hdd_global_state
   {
-    int64_t hdd_total_balance = 10000000000;
+    int64_t hdd_total_balance = 0;
   };
 
   struct hdd_global_state2
   {
-    uint64_t hdd_total_user = 4;
+    uint64_t hdd_total_user = 0;
   };
 
   struct hdd_global_state3
   {
-    uint64_t hdd_macc_user = 2;
+    uint64_t hdd_macc_user = 0;
   };
 
   struct hdd_global_price
@@ -202,5 +202,5 @@ private:
 
   void update_total_hdd_balance(int64_t _balance_delta);
 
-  void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance);
+  void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 };
