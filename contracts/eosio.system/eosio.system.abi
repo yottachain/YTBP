@@ -317,8 +317,7 @@
       "base": "",
       "fields": [
          {"name":"prods_l1",          "type":"yta_prod_info[]"},
-         {"name":"prods_l2",          "type":"yta_prod_info[]"},
-         {"name":"prods_l3",          "type":"yta_prod_info[]"}
+         {"name":"prods_l2",          "type":"yta_prod_info[]"}
       ]
     },{
       "name": "regproducer",
@@ -473,7 +472,7 @@
         {"name":"base", "type":"connector"},
         {"name":"quote", "type":"connector"}
       ]
-    }, {
+    },{
        "name": "namebid_info",
        "base": "",
        "fields": [

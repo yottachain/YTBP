@@ -106,7 +106,6 @@ namespace eosiosystem {
          _all_prods_state = _all_prods.get();
          _all_prods_state.prods_l1.clear();
          _all_prods_state.prods_l2.clear();
-         _all_prods_state.prods_l3.clear();
          _all_prods.set(_all_prods_state,_self);
       }
 
@@ -162,37 +161,51 @@ namespace eosiosystem {
    }
 
    void system_contract::rm_producer_yta(const account_name producer) {
+
+      bool is_all_prods_level_change = false;
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
       if (_all_prods.exists()) {
-         _all_prods_state = _all_prods.get();
-         for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
-            if(it1->owner == producer) {
-               _all_prods_state.prods_l1.erase(it1);
+         do {
+            _all_prods_state = _all_prods.get();
+            for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
+               if(it1->owner == producer) {
+                  _all_prods_state.prods_l1.erase(it1);
+                  is_all_prods_level_change = true;
+                  break;
+               } 
+            }
+            if(is_all_prods_level_change) 
                break;
-            } 
+            for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
+               if(it2->owner == producer) {
+                  _all_prods_state.prods_l2.erase(it2);
+                  is_all_prods_level_change = true;
+                  break;
+               } 
+            }
+         } while(false);   
+
+         if(is_all_prods_level_change) {
+            _all_prods.set(_all_prods_state,_self);
          }
-         for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
-            if(it2->owner == producer) {
-               _all_prods_state.prods_l2.erase(it2);
-               break;
-            } 
-         }
-         for( auto it3=  _all_prods_state.prods_l3.begin(); it3 !=  _all_prods_state.prods_l3.end(); it3++ ) {
-            if(it3->owner == producer) {
-               _all_prods_state.prods_l3.erase(it3);
-               break;
-            } 
-         }
-         _all_prods.set(_all_prods_state,_self);
       }
-   
+
    }
 
    void system_contract::add_producer_yta( const account_name producer, uint8_t level ) {
       
       //need retrive from system producers table
       const auto& prod = _producers.get( producer, "producer not found" );
+
+      yta_prod_info prodyta;
+      prodyta.grace_start_time = 0;
+      prodyta.is_active = prod.is_active;
+      prodyta.is_in_grace = false;
+      prodyta.location = prod.location;
+      prodyta.owner = producer;
+      prodyta.producer_key = prod.producer_key;
+      prodyta.total_votes = prod.total_votes;
 
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
@@ -201,27 +214,14 @@ namespace eosiosystem {
       } else {
          _all_prods_state = all_prods_level{};
       }
-      yta_prod_info prodyta;
-      //prodyta.all_stake = (int64_t)prod.total_votes;
-      prodyta.grace_start_time = 0;
-      prodyta.is_active = prod.is_active;
-      prodyta.is_in_grace = false;
-      prodyta.location = prod.location;
-      prodyta.owner = producer;
-      prodyta.producer_key = prod.producer_key;
-      prodyta.total_votes = prod.total_votes;
-      //prodyta.url = prod.url;
       if(level == 1) {
          eosio_assert( _all_prods_state.prods_l1.size() < LEVEL_ONE_MAX, "too many level one bp");
          _all_prods_state.prods_l1.push_back(prodyta);
       } else if(level == 2) {
          eosio_assert( _all_prods_state.prods_l2.size() < LEVEL_TWO_MAX, "too many level two bp");
          _all_prods_state.prods_l2.push_back(prodyta);
-      } else {
-         _all_prods_state.prods_l3.push_back(prodyta);
-      }
+      } 
       _all_prods.set(_all_prods_state,_self);
-      
    }
 
    void system_contract::change_producer_yta_info( const account_name producer, const eosio::public_key& producer_key, bool isactive) {
@@ -231,64 +231,68 @@ namespace eosiosystem {
          return;
       }
 
+      bool is_all_prods_level_change = false;
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
       if (_all_prods.exists()) {
-         _all_prods_state = _all_prods.get();
-         for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
-            if(it1->owner == producer) {
-               it1->is_active = isactive;
-               it1->producer_key = producer_key;
+         do {
+            _all_prods_state = _all_prods.get();
+            for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
+               if(it1->owner == producer) {
+                  it1->is_active = isactive;
+                  it1->producer_key = producer_key;
+                  is_all_prods_level_change = true;
+                  break;
+               } 
+            }
+            if(is_all_prods_level_change) 
                break;
-            } 
+            for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
+               if(it2->owner == producer) {
+                  it2->is_active = isactive;
+                  it2->producer_key = producer_key;
+                  is_all_prods_level_change = true;
+                  break;
+               } 
+            }
+         } while(false);
+
+         if(is_all_prods_level_change) {
+            _all_prods.set(_all_prods_state,_self);
          }
-         for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
-            if(it2->owner == producer) {
-               it2->is_active = isactive;
-               it2->producer_key = producer_key;
-               break;
-            } 
-         }
-         for( auto it3=  _all_prods_state.prods_l3.begin(); it3 !=  _all_prods_state.prods_l3.end(); it3++ ) {
-            if(it3->owner == producer) {
-               it3->is_active = isactive;
-               it3->producer_key = producer_key;
-               break;
-            } 
-         }
-         _all_prods.set(_all_prods_state,_self);
       }
 
    }
 
    void system_contract::update_producers_yta_totalvotes( account_name owner, double total_votes) {
 
+      bool is_all_prods_level_change = false;
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
       if (_all_prods.exists()) {
-         _all_prods_state = _all_prods.get();
-         for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
-            if(it1->owner == owner) {
-               it1->total_votes = total_votes;
-               //it1->all_stake = (int64_t)total_votes;
+         do {
+            _all_prods_state = _all_prods.get();
+            for( auto it1=  _all_prods_state.prods_l1.begin(); it1 !=  _all_prods_state.prods_l1.end(); it1++ ) {
+               if(it1->owner == owner) {
+                  it1->total_votes = total_votes;
+                  is_all_prods_level_change = true;
+                  break;
+               } 
+            }
+            if(is_all_prods_level_change) 
                break;
-            } 
+            for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
+               if(it2->owner == owner) {
+                  it2->total_votes = total_votes;
+                  is_all_prods_level_change = true;
+                  break;
+               } 
+            }
+         } while(false);
+
+         if(is_all_prods_level_change) {
+            _all_prods.set(_all_prods_state,_self);
          }
-         for( auto it2=  _all_prods_state.prods_l2.begin(); it2 !=  _all_prods_state.prods_l2.end(); it2++ ) {
-            if(it2->owner == owner) {
-               it2->total_votes = total_votes;
-               //it2->all_stake = (int64_t)total_votes;
-               break;
-            } 
-         }
-         for( auto it3=  _all_prods_state.prods_l3.begin(); it3 !=  _all_prods_state.prods_l3.end(); it3++ ) {
-            if(it3->owner == owner) {
-               it3->total_votes = total_votes;
-               //it3->all_stake = (int64_t)total_votes;
-               break;
-            } 
-         }
-         _all_prods.set(_all_prods_state,_self);
       }
    }
 
@@ -337,7 +341,7 @@ namespace eosiosystem {
          }
 
          if(is_remove) {
-            _all_prods_state.prods_l3.push_back(*it);
+            //_all_prods_state.prods_l3.push_back(*it);
             it = _all_prods_state.prods_l1.erase(it);
             ischanged = true;
          } else {
@@ -374,7 +378,7 @@ namespace eosiosystem {
          }
 
          if(is_remove) {
-            _all_prods_state.prods_l3.push_back(*it);
+            //_all_prods_state.prods_l3.push_back(*it);
             it =  _all_prods_state.prods_l2.erase(it);
             ischanged = true;
          } else {
@@ -398,31 +402,13 @@ namespace eosiosystem {
             }
          }
       }     
-
-      if(_all_prods_state.prods_l2.size() < LEVEL_TWO_MAX) {
-         std::sort(_all_prods_state.prods_l3.begin(), _all_prods_state.prods_l3.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
-         for( auto it =_all_prods_state.prods_l3.begin(); it != _all_prods_state.prods_l3.end();) {
-            if((int64_t)it->total_votes >= 20000000000 && it->is_active) {
-               if(_all_prods_state.prods_l2.size() < LEVEL_TWO_MAX) {
-                  _all_prods_state.prods_l2.push_back(*it);
-                  it = _all_prods_state.prods_l3.erase(it);
-                  ischanged = true;
-               } else {
-                  break;
-               }
-            } else {
-               ++it;
-            }
-         }
-      }
-
+      
       if(ischanged) 
       {
          _all_prods.set(_all_prods_state, _self);
       }
 
    }
-
 
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
  

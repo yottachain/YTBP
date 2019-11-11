@@ -131,9 +131,8 @@ namespace eosiosystem {
    struct all_prods_level {
       std::vector<yta_prod_info>        prods_l1;  //max 21
       std::vector<yta_prod_info>        prods_l2;  //max 105
-      std::vector<yta_prod_info>        prods_l3;
-     
-      EOSLIB_SERIALIZE( all_prods_level, (prods_l1)(prods_l2)(prods_l3) )      
+
+      EOSLIB_SERIALIZE( all_prods_level, (prods_l1)(prods_l2) )      
    };
    typedef eosio::singleton<N(prodslevel), all_prods_level> all_prods_singleton;
 
