@@ -309,6 +309,7 @@
          {"name":"out_votes",               "type":"int64"},
          {"name":"deposit_votes",           "type":"int64"},
          {"name":"unpaid_base_cnt",         "type":"uint32"},
+         {"name":"unpaid_amount",           "type":"int64"},
          {"name":"shadow",                  "type":"account_name"}
       ]
     },{

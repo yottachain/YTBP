@@ -105,10 +105,11 @@ namespace eosiosystem {
       int64_t               out_votes = 0;
       int64_t               deposit_votes = 0;
       uint32_t              unpaid_base_cnt = 0;
+      int64_t               unpaid_amount = 0;  
       account_name          shadow = 0;
       uint64_t primary_key()const { return owner; }          
 
-      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(level)(out_votes)(deposit_votes)(unpaid_base_cnt)(shadow))
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(level)(out_votes)(deposit_votes)(unpaid_base_cnt)(unpaid_amount)(shadow))
 
    };
    //##YTA-Change  end:
