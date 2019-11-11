@@ -402,6 +402,10 @@
       "base": "",
       "fields": []
     },{
+      "name": "startreward",
+      "base": "",
+      "fields": []
+    },{
       "name": "setpriv",
       "base": "",
       "fields": [
@@ -587,6 +591,10 @@
    },{
       "name": "rewardprods",
       "type": "rewardprods",
+      "ricardian_contract": ""
+   },{
+      "name": "startreward",
+      "type": "startreward",
       "ricardian_contract": ""
    },{
       "name": "setpriv",

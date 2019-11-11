@@ -108,9 +108,29 @@ namespace eosiosystem {
       //require_auth(owner);
    }
 
+   void system_contract::startreward( ) {
+      require_auth(N(ytarewardusr));
+
+      eosio_assert( _gstate.last_pervote_bucket_fill == 0, "already start reward");
+      all_prods_singleton _all_prods(_self, _self);
+      all_prods_level     _all_prods_state;
+
+      eosio_assert ( _all_prods.exists(), "can not start reward" );
+
+      _all_prods_state = _all_prods.get();
+      uint64_t num_producers = _all_prods_state.prods_l1.size() + _all_prods_state.prods_l2.size();
+
+      eosio_assert ( num_producers >= 126, "can not start reward" );
+
+      _gstate.last_pervote_bucket_fill = current_time();
+
+   }
 
    void system_contract::rewardprods( ) {
       require_auth(N(ytarewardusr));
+
+      if( _gstate.last_pervote_bucket_fill == 0 ) 
+         return;
 
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;

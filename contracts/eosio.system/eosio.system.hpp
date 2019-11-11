@@ -291,7 +291,8 @@ namespace eosiosystem {
 
          // functions defined in producer_pay.cpp
          void claimrewards( const account_name& owner );
-         void rewardprods(); 
+         void rewardprods();
+         void startreward(); 
 
          void setpriv( account_name account, uint8_t ispriv );
 
