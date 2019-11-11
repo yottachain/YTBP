@@ -84,7 +84,6 @@ void token::transfer( account_name from,
     eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
     eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
-
     //##YTA-Change  start:  
     if( quantity.symbol != CORE_SYMBOL || from == N(hddbasefound))  // no need to consider hdd_deposit and hdd_lock issue  
       sub_balance( from, quantity );
@@ -116,6 +115,10 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
    accounts from_acnts( _self, owner );
 
    const auto& from = from_acnts.get( value.symbol.name(), "no balance object found" );
+
+   bool is_frozen = hddlock(hdd_lock_account).is_frozen(owner);  
+   eosio_assert( !is_frozen, "user is frozen" );
+
 
    //todo : need consider lock_token situation
    if( to == hdd_deposit_account) { //缴纳罚金,锁仓币也可以缴纳罚金

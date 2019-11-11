@@ -27,6 +27,14 @@
             ]
         },
         {
+            "name": "frozenuser",
+            "base": "",
+            "fields": [
+                {"name":"user",         "type":"account_name"},
+                {"name":"time",         "type":"uint64"}
+            ]
+        },
+        {
             "name": "clearall",
             "base": "",
             "fields": [
@@ -127,6 +135,20 @@
                     "type": "string"
                 }
             ]
+        },
+        {
+            "name": "accfrozen",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "time",
+                    "type": "uint64"
+                }
+            ]
         }
     ],
     "actions": [
@@ -164,8 +186,12 @@
             "name": "rmvaccbig",
             "type": "rmvaccbig",
             "ricardian_contract": ""
+        },
+        {
+            "name": "frozenuser",
+            "type": "frozenuser",
+            "ricardian_contract": ""
         }
-
     ],
     "tables": [
         {
@@ -185,6 +211,13 @@
         {
             "name": "accbig",
             "type": "accbig",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "accfrozen",
+            "type": "accfrozen",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

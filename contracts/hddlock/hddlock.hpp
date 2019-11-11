@@ -26,8 +26,10 @@ class hddlock : public eosio::contract {
         void clearall(account_name user);
         void addaccbig(account_name user, std::string& desc);
         void rmvaccbig(account_name user);
+        void frozenuser(account_name user, uint64_t time);
 
         inline asset get_lock_asset( account_name user )const;
+        inline bool is_frozen( account_name user ) const;
 
     private:
 
@@ -54,11 +56,32 @@ class hddlock : public eosio::contract {
         struct accbig {
             account_name    user;
             std::string     desc;
-            uint64_t    primary_key()const { return user; }
+            uint64_t        primary_key()const { return user; }
         };
         typedef multi_index<N(accbig), accbig> accbig_table; 
+
+        struct accfrozen {
+            account_name    user;
+            uint64_t        time; //frozen deadline
+            uint64_t        primary_key()const { return user; }
+        };
+        typedef multi_index<N(accfrozen), accfrozen> accfrozen_table; 
+
 };
 
+bool hddlock::is_frozen( account_name user ) const
+{   
+    bool isFrozen = false;
+    accfrozen_table _accfrozen(_self, _self);
+    auto it = _accfrozen.find(user);
+    if(it != _accfrozen.end()) {
+        uint64_t curtime = current_time()/1000000ll; //seconds
+        if(curtime < it->time) {
+            isFrozen = true;
+        }
+    }
+    return isFrozen;
+}
 
 asset hddlock::get_lock_asset( account_name user ) const
 {

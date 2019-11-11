@@ -107,6 +107,26 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
     });
 }
 
+void hddlock::frozenuser(account_name user, uint64_t time) {
+    require_auth(_self);
+
+    accfrozen_table _accfrozen(_self, _self);
+    auto it = _accfrozen.find(user);
+    if (it == _accfrozen.end())
+    {
+        _accfrozen.emplace(_self, [&](auto &row) {
+        row.user= user;
+        row.time = time;
+        });
+    }
+    else
+    {
+        _accfrozen.modify(it, _self, [&](auto &row) {
+        row.time = time;
+        });
+    }
+}
+
 
 void hddlock::clearall(account_name user) {
     require_auth(_self);
@@ -118,4 +138,4 @@ void hddlock::clearall(account_name user) {
 }
 
 
-EOSIO_ABI( hddlock, (init)(addrule)(rmvrule)(locktransfer)(clearall)(addaccbig)(rmvaccbig))
+EOSIO_ABI( hddlock, (init)(addrule)(rmvrule)(locktransfer)(clearall)(addaccbig)(rmvaccbig)(frozenuser))
