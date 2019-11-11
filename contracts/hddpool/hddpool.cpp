@@ -276,6 +276,8 @@ void hddpool::sellhdd(name user, int64_t amount)
 
    eosio_assert(is_hdd_amount_within_range(amount), "magnitude of user hdd amount must be less than 2^62");      
 
+   eosio_assert( amount > 0, "cannot sell negative hdd amount" );
+
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table.");
