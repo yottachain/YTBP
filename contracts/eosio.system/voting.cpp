@@ -298,15 +298,14 @@ namespace eosiosystem {
       }
    }
 
-   void system_contract::testnewelec() {
+   void system_contract::reprodlevel() {
       require_auth( _self );
 
-      //block_timestamp block_time;
-      //update_elected_producers_yta( block_time );
+      update_producer_level();
    }
 
-   void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
- 
+   void system_contract::update_producer_level() {
+
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
 
@@ -428,9 +427,19 @@ namespace eosiosystem {
          _all_prods.set(_all_prods_state, _self);
       }
 
-      ///---------------------------------------------------
+   }
 
-      //return;
+
+   void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
+ 
+      all_prods_singleton _all_prods(_self, _self);
+      all_prods_level     _all_prods_state;
+
+      if (!_all_prods.exists())
+         return;
+
+      _all_prods_state = _all_prods.get();
+
       _gstate.last_producer_schedule_update = block_time;
 
       std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;

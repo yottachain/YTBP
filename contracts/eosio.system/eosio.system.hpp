@@ -277,7 +277,7 @@ namespace eosiosystem {
 
          void seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level );
 
-         void testnewelec();       
+         void reprodlevel();       
 
          void changevotes( const account_name voter_name );  
 //##YTA-Change  end:           
@@ -304,6 +304,8 @@ namespace eosiosystem {
 
 //##YTA-Change  start:  
          void update_elected_producers_yta( block_timestamp timestamp );
+
+         void update_producer_level();
 
          void rm_producer_yta( const account_name producer );
 

@@ -350,7 +350,7 @@
         {"name":"level",        "type":"uint8"}
       ]
     },{
-      "name": "testnewelec",
+      "name": "reprodlevel",
       "base": "",
       "fields": []
     },{
@@ -566,8 +566,8 @@
       "type": "seqproducer",
       "ricardian_contract": ""
    },{
-      "name": "testnewelec",
-      "type": "testnewelec",
+      "name": "reprodlevel",
+      "type": "reprodlevel",
       "ricardian_contract": ""
    },{
       "name": "regproxy",
