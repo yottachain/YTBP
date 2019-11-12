@@ -6,7 +6,7 @@
    }],
     "structs": [
         {
-            "name": "acc2deposit",
+            "name": "depositpool",
             "base": "",
             "fields": [
                 {
@@ -14,11 +14,11 @@
                     "type": "name"
                 },                
                 {
-                    "name": "deposit",
+                    "name": "deposit_total",
                     "type": "asset"
                 },
                 {
-                    "name": "forfeit",
+                    "name": "deposit_free",
                     "type": "asset"
                 }                
             ]
@@ -52,6 +52,34 @@
                 {
                     "name": "rate",
                     "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "paydeppool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "unpaydeppool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
                 }
             ]
         },
@@ -122,42 +150,6 @@
             ]
         },
         {
-            "name": "drawforfeit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "acc_type",
-                    "type": "uint8"
-                },
-                {
-                    "name": "caller",
-                    "type": "name"
-                }                                
-            ]
-        },
-        {
-            "name": "cutvote",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "acc_type",
-                    "type": "uint8"
-                },
-                {
-                    "name": "caller",
-                    "type": "name"
-                }                                
-            ]
-        },
-        {
             "name": "delminer",
             "base": "",
             "fields": [
@@ -194,6 +186,16 @@
     ],
     "actions": [
         {
+            "name": "paydeppool",
+            "type": "paydeppool",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "unpaydeppool",
+            "type": "unpaydeppool",
+            "ricardian_contract": ""
+        },
+        {
             "name": "paydeposit",
             "type": "paydeposit",
             "ricardian_contract": ""
@@ -208,16 +210,6 @@
             "type": "payforfeit",
             "ricardian_contract": ""
         },
-        {
-            "name": "drawforfeit",
-            "type": "drawforfeit",
-            "ricardian_contract": ""
-        },   
-        {
-            "name": "cutvote",
-            "type": "cutvote",
-            "ricardian_contract": ""
-        },                
         {
             "name": "delminer",
             "type": "delminer",
@@ -236,8 +228,8 @@
     ],
     "tables": [
         {
-            "name": "acc2deposit",
-            "type": "acc2deposit",
+            "name": "depositpool",
+            "type": "depositpool",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

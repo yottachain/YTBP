@@ -16,25 +16,32 @@ class hdddeposit : public eosio::contract {
     public:
         using contract::contract;
 
+        void paydeppool(account_name user, asset quant);
+        void unpaydeppool(account_name user, asset quant);
+
         void paydeposit(account_name user, uint64_t minerid, asset quant);
         void chgdeposit(name user, uint64_t minerid, bool is_increace, asset quant);
         void payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller);
-        void drawforfeit(name user, uint8_t acc_type, name caller);
-        void cutvote(name user, uint8_t acc_type, name caller);
         void delminer(uint64_t minerid);
         void setrate(int64_t rate);
 
         void mchgdepacc(uint64_t minerid, name new_depacc);
 
-        inline asset get_deposit_and_forfeit( account_name user )const;
         inline asset get_deposit( account_name user )const;
-        inline asset get_forfeit( account_name user)const;
 
 
     private:
 
-        //bool is_bp_account(uint64_t uservalue);
         void check_bp_account(account_name bpacc, uint64_t id, bool isCheckId);
+
+        //记录某个账户的存储押金池信息
+        struct depositpool {
+            name        account_name;
+            asset       deposit_total;  //用户押金池总额(扣除了罚金后的总额)
+            asset       deposit_free;   //用户押金池剩余的可以给矿机缴纳押金的总额
+            uint64_t    primary_key()const { return account_name.value; }
+        };        
+        typedef multi_index<N(depositpool), depositpool> depositpool_table; 
 
         //记录某个账户缴纳的押金总量和当前需要缴纳的罚款总量
         struct acc2deposit {
@@ -65,38 +72,16 @@ class hdddeposit : public eosio::contract {
         typedef eosio::singleton<N(gdepositrate), deposit_rate> grate_singleton;
 };
 
-//these const functions will be called by eosio.token transfer action to check where a user has hdd deposit or forfeit
+//these const functions will be called by eosio.token transfer action to check where a user has deposit
+
+
 asset hdddeposit::get_deposit( account_name user ) const
 {
-    accdeposit_table _deposit(_self, user);
+    depositpool_table _deposit(_self, user);
     auto acc = _deposit.find( user );    
     if ( acc != _deposit.end() ) {
-        return acc->deposit;
+        return acc->deposit_total;
     } 
     asset zero{0, CORE_SYMBOL};
     return zero;
 }
-
-asset hdddeposit::get_forfeit( account_name user ) const
-{
-    accdeposit_table _deposit(_self, user);
-    auto acc = _deposit.find( user );    
-    if ( acc != _deposit.end() ) {
-        return acc->forfeit;
-    } 
-    asset zero{0, CORE_SYMBOL};
-    return zero;
-}
-
-
-asset hdddeposit::get_deposit_and_forfeit( account_name user ) const
-{
-    accdeposit_table _deposit(_self, user);
-    auto acc = _deposit.find( user );    
-    if ( acc != _deposit.end() ) {
-        return acc->deposit + acc->forfeit;
-    } 
-    asset zero{0, CORE_SYMBOL};
-    return zero;
-}
-

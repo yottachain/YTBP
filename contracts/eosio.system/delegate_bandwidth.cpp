@@ -416,7 +416,7 @@ namespace eosiosystem {
       //eosio_assert( transfer == false, "transfer not supported" );
       if(transfer) {
          auto balance   = eosio::token(N(eosio.token)).get_balance( from , asset(0,CORE_SYMBOL).symbol.name() );
-         auto frozen_asset = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(from);
+         auto frozen_asset = hdddeposit(hdd_deposit_account).get_deposit(from);
          //also need check lock token issue
          auto lock_asset = hddlock(hdd_lock_account).get_lock_asset(from);
          eosio_assert( frozen_asset.symbol == lock_asset.symbol, "deposit and lock symbol precision mismatch" );

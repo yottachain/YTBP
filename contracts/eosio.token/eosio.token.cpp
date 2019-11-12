@@ -125,11 +125,11 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
       eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
    } else if( to == N(eosio.stake) ) { //用来抵押带宽和CPU
       //forfeit can not use to delegatebw and vote
-      auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
+      auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit(owner);
       eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
       eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
    } else { //普通转账，需要考虑锁仓和存储抵押
-      auto frozen_asset = hdddeposit(hdd_deposit_account).get_deposit_and_forfeit(owner);
+      auto frozen_asset = hdddeposit(hdd_deposit_account).get_deposit(owner);
       //also need check lock token issue
       auto lock_asset = hddlock(hdd_lock_account).get_lock_asset(owner);
       eosio_assert( frozen_asset.symbol == lock_asset.symbol, "symbol precision mismatch" );
