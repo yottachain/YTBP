@@ -175,7 +175,8 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
 }
 
 void hdddeposit::delminer(uint64_t minerid) {
-    require_auth(_self);
+    //require_auth(_self);
+    require_auth(N(hddpooladmin));
           
     minerdeposit_table _mdeposit(_self, _self);
     auto miner = _mdeposit.find(minerid);

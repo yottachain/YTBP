@@ -528,7 +528,7 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 
 
    action(
-       permission_level{hdd_deposit, active_permission},
+       permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(delminer),
        std::make_tuple(minerid))
        .send(); 

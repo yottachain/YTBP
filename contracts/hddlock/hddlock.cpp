@@ -20,7 +20,7 @@ void hddlock::init() {
 }
 
 void hddlock::addaccbig(account_name user, std::string& desc) {
-    require_auth(_self);
+    require_auth(N(lockadminusr));
 
     accbig_table _accbig( _self , _self );
     auto itmaccbig = _accbig.find(user);
@@ -33,7 +33,7 @@ void hddlock::addaccbig(account_name user, std::string& desc) {
 }
 
 void hddlock::rmvaccbig(account_name user) {
-    require_auth(_self);
+    require_auth(N(lockadminusr));
 
     accbig_table _accbig( _self , _self );
     auto itmaccbig = _accbig.find(user);
@@ -45,7 +45,7 @@ void hddlock::rmvaccbig(account_name user) {
 
 void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::vector<uint8_t>& percentage, std::string& desc) 
 {
-    require_auth(_self);
+    require_auth(N(lockadminusr));
 
     eosio_assert(times.size() >= 2, "invalidate size of times array");
     eosio_assert(times.size() == percentage.size(), "times and percentage in different size.");
@@ -69,7 +69,7 @@ void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::ve
 
 void hddlock::rmvrule(uint64_t lockruleid)
 {
-    require_auth(_self);
+    require_auth(N(lockadminusr));
 
     lockrule_table _lockrule(_self, _self);
     auto itrule = _lockrule.find(lockruleid);
@@ -85,7 +85,7 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
     eosio_assert( quantity.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
     eosio_assert( amount.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
     eosio_assert( quantity.amount > 0, "must locktransfer positive quantity" );
-    eosio_assert( amount.amount > 0, "must locktransfer positive amount" );
+    eosio_assert( amount.amount >= 0, "can not locktransfer negative amount" );
 
 
     accbig_table _accbig( _self , _self );
@@ -98,11 +98,13 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
 
     eosio_assert(quantity.amount >= amount.amount, "overdrawn quantity");  
 
-    action(
-       permission_level{from, active_permission},
-       token_account, N(transfer),
-       std::make_tuple(from, to, amount, memo))
-       .send();
+    if(amount.amount > 0) {
+        action(
+            permission_level{from, active_permission},
+            token_account, N(transfer),
+            std::make_tuple(from, to, amount, memo))
+        .send();
+    }
 
     acclock_table _acclock(_self, to);
     _acclock.emplace(_self, [&](auto &row) {
@@ -116,7 +118,7 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
 }
 
 void hddlock::frozenuser(account_name user, uint64_t time) {
-    require_auth(_self);
+    require_auth(N(lockadminusr));
 
     accfrozen_table _accfrozen(_self, _self);
     auto it = _accfrozen.find(user);
@@ -137,7 +139,7 @@ void hddlock::frozenuser(account_name user, uint64_t time) {
 
 
 void hddlock::clearall(account_name user) {
-    require_auth(_self);
+    require_auth(N(lockadminusr));
 
     acclock_table _acclock(_self, user);
     while (_acclock.begin() != _acclock.end()) {
