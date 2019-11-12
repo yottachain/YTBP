@@ -54,10 +54,10 @@ void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::ve
     auto itrule = _lockrule.find(lockruleid);
     eosio_assert(itrule == _lockrule.end(), "the id already existed in rule table"); 
     
-    /*
+    
     for(auto it = percentage.begin(); it != percentage.end(); it++) {
         eosio_assert(*it>=0 && *it<=100, "invalidate lock percentage");          
-    }*/
+    }
 
     _lockrule.emplace(_self, [&](auto &row) {
         row.lockruleid   = lockruleid;
