@@ -314,6 +314,8 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
+   eosio_assert( fee >= 0, "must use positive fee value" );
+
 
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
@@ -359,7 +361,9 @@ void hddpool::subbalance(name user, int64_t balance, uint64_t userid, uint8_t ac
       require_auth( _self );
    }
 
-   eosio_assert(is_hdd_amount_within_range(balance), "magnitude of hddbalance must be less than 2^62");      
+   eosio_assert(is_hdd_amount_within_range(balance), "magnitude of hddbalance must be less than 2^62");  
+   eosio_assert( balance >= 0, "must use positive balance value" );
+
 
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
@@ -620,6 +624,8 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
 
    eosio_assert(is_account(adminacc), "adminacc invalidate");
    eosio_assert(is_account(dep_acc), "dep_acc invalidate");
+   eosio_assert( dep_amount.amount > 0, "must use positive dep_amount" );
+
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
@@ -915,6 +921,7 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+    //return;   
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");

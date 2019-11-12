@@ -52,7 +52,12 @@ void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::ve
 
     lockrule_table _lockrule(_self, _self);
     auto itrule = _lockrule.find(lockruleid);
-    eosio_assert(itrule == _lockrule.end(), "the id already existed in rule table");  
+    eosio_assert(itrule == _lockrule.end(), "the id already existed in rule table"); 
+    
+    /*
+    for(auto it = percentage.begin(); it != percentage.end(); it++) {
+        eosio_assert(*it>=0 && *it<=100, "invalidate lock percentage");          
+    }*/
 
     _lockrule.emplace(_self, [&](auto &row) {
         row.lockruleid   = lockruleid;
@@ -79,6 +84,9 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
     require_auth(from);
     eosio_assert( quantity.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
     eosio_assert( amount.symbol == CORE_SYMBOL , "only core symbole support this lock transsfer");  
+    eosio_assert( quantity.amount > 0, "must locktransfer positive quantity" );
+    eosio_assert( amount.amount > 0, "must locktransfer positive amount" );
+
 
     accbig_table _accbig( _self , _self );
     auto itmaccbig = _accbig.find(from);

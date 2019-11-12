@@ -22,6 +22,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert( quant.amount > 0, "must use positive quant" );
 
     //check if user has enough YTA balance for deposit
     auto balance   = eosio::token(N(eosio.token)).get_balance( user , quant.symbol.name() );
@@ -74,6 +75,8 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert( quant.amount > 0, "must use positive quant" );
+    
 
     require_auth(user); // need hdd official account to sign this action.
 
@@ -137,6 +140,7 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert( quant.amount > 0, "must use positive quant" );
 
     minerdeposit_table _mdeposit(_self, _self);
     accdeposit_table   _deposit(_self, user.value);
@@ -291,6 +295,7 @@ void hdddeposit::cutvote(name user, uint8_t acc_type, name caller) {
 
 
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+    //return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");
