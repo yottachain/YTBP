@@ -14,6 +14,10 @@
                     "type": "name"
                 },                
                 {
+                    "name": "pool_type",
+                    "type": "uint8"
+                },
+                {
                     "name": "deposit_total",
                     "type": "asset"
                 },
@@ -30,6 +34,10 @@
                 {
                     "name": "minerid",
                     "type": "uint64"
+                },
+                {
+                    "name": "miner_type",
+                    "type": "uint8"
                 },
                 {
                     "name": "account_name",

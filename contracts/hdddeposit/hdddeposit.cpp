@@ -38,6 +38,7 @@ void hdddeposit::paydeppool(account_name user, asset quant) {
         //_deposit.emplace( _self, [&]( auto& a ){
         _deposit.emplace( user, [&]( auto& a ){
             a.account_name = name{user};
+            a.pool_type = 0;
             a.deposit_total = quant;
             a.deposit_free = quant;
         });
@@ -106,6 +107,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     if ( miner == _mdeposit.end() ) {
         _mdeposit.emplace( _self, [&]( auto& a ){
             a.minerid = minerid;
+            a.miner_type = 0;
             a.account_name = name{user};
             a.deposit = quant;
             a.dep_total = quant;

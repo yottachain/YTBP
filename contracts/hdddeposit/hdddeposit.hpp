@@ -37,6 +37,7 @@ class hdddeposit : public eosio::contract {
         //记录某个账户的存储押金池信息
         struct depositpool {
             name        account_name;
+            uint8_t     pool_type = 0;
             asset       deposit_total;  //用户押金池总额(扣除了罚金后的总额)
             asset       deposit_free;   //用户押金池剩余的可以给矿机缴纳押金的总额
             uint64_t    primary_key()const { return account_name.value; }
@@ -46,6 +47,7 @@ class hdddeposit : public eosio::contract {
         //记录哪个账户为哪个矿机抵押了多少钱
         struct miner2dep {
             uint64_t    minerid;    //矿机ID
+            uint8_t     miner_type = 0;
             name        account_name; 
             asset       deposit;
             asset       dep_total;
