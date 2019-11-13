@@ -48,8 +48,8 @@ namespace eosiosystem {
       if( _gstate.total_activated_stake < min_activated_stake )
          return;
 
-      if( _gstate.last_pervote_bucket_fill == 0 )  /// start the presses
-         _gstate.last_pervote_bucket_fill = current_time();
+      //if( _gstate.last_pervote_bucket_fill == 0 )  /// start the presses
+      //   _gstate.last_pervote_bucket_fill = current_time();
 
 
       /**
@@ -74,8 +74,8 @@ namespace eosiosystem {
       if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 240 ) {
       //##YTA-Change  end:         
 
-         update_elected_producers( timestamp );
-         //update_elected_producers_yta( timestamp );
+         //update_elected_producers( timestamp );
+         update_elected_producers_yta( timestamp );
 
 
          if( (timestamp.slot - _gstate.last_name_close.slot) > blocks_per_day ) {
@@ -118,9 +118,9 @@ namespace eosiosystem {
       eosio_assert ( _all_prods.exists(), "can not start reward" );
 
       _all_prods_state = _all_prods.get();
-      uint64_t num_producers = _all_prods_state.prods_l1.size() + _all_prods_state.prods_l2.size();
 
-      eosio_assert ( num_producers >= 126, "can not start reward" );
+      eosio_assert( _all_prods_state.prods_l1.size() >= 21, "main susper producers not enough" );
+      eosio_assert( _all_prods_state.prods_l2.size() >= 42, "super producers not enouth" );
 
       _gstate.last_pervote_bucket_fill = current_time();
 
