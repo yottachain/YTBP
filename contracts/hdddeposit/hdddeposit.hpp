@@ -43,15 +43,6 @@ class hdddeposit : public eosio::contract {
         };        
         typedef multi_index<N(depositpool), depositpool> depositpool_table; 
 
-        //记录某个账户缴纳的押金总量和当前需要缴纳的罚款总量
-        struct acc2deposit {
-            name        account_name;
-            asset       deposit; 
-            asset       forfeit;   
-            uint64_t    primary_key()const { return account_name.value; }
-        };
-        typedef multi_index<N(acc2deposit), acc2deposit> accdeposit_table; 
-
         //记录哪个账户为哪个矿机抵押了多少钱
         struct miner2dep {
             uint64_t    minerid;    //矿机ID
