@@ -258,7 +258,6 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    auto it = _userhdd.find(receiver.value);
    if (it == _userhdd.end())
    {
-      eosio_assert(is_hdd_amount_within_range(_hdd_amount), "magnitude of user hddbalance must be less than 2^62");
       new_user_hdd(_userhdd, receiver, _hdd_amount, from);
    }
    else
@@ -433,12 +432,14 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    //check space left -- (is it enough)  -- start ----------
    minerinfo_table _minerinfo(_self, _self);
    auto itminerinfo = _minerinfo.find(minerid);   
-   if(itminerinfo != _minerinfo.end()) {
-      eosio_assert(itminerinfo->space_left >= space, "exceed max space");
-      _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
-         row.space_left -= space;
-      });         
-   }
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
+
+   eosio_assert(itminerinfo->space_left >= space, "exceed max space");
+   eosio_assert(itminerinfo->owner == owner, "invalid owner");
+
+   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+      row.space_left -= space;
+   });         
    //check space left -- (is it enough)  -- end   ----------
 
    int64_t profit_delta = 0;
@@ -653,6 +654,7 @@ void hddpool::delstrpool(name poolid)
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(poolid.value);
    if(itmstorepool != _storepool.end()) {
+      eosio_assert(itmstorepool->max_space == itmstorepool->space_left == 0,  "can not delete this storepool.");
       _storepool.erase(itmstorepool);
    }
 
@@ -814,6 +816,12 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    require_auth(itminerinfo->admin);
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+
+      maccount_index _maccount(_self, itminerinfo->owner.value);
+      auto itmaccount = _maccount.find(minerid);
+      eosio_assert(itmaccount != _maccount.end(), "miner owner invalidate");
+      eosio_assert(itmaccount->space <= max_space, "max_space less then miner profit space");
+
       storepool_index _storepool( _self , _self );
       auto itmstorepool = _storepool.find(row.pool_id.value);
       eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
