@@ -241,7 +241,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
        std::make_tuple(from, hdd_account, quant, std::string("buy hdd")))
        .send();
 
-   int64_t _hdd_amount = quant.amount * 10000;   
+   int64_t _hdd_amount = 0;   
    const auto &market = _hmarket.get(HDDCORE_SYMBOL_BANCOR, "hdd market does not exist");
    _hmarket.modify(market, 0, [&](auto &es) {
       _hdd_amount = (es.convert(quant, HDD_SYMBOL_BANCOR).amount) * 10000;
@@ -289,9 +289,9 @@ void hddpool::sellhdd(name user, int64_t amount)
       eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");      
    });
 
-   int64_t _yta_amount = (int64_t)((double)amount / 10000);
-   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
-   _hmarket.modify(itr, 0, [&](auto &es) {
+   int64_t _yta_amount = 0;
+   const auto &market = _hmarket.get(HDDCORE_SYMBOL_BANCOR, "hdd market does not exist");
+   _hmarket.modify(market, 0, [&](auto &es) {
       /// the cast to int64_t of quant is safe because we certify quant is <= quota which is limited by prior purchases
       _yta_amount = es.convert(asset(amount / 10000, HDD_SYMBOL_BANCOR), CORE_SYMBOL).amount;
    });
