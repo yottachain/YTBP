@@ -8,6 +8,7 @@
 #include <eosiolib/multi_index.hpp>
 #include <eosio.token/eosio.token.hpp>
 #include <eosio.system/eosio.system.hpp>
+#include <hddlock/hddlock.hpp>
 
 using namespace eosio;
 
@@ -15,9 +16,14 @@ static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name system_account{N(eosio)};
 static constexpr eosio::name hdd_deposit_account{N(hdddeposit12)};
+static constexpr eosio::name hdd_lock_account{N(hddlock12345)};
+
 
 void hdddeposit::paydeppool(account_name user, asset quant) {
     require_auth(user);
+    
+    bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
+    eosio_assert( !is_frozen, "frozen user can not create deposit pool" );
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
