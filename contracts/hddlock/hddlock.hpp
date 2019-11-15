@@ -105,7 +105,8 @@ asset hddlock::get_lock_asset( account_name user ) const
         }
         eosio_assert(percent>=0 && percent<=100, "invalidate lock percentage");          
         percent = 100 - percent;
-        lockasset.amount += (amount * percent)/100;
+        lockasset.amount += (int64_t)(((double)amount / 100)*percent);
+
     }
     return lockasset;
 }
