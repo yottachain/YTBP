@@ -438,7 +438,7 @@ namespace eosiosystem {
          return;
 
       if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
-         if(top_producers.size() < 15)
+         //if(top_producers.size() < 15)
             return;
       }
 
