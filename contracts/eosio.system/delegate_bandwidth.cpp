@@ -114,10 +114,6 @@ namespace eosiosystem {
       require_auth( payer );
       eosio_assert( quant.amount > 0, "must purchase a positive amount" );
 
-//##YTA-Change  start:
-      check_yta_account(receiver);
-//##YTA-Change  end:            
-
       auto fee = quant;
       fee.amount = ( fee.amount + 199 ) / 200; /// .5% fee (round up)
       // fee.amount cannot be 0 since that is only possible if quant.amount is 0 which is not allowed by the assert above.
@@ -174,10 +170,6 @@ namespace eosiosystem {
       require_auth( account );
       eosio_assert( bytes > 0, "cannot sell negative byte" );
 
-//##YTA-Change  start:
-      check_yta_account(account);
-//##YTA-Change  end:            
-
       user_resources_table  userres( _self, account );
       auto res_itr = userres.find( account );
       eosio_assert( res_itr != userres.end(), "no resource row" );
@@ -232,10 +224,6 @@ namespace eosiosystem {
       eosio_assert( std::abs( (stake_net_delta + stake_cpu_delta).amount )
                      >= std::max( std::abs( stake_net_delta.amount ), std::abs( stake_cpu_delta.amount ) ),
                     "net and cpu deltas cannot be opposite signs" );
-
-//##YTA-Change  start:
-      check_yta_account(receiver);
-//##YTA-Change  end:            
 
 
       account_name source_stake_from = from;
@@ -458,16 +446,6 @@ namespace eosiosystem {
 
       refunds_tbl.erase( req );
    }
-
-//##YTA-Change  start:
-   void system_contract::check_yta_account(const account_name user) {
-
-      if(user == hdd_pool_account || user == hdd_deposit_account || user == hdd_lock_account) {
-         eosio_assert(1 == 2, "can not delegatebe and buy ram for this user");
-      }
-   }
-//##YTA-Change  end:   
-
 
 
 } //namespace eosiosystem

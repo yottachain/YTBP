@@ -315,8 +315,6 @@ namespace eosiosystem {
          void update_producers_yta_totalvotes( account_name owner, double total_votes);              
 
          void delproducer( const account_name producer );
-
-         void check_yta_account( const account_name user );
 //##YTA-Change  end:  
 
          // Implementation details:
