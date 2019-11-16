@@ -221,7 +221,7 @@ namespace eosiosystem {
             producer_already_total_pay += producer_per_total_pay;
             producer_already_base_pay += producer_per_base_pay;
             producer_already_block_pay += producer_per_block_pay;
-            producer_already_vote_pay += producer_per_total_pay;
+            producer_already_vote_pay += producer_per_vote_pay;
             INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(hddbasefound),N(active)},
                                                           { N(hddbasefound), it->owner, asset(producer_per_total_pay), std::string("main producer daily pay") } );
          }
@@ -251,7 +251,7 @@ namespace eosiosystem {
             producer_already_total_pay += producer_per_total_pay;
             producer_already_base_pay += producer_per_base_pay;
             producer_already_block_pay += producer_per_block_pay;
-            producer_already_vote_pay += producer_per_total_pay;
+            producer_already_vote_pay += producer_per_vote_pay;
             INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {N(hddbasefound),N(active)},
                                                           { N(hddbasefound), it->owner, asset(producer_per_total_pay), std::string("producer daily pay") } );
          }
