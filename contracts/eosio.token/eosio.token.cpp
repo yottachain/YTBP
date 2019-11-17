@@ -4,11 +4,14 @@
  */
 
 #include "eosio.token.hpp"
+
+//##YTA-Change  start:
 #include <hdddeposit/hdddeposit.hpp>
 #include <hddlock/hddlock.hpp>
 
 const account_name hdd_deposit_account = N(hdddeposit12);
 const account_name hdd_lock_account = N(hddlock12345);
+//##YTA-Change  end
 
 namespace eosio {
 
