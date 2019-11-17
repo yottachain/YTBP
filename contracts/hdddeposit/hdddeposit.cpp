@@ -92,6 +92,8 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
 void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     require_auth(user);
 
+    eosio_assert(1 == 2, "can not paydeposit now");
+
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert( quant.amount > 0, "must use positive quant" );
 
