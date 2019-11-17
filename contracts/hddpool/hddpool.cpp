@@ -654,7 +654,7 @@ void hddpool::delstrpool(name poolid)
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(poolid.value);
    if(itmstorepool != _storepool.end()) {
-      eosio_assert(itmstorepool->max_space == itmstorepool->space_left == 0,  "can not delete this storepool.");
+      eosio_assert(itmstorepool->max_space - itmstorepool->space_left == 0,  "can not delete this storepool.");
       _storepool.erase(itmstorepool);
    }
 
