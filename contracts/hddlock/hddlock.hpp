@@ -20,10 +20,8 @@ class hddlock : public eosio::contract {
 
         void init();
         void addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::vector<uint8_t>& percentage, std::string& desc);
-        void rmvrule(uint64_t lockruleid);
         void locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, asset amount, std::string memo);
 
-        void clearall(account_name user);
         void addaccbig(account_name user, std::string& desc);
         void rmvaccbig(account_name user);
         void frozenuser(account_name user, uint64_t time);

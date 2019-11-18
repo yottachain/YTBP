@@ -67,17 +67,6 @@ void hddlock::addrule(uint64_t lockruleid, std::vector<uint64_t>& times, std::ve
     });          
 }
 
-void hddlock::rmvrule(uint64_t lockruleid)
-{
-    require_auth(N(lockadminusr));
-
-    lockrule_table _lockrule(_self, _self);
-    auto itrule = _lockrule.find(lockruleid);
-    eosio_assert(itrule != _lockrule.end(), "the lockruleid not exist");  
-    _lockrule.erase(itrule);      
-
-}
-
 
 void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name to, asset quantity, asset amount, std::string memo) 
 {
@@ -138,14 +127,5 @@ void hddlock::frozenuser(account_name user, uint64_t time) {
 }
 
 
-void hddlock::clearall(account_name user) {
-    require_auth(N(lockadminusr));
 
-    acclock_table _acclock(_self, user);
-    while (_acclock.begin() != _acclock.end()) {
-      _acclock.erase(_acclock.begin());      
-    }  
-}
-
-
-EOSIO_ABI( hddlock, (init)(addrule)(rmvrule)(locktransfer)(clearall)(addaccbig)(rmvaccbig)(frozenuser))
+EOSIO_ABI( hddlock, (init)(addrule)(locktransfer)(addaccbig)(rmvaccbig)(frozenuser))

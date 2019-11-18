@@ -35,13 +35,6 @@
             ]
         },
         {
-            "name": "clearall",
-            "base": "",
-            "fields": [
-                {"name":"user",         "type":"account_name"}
-            ]
-        },
-        {
             "name": "addrule",
             "base": "",
             "fields": [
@@ -49,13 +42,6 @@
                 {"name":"times",        "type":"uint64[]"},
                 {"name":"percentage",   "type":"uint8[]"},
                 {"name":"desc",         "type":"string"}
-            ]
-        },
-        {
-            "name": "rmvrule",
-            "base": "",
-            "fields": [
-                {"name":"lockruleid",   "type":"uint64"}
             ]
         },
         {
@@ -158,18 +144,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "clearall",
-            "type": "clearall",
-            "ricardian_contract": ""
-        },
-        {
             "name": "addrule",
             "type": "addrule",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "rmvrule",
-            "type": "rmvrule",
             "ricardian_contract": ""
         },
         {
