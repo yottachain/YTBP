@@ -302,7 +302,7 @@ namespace eosiosystem {
 
    void system_contract::reprodlevel() {
       //require_auth( _self );
-      require_auth(N(ytaadminuser));
+      require_auth(N(ytarewardusr));
 
       update_producer_level();
    }
