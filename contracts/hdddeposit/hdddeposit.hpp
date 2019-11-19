@@ -73,7 +73,7 @@ asset hdddeposit::get_deposit( account_name user ) const
     depositpool_table _deposit(_self, user);
     auto acc = _deposit.find( user );    
     if ( acc != _deposit.end() ) {
-        return acc->deposit_total;
+        return acc->deposit_free;
     } 
     asset zero{0, CORE_SYMBOL};
     return zero;
