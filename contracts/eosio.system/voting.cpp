@@ -304,6 +304,9 @@ namespace eosiosystem {
       //require_auth( _self );
       require_auth(N(ytarewardusr));
 
+      if( _gstate.last_pervote_bucket_fill == 0 ) 
+         return;
+
       update_producer_level();
    }
 
