@@ -90,13 +90,6 @@ namespace eosiosystem {
       require_auth(N(ytaadminuser));
 
       while (_producersext.begin() != _producersext.end()) {
-         auto it = _producersext.begin();
-         //it->out_votes
-         const auto& prod = _producers.get( it->owner, "producer not found" );
-         _producers.modify( prod, 0, [&]( producer_info& info ){
-            info.total_votes -= it->out_votes;
-         });
-         _gstate.total_producer_vote_weight -= it->out_votes;
          _producersext.erase(_producersext.begin()); 
       }
 
@@ -418,8 +411,38 @@ namespace eosiosystem {
 
    }
 
+   void system_contract::setautosche( bool auto_sche) {
+
+      require_auth(N(ytaadminuser));
+
+      global_state3_singleton _globalext2(_self, _self);
+      eosio_global_state3     _global_state3;
+      if (_globalext2.exists()) {
+         _global_state3 = _globalext2.get();
+      } else {
+         _global_state3 = eosio_global_state3{};
+      }
+
+      _global_state3.is_schedule = auto_sche;
+
+      _globalext2.set(_global_state3,_self);
+
+   }
+
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
  
+      global_state3_singleton _globalext2(_self, _self);
+      eosio_global_state3     _global_state3;
+      bool isSchedule = true;
+      if (_globalext2.exists()) {
+         _global_state3 = _globalext2.get();
+         isSchedule = _global_state3.is_schedule;
+      }
+
+      if(!isSchedule)
+         return;
+         
+
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
 

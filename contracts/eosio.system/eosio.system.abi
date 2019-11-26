@@ -281,6 +281,13 @@
          {"name":"last_claim_time",               "type":"uint64"}         
       ]
     },{
+      "name": "eosio_global_state3",
+      "base": "",
+      "fields": [
+         {"name":"is_schedule",                "type":"bool"}
+      ]
+    },
+    {
       "name": "eosio_global_count",
       "base": "",
       "fields": [
@@ -306,8 +313,6 @@
          {"name":"owner",                   "type":"account_name"},
          {"name":"seq_num",                 "type":"uint16"},
          {"name":"level",                   "type":"uint8"},
-         {"name":"out_votes",               "type":"int64"},
-         {"name":"deposit_votes",           "type":"int64"},
          {"name":"unpaid_base_cnt",         "type":"uint32"},
          {"name":"unpaid_amount",           "type":"int64"},
          {"name":"shadow",                  "type":"account_name"}
@@ -377,6 +382,12 @@
       "base": "",
       "fields": [
         {"name":"voter_name",     "type":"account_name"}
+      ]
+    },{
+      "name": "setautosche",
+      "base": "",
+      "fields": [
+        {"name":"auto_sche",     "type":"bool"}
       ]
     },{
       "name": "voter_info",
@@ -584,6 +595,10 @@
       "type": "changevotes",
       "ricardian_contract": ""
    },{
+      "name": "setautosche",
+      "type": "setautosche",
+      "ricardian_contract": ""
+   },{
       "name": "claimrewards",
       "type": "claimrewards",
       "ricardian_contract": ""
@@ -651,6 +666,12 @@
     },{
       "name": "globalext",
       "type": "eosio_global_state2",
+      "index_type": "i64",
+      "key_names" : [],
+      "key_types" : []
+    },{
+      "name": "globalext2",
+      "type": "eosio_global_state3",
       "index_type": "i64",
       "key_names" : [],
       "key_types" : []

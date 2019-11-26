@@ -47,7 +47,7 @@ class hddlock : public eosio::contract {
             account_name    from;
             std::string     memo;
             uint64_t        time;
-            uint64_t        primary_key()const { return time; }
+            uint64_t        primary_key()const { return lockruleid; }
         };
         typedef multi_index<N(acclock), acclock> acclock_table; 
 

@@ -75,6 +75,13 @@ namespace eosiosystem {
 
       EOSLIB_SERIALIZE( eosio_global_count, (total_accounts) )
    };
+
+   struct eosio_global_state3 {
+      bool    is_schedule = true;
+
+      EOSLIB_SERIALIZE( eosio_global_state3, (is_schedule) )
+   };
+
    //##YTA-Change  end:
 
    struct producer_info {
@@ -102,14 +109,12 @@ namespace eosiosystem {
       account_name          owner;
       uint16_t              seq_num = 1; // from 1 to 21      
       uint8_t               level = 3;
-      int64_t               out_votes = 0;
-      int64_t               deposit_votes = 0;
       uint32_t              unpaid_base_cnt = 0;
       int64_t               unpaid_amount = 0;  
       account_name          shadow = 0;
       uint64_t primary_key()const { return owner; }          
 
-      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(level)(out_votes)(deposit_votes)(unpaid_base_cnt)(unpaid_amount)(shadow))
+      EOSLIB_SERIALIZE( producer_info_ext, (owner)(seq_num)(level)(unpaid_base_cnt)(unpaid_amount)(shadow))
 
    };
    //##YTA-Change  end:
@@ -184,6 +189,7 @@ namespace eosiosystem {
 
    //##YTA-Change  start:
    typedef eosio::singleton<N(globalext), eosio_global_state2> global_state2_singleton;
+   typedef eosio::singleton<N(globalext2), eosio_global_state3> global_state3_singleton;
    typedef eosio::singleton<N(gcount), eosio_global_count> global_count_singleton;
    //##YTA-Change  end:
 
@@ -278,6 +284,8 @@ namespace eosiosystem {
          void reprodlevel();       
 
          void changevotes( const account_name voter_name );  
+
+         void setautosche( bool auto_sche);
 //##YTA-Change  end:           
 
          void setram( uint64_t max_ram_size );

@@ -15,7 +15,6 @@ using namespace eosio;
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name system_account{N(eosio)};
-static constexpr eosio::name hdd_deposit_account{N(hdddeposit12)};
 static constexpr eosio::name hdd_lock_account{N(hddlock12345)};
 
 
@@ -196,7 +195,7 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
     action(
        permission_level{user, active_permission},
        token_account, N(transfer),
-       std::make_tuple(user, hdd_deposit_account, quant, std::string("draw forfeit")))
+       std::make_tuple(user, N(yottaforfeit), quant, std::string("draw forfeit")))
        .send();
 
     if( eosiosystem::isActiveVoter(user) ) {

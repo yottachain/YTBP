@@ -96,14 +96,23 @@ void hddlock::locktransfer(uint64_t lockruleid, account_name from, account_name 
     }
 
     acclock_table _acclock(_self, to);
-    _acclock.emplace(_self, [&](auto &row) {
-        row.quantity    = quantity;
-        row.lockruleid  = lockruleid;
-        row.user        = to;
-        row.from        = from;
-        row.memo        = memo;
-        row.time        = current_time();
-    });
+    auto itlc = _acclock.find(lockruleid);
+    if(itlc != _acclock.end()) {
+        _acclock.modify(itlc, _self, [&](auto &row) {
+            row.time = current_time();
+            row.quantity += quantity;
+        });
+    } else {
+        _acclock.emplace(_self, [&](auto &row) {
+            row.quantity    = quantity;
+            row.lockruleid  = lockruleid;
+            row.user        = to;
+            row.from        = from;
+            row.memo        = memo;
+            row.time        = current_time();
+        });
+    }
+
 }
 
 void hddlock::frozenuser(account_name user, uint64_t time) {

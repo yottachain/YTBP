@@ -36,7 +36,7 @@ const uint64_t max_minerspace = 64 * 1024 * uint64_t(1024 * 100); //100T 单个�
 
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
-static constexpr eosio::name hdd_account{N(hddpool12345)};
+static constexpr eosio::name hdd_exchg_acc{N(hddpoolexchg)};
 static constexpr eosio::name hdd_deposit{N(hdddeposit12)};
 
 static constexpr int64_t max_hdd_amount    = (1LL << 62) - 1;
@@ -229,7 +229,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
 
    eosio_assert(is_account(from), "user not a account");
    eosio_assert(is_account(receiver), "receiver not a account");
-   eosio_assert(is_account(hdd_account), "to not a account");
+   eosio_assert(is_account(hdd_exchg_acc), "to not a account");
    eosio_assert(quant.is_valid(), "asset is invalid");
    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset to buy HDD");
    eosio_assert(quant.amount > 0, "must transfer positive quantity");
@@ -238,7 +238,7 @@ void hddpool::buyhdd(name from, name receiver, asset quant)
    action(
        permission_level{from, active_permission},
        token_account, N(transfer),
-       std::make_tuple(from, hdd_account, quant, std::string("buy hdd")))
+       std::make_tuple(from, hdd_exchg_acc, quant, std::string("buy hdd")))
        .send();
 
    int64_t _hdd_amount = 0;   
@@ -300,9 +300,9 @@ void hddpool::sellhdd(name user, int64_t amount)
 
    asset quant{_yta_amount, CORE_SYMBOL};
    action(
-       permission_level{hdd_account, active_permission},
+       permission_level{hdd_exchg_acc, active_permission},
        token_account, N(transfer),
-       std::make_tuple(hdd_account, user, quant, std::string("sell hdd")))
+       std::make_tuple(hdd_exchg_acc, user, quant, std::string("sell hdd")))
        .send();
 
    update_total_hdd_balance(-amount);
