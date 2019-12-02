@@ -46,11 +46,13 @@ void hdddeposit::paydeppool(account_name user, asset quant) {
             a.pool_type = 0;
             a.deposit_total = quant;
             a.deposit_free = quant;
+            a.deposit_his = quant;
         });
     } else {
         _deposit.modify( it, 0, [&]( auto& a ) {
             a.deposit_total += quant;
             a.deposit_free += quant;
+            a.deposit_his += quant;
         });
     }
 
@@ -73,10 +75,13 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
 
     eosio_assert( it.deposit_free.amount >= quant.amount, "free deposit not enough." );
     eosio_assert( it.deposit_total.amount >= quant.amount, "deposit not enough." );
+    eosio_assert( it.deposit_his.amount >= quant.amount, "deposit not enough." );
 
     _deposit.modify( it, 0, [&]( auto& a ) {
         a.deposit_free -= quant;
         a.deposit_total -= quant;
+        a.deposit_his -= quant;
+
     });
 
     if( eosiosystem::isActiveVoter(user) ) {

@@ -40,6 +40,7 @@ class hdddeposit : public eosio::contract {
             uint8_t     pool_type = 0;
             asset       deposit_total;  //用户押金池总额(扣除了罚金后的总额)
             asset       deposit_free;   //用户押金池剩余的可以给矿机缴纳押金的总额
+            asset       deposit_his;    //用户总抵押量(包含罚金)
             uint64_t    primary_key()const { return account_name.value; }
         };        
         typedef multi_index<N(depositpool), depositpool> depositpool_table; 

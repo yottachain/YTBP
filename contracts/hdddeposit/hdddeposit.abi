@@ -24,6 +24,10 @@
                 {
                     "name": "deposit_free",
                     "type": "asset"
+                },
+                {
+                    "name": "deposit_his",
+                    "type": "asset"
                 }                
             ]
         },
