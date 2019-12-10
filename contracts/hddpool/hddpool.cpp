@@ -327,8 +327,8 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
 
 
    //每周期费用 <= （占用存储空间*数据分片大小/1GB）*（记账周期/ 1年）
-   bool istrue = fee <= (int64_t)(((double)(it->hdd_space * data_slice_size)/(double)one_gb) * ((double)fee_cycle/(double)seconds_in_one_year) * 100000000);
-   eosio_assert(istrue , "the fee verification is not right \n");
+   //bool istrue = fee <= (int64_t)(((double)(it->hdd_space * data_slice_size)/(double)one_gb) * ((double)fee_cycle/(double)seconds_in_one_year) * 100000000);
+   //eosio_assert(istrue , "the fee verification is not right \n");
    _userhdd.modify(it, _self, [&](auto &row) {
       //设置每周期费用之前可能需要将以前的余额做一次计算，然后更改last_hdd_time
       uint64_t tmp_t = current_time();
