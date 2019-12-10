@@ -135,7 +135,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    }
    else if(acc_type == 2) {
       eosio_assert(is_account(caller), "caller not a account.");
-      check_bp_account(caller.value, 0, false);
+      check_bp_account(caller.value, user.value, true);
    } else {
       require_auth( _self );
    }
@@ -309,7 +309,7 @@ void hddpool::sellhdd(name user, int64_t amount)
 }
 
 
-void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
+void hddpool::sethfee(name user, int64_t fee, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -321,8 +321,7 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
    eosio_assert(fee != it->hdd_per_cycle_fee, " the fee is the same \n");
 
-   check_userid(user.value, userid);
-   check_bp_account(caller.value, userid, true);
+   check_bp_account(caller.value, user.value, true);
 
    eosio_assert(is_hdd_amount_within_range(fee), "magnitude of fee must be less than 2^62");      
 
@@ -345,7 +344,7 @@ void hddpool::sethfee(name user, int64_t fee, name caller, uint64_t userid)
 
 }
 
-void hddpool::subbalance(name user, int64_t balance, uint64_t userid, uint8_t acc_type, name caller)
+void hddpool::subbalance(name user, int64_t balance, uint8_t acc_type, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
 
@@ -354,7 +353,7 @@ void hddpool::subbalance(name user, int64_t balance, uint64_t userid, uint8_t ac
    }
    else if(acc_type == 2) {
       eosio_assert(is_account(caller), "caller not a account.");
-      check_bp_account(caller.value, userid, false);
+      check_bp_account(caller.value, user.value, false);
 
    } else {
       require_auth( _self );
@@ -368,7 +367,7 @@ void hddpool::subbalance(name user, int64_t balance, uint64_t userid, uint8_t ac
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
 
-   check_userid(user.value, userid);
+   check_bp_account(caller.value, user.value, true);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_balance -= balance;
@@ -378,7 +377,7 @@ void hddpool::subbalance(name user, int64_t balance, uint64_t userid, uint8_t ac
    update_total_hdd_balance(-balance);
 }
 
-void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
+void hddpool::addhspace(name user, uint64_t space, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -387,8 +386,7 @@ void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
 
-   check_userid(user.value, userid);
-   check_bp_account(caller.value, userid, true);
+   check_bp_account(caller.value, user.value, true);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space += space;
@@ -397,7 +395,7 @@ void hddpool::addhspace(name user, uint64_t space, name caller, uint64_t userid)
 
 }
 
-void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
+void hddpool::subhspace(name user, uint64_t space, name caller)
 {
    eosio_assert(is_account(user), "user invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -406,8 +404,7 @@ void hddpool::subhspace(name user, uint64_t space, name caller, uint64_t userid)
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table");
 
-   check_userid(user.value, userid);
-   check_bp_account(caller.value, userid, true);
+   check_bp_account(caller.value, user.value, true);
 
    _userhdd.modify(it, _self, [&](auto &row) {
       //eosio_assert(row.hdd_space >= space , "overdraw user hdd_space");
@@ -895,22 +892,6 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
       rowminer.owner = new_owneracc;
 
    });
-}
-
-
-
-void hddpool::check_userid(uint64_t namevalue, uint64_t userid)
-{
-   userhdd2_index _userhdd2(_self, _self);
-   auto it = _userhdd2.find(namevalue);
-   if(it != _userhdd2.end()) {
-      eosio_assert(it->userid == userid, "invalidate userid");      
-   } else {
-      _userhdd2.emplace(_self, [&](auto &row) {
-         row.account_name = name{namevalue};
-         row.userid = userid;
-      });
-   }
 }
 
 /*
