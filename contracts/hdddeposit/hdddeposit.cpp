@@ -9,6 +9,7 @@
 #include <eosio.token/eosio.token.hpp>
 #include <eosio.system/eosio.system.hpp>
 #include <hddlock/hddlock.hpp>
+#include <hddpool/hddpool.hpp>
 
 using namespace eosio;
 
@@ -98,6 +99,8 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 
     eosio_assert(1 == 2, "can not paydeposit now");
 
+    eosio_assert(hddpool(N(hddpool12345)).is_miner_exist(minerid), "miner not registered");
+
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert( quant.amount > 0, "must use positive quant" );
 
@@ -112,7 +115,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
         a.deposit_free -= quant;
     });
 
-    //insert or update minerdeposit table
+    //insert minerdeposit table
     minerdeposit_table _mdeposit(_self, _self);
     auto miner = _mdeposit.find( minerid );
     eosio_assert(miner == _mdeposit.end(), "already deposit.");
@@ -164,6 +167,13 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset
             a.deposit_free -= quant;
         });
     }
+
+    //--- check miner deposit and max_space
+    asset deposit = miner.deposit;
+    uint64_t max_space = hddpool(N(hddpool12345)).get_miner_max_space(minerid);
+    eosio_assert(is_deposit_enough(deposit, max_space),"deposit not enough for miner's max_space -- chgdeposit");
+    //--- check miner deposit and max_space
+
 }
 
 void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller) {

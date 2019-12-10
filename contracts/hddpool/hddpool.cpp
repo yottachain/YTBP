@@ -8,6 +8,7 @@
 #include <eosiolib/multi_index.hpp>
 #include <eosio.token/eosio.token.hpp>
 #include <eosio.system/eosio.system.hpp>
+#include <hdddeposit/hdddeposit.hpp>
 
 
 #include <cmath>
@@ -624,24 +625,22 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
    eosio_assert(is_account(dep_acc), "dep_acc invalidate");
    eosio_assert( dep_amount.amount > 0, "must use positive dep_amount" );
 
-
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo == _minerinfo.end(), "miner already registered \n");  
 
-   action(
-       permission_level{dep_acc, active_permission},
-       hdd_deposit, N(paydeposit),
-       std::make_tuple(dep_acc, minerid, dep_amount))
-       .send(); 
-
-   //_minerinfo.emplace(_self, [&](auto &row) {
    _minerinfo.emplace(dep_acc.value, [&](auto &row) {      
       row.minerid    = minerid;
       row.admin      = adminacc;
       row.max_space  = 0;
       row.space_left = 0;
    });       
+
+   action(
+       permission_level{dep_acc, active_permission},
+       hdd_deposit, N(paydeposit),
+       std::make_tuple(dep_acc, minerid, dep_amount))
+       .send(); 
 }
 
 void hddpool::delstrpool(name poolid)
@@ -730,6 +729,13 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
 
    eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left > max_space),"pool space not enough");
 
+   //--- check miner deposit and max_space
+   asset deposit = hdddeposit(hdd_deposit).get_miner_deposit(minerid);
+   eosio_assert(hdddeposit(hdd_deposit).is_deposit_enough(deposit, max_space),"deposit not enough for miner's max_space -- addm2pool");
+   //--- check miner deposit and max_space
+
+
+
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.pool_id = pool_id;
       row.owner = minerowner;
@@ -811,6 +817,12 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
 
    require_auth(itminerinfo->admin);
+
+   //--- check miner deposit and max_space
+   asset deposit = hdddeposit(hdd_deposit).get_miner_deposit(minerid);
+   eosio_assert(hdddeposit(hdd_deposit).is_deposit_enough(deposit, max_space),"deposit not enough for miner's max_space -- addm2pool");
+   //--- check miner deposit and max_space
+
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
 

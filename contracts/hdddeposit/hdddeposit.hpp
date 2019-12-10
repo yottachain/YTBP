@@ -28,6 +28,8 @@ class hdddeposit : public eosio::contract {
         void mchgdepacc(uint64_t minerid, name new_depacc);
 
         inline asset get_deposit( account_name user )const;
+        inline asset get_miner_deposit( uint64_t minerid )const;
+        inline bool is_deposit_enough( asset deposit, uint64_t max_space ) const;
 
 
     private:
@@ -79,3 +81,38 @@ asset hdddeposit::get_deposit( account_name user ) const
     asset zero{0, CORE_SYMBOL};
     return zero;
 }
+
+asset hdddeposit::get_miner_deposit( uint64_t minerid ) const 
+{
+    minerdeposit_table _mdeposit(_self, _self);
+    auto miner = _mdeposit.find( minerid );
+    if(miner != _mdeposit.end())
+        return miner->deposit;
+
+    asset zero{0, CORE_SYMBOL};
+    return zero;
+}
+
+bool hdddeposit::is_deposit_enough( asset deposit, uint64_t max_space ) const 
+{
+    grate_singleton grate(_self, _self);
+    deposit_rate    rate_state;
+    int64_t rate;
+
+    if (!grate.exists()) {
+        rate = 100;
+    } else {
+        rate = grate.get().rate;
+    }
+    double drate = ((double)rate)/100;
+    uint32_t one_gb = 1024 * 1024 * 1024; //1GB
+    uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
+    
+    int64_t am = (int64_t)((((double)((max_space * data_slice_size)))/one_gb) * drate * 10000);
+    if(deposit.amount >= am)
+        return true;
+
+    return false;
+}
+
+

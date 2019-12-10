@@ -85,7 +85,8 @@ public:
   void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
 
-  
+  inline bool     is_miner_exist(uint64_t minerid)const;
+  inline uint64_t get_miner_max_space(uint64_t minerid)const;
 private:
   struct userhdd
   {
@@ -195,3 +196,22 @@ private:
 
   void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 };
+
+bool hddpool::is_miner_exist(uint64_t minerid) const
+{
+  minerinfo_table _minerinfo( _self , _self );
+  auto itminerinfo = _minerinfo.find(minerid);
+  if(itminerinfo != _minerinfo.end())
+    return true;    
+
+  return false;
+}
+
+uint64_t hddpool::get_miner_max_space(uint64_t minerid) const
+{
+  minerinfo_table _minerinfo( _self , _self );
+  auto itminerinfo = _minerinfo.find(minerid);
+  if(itminerinfo != _minerinfo.end())
+    return itminerinfo->max_space;    
+  return 0;  
+}
