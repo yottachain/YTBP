@@ -30,7 +30,7 @@ const uint32_t one_gb = 1024 * 1024 * 1024; //1GB
 const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
 //以下空间量按照16k一个分片大小为单位
-const uint64_t max_userspace = 64 * 1024 * 1024 * uint64_t(1024 * 50);  //50P 最大用户存储空间量
+const uint64_t max_userspace = 64 * 1024 * 1024 * uint64_t(1024 * 500);  //500P 最大用户存储空间量
 const uint64_t max_minerspace = 64 * 1024 * uint64_t(1024 * 100); //100T 单个矿机最大的采购空间量
 //const uint32_t per_profit_space = 64 * 1024; //1G //每次增加的采购空间容量
 
@@ -43,83 +43,42 @@ static constexpr eosio::name hdd_deposit{N(hdddeposit12)};
 static constexpr int64_t max_hdd_amount    = (1LL << 62) - 1;
 bool is_hdd_amount_within_range(int64_t amount) { return -max_hdd_amount <= amount && amount <= max_hdd_amount; }
 
-#define HDD_SYMBOL_BANCOR S(4, HDD)
-#define HDDCORE_SYMBOL_BANCOR S(4, HDDCORE)
-
-const int64_t inc_hdd_amount = 0;//1000000000;
-
 //const int64_t price_delta = 1;
 
 hddpool::hddpool(account_name s)
     : contract(s),
-      _global(_self, _self),
-      _global2(_self, _self),
-      _global3(_self, _self),
-      _ghddprice(_self, _self),
-      _hmarket(_self, _self)
+      _globalu(_self, _self),
+      _globalm(_self, _self)
 {
 
-   if (_global.exists())
-      _gstate = _global.get();
+   if (_globalu.exists())
+      _gstateu = _globalu.get();
    else
-      _gstate = hdd_global_state{};
+      _gstateu = hdd_global_state2{};
 
-   if (_global2.exists())
-      _gstate2 = _global2.get();
+   if (_globalm.exists())
+      _gstatem = _globalm.get();
    else
-      _gstate2 = hdd_global_state2{};
-
-   if (_global3.exists())
-      _gstate3 = _global3.get();
-   else
-      _gstate3 = hdd_global_state3{};
-
-   if (_ghddprice.exists())
-      _ghddpriceState = _ghddprice.get();
-   else
-      _ghddpriceState = hdd_global_price{};
-
-   auto itr = _hmarket.find(HDDCORE_SYMBOL_BANCOR);
-
-   if (itr == _hmarket.end())
-   {
-      auto system_token_supply = eosio::token(N(eosio.token)).get_supply(eosio::symbol_type(CORE_SYMBOL).name()).amount;
-      if (system_token_supply > 0)
-      {
-         itr = _hmarket.emplace(_self, [&](auto &m) {
-            m.supply.amount = 100000000000000ll;
-            m.supply.symbol = HDDCORE_SYMBOL_BANCOR;
-            m.base.balance.amount = 40000000000000ll / 10;
-            m.base.weight = 0.35;
-            m.base.balance.symbol = HDD_SYMBOL_BANCOR;
-            ;
-            m.quote.balance.amount = system_token_supply / 10;
-            m.quote.balance.symbol = CORE_SYMBOL;
-            m.quote.weight = 0.5;
-         });
-      }
-   }
+      _gstatem = hdd_global_state3{};
 }
 
 hddpool::~hddpool()
 {
-   _global.set(_gstate, _self);
-   _global2.set(_gstate2, _self);
-   _global3.set(_gstate3, _self);
-   _ghddprice.set(_ghddpriceState, _self);
+   _globalu.set(_gstateu, _self);
+   _globalm.set(_gstatem, _self);
 }
 
 void hddpool::new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer)
 {
       userhdd.emplace(payer, [&](auto &row) {
          row.account_name = user;
-         row.hdd_balance = balance;
+         row.hdd_storehhdd = balance;
+         row.hdd_minerhdd = 0;
          row.hdd_per_cycle_fee = 0;
          row.hdd_per_cycle_profit = 0;
          row.hdd_space = 0;
          row.last_hdd_time = current_time();
-
-         _gstate2.hdd_total_user += 1;
+         _gstateu.hdd_total_user += 1;
       });
 
 }
@@ -145,46 +104,23 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    auto it = _userhdd.find(user.value);
    if (it == _userhdd.end())
    {
-      new_user_hdd(_userhdd, user, inc_hdd_amount, payer);
-      print("{\"balance\":", inc_hdd_amount, "}");
+      new_user_hdd(_userhdd, user, 0, payer);
+      print("{\"balance\":", 0, "}");
    }
    else
    {
       _userhdd.modify(it, _self, [&](auto &row) {
          uint64_t tmp_t = current_time();
-         int64_t tmp_last_balance = it->hdd_balance;
+         int64_t tmp_last_balance = it->hdd_storehhdd;
          int64_t new_balance;
-         if (calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance))
+         if (calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, 0, it->last_hdd_time, tmp_t, new_balance))
          {
-            row.hdd_balance = new_balance;
+            row.hdd_storehhdd = new_balance;
+            eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");      
             row.last_hdd_time = tmp_t;
          }
          
-         /* 
-         //--- 去掉遍历该账户下所有矿机并计算收益的操作，以避免事务超过最大CPU时限。外部系统需要自行调用相关的action分别计算某个矿机的收益
-         //计算该账户下所有矿机的收益
-         maccount_index _maccount(_self, user.value);
-         for (auto it_m = _maccount.begin(); it_m != _maccount.end(); it_m++)
-         {
-            int64_t balance_delta_m = 0;
-            _maccount.modify(it_m, _self, [&](auto &row_m) {
-               uint64_t tmp_t_m = current_time();
-               int64_t tmp_last_balance_m = it_m->hdd_balance;
-               int64_t new_balance_m = 0;
-               if (calculate_balance(tmp_last_balance_m, 0, it_m->hdd_per_cycle_profit, it_m->last_hdd_time, tmp_t_m, new_balance_m))
-               {
-                  eosio_assert(is_hdd_amount_within_range(new_balance_m), "magnitude of miner hddbalance must be less than 2^62");
-                  balance_delta_m = new_balance_m - row_m.hdd_balance;
-                  row_m.hdd_balance = new_balance_m;
-                  row_m.last_hdd_time = tmp_t;
-               }
-            });
-            row.hdd_balance += balance_delta_m;
-            eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
-
-         }
-         */
-         print("{\"balance\":", it->hdd_balance, "}");
+         print("{\"balance\":", it->hdd_storehhdd, "}");
       });
    }
 }
@@ -198,78 +134,58 @@ bool hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, i
    double tick = (double)((double)slot_t / fee_cycle);
    new_balance = oldbalance;
    int64_t delta = (int64_t)(tick * (hdd_per_cycle_profit - hdd_per_cycle_fee));
-   //avoid under zero
-   if (delta < 0 && oldbalance <= -delta) {
-      if(oldbalance < 0) {
-         delta = 0;
-      } else {
-         delta = -oldbalance;
-      }
-   }
-      
    new_balance += delta;
-
-   update_total_hdd_balance(delta);
 
    return true;
 }
 
-void hddpool::update_total_hdd_balance(int64_t _balance_delta)
-{
-   _gstate.hdd_total_balance += _balance_delta;
-
-   if (_gstate.hdd_total_balance < 0)
-      _gstate.hdd_total_balance = 0;
-
-   eosio_assert(is_hdd_amount_within_range(_gstate.hdd_total_balance), "magnitude of hdd_total_balance must be less than 2^62");
-}
-
-void hddpool::buyhdd(name from, name receiver, asset quant)
+void hddpool::buyhdd(name from, name receiver, int64_t amount)
 {
    require_auth(from);
 
    eosio_assert(is_account(from), "user not a account");
    eosio_assert(is_account(receiver), "receiver not a account");
    eosio_assert(is_account(hdd_exchg_acc), "to not a account");
-   eosio_assert(quant.is_valid(), "asset is invalid");
-   eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset to buy HDD");
-   eosio_assert(quant.amount > 0, "must transfer positive quantity");
-   //print( "quant.amount: ", quant.amount , "\n" );
+   eosio_assert(amount > 0, "must buy positive quantity");
+   eosio_assert(is_hdd_amount_within_range(amount), "magnitude of amount must be less than 2^62");
 
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
+   eosio_assert(_gparmas_state.hdd_counter >= amount, "hdd_counter overdrawn");
+   _gparmas_state.hdd_counter -= amount;
+   _gparams.set(_gparmas_state,_self);
+
+   int64_t _yta_amount =(int64_t)(((amount/10000)*(((double)_gparmas_state.hdd_price)/10000))/(((double)_gparmas_state.yta_price)/10000));
+
+   asset quant{_yta_amount, CORE_SYMBOL};
    action(
        permission_level{from, active_permission},
        token_account, N(transfer),
        std::make_tuple(from, hdd_exchg_acc, quant, std::string("buy hdd")))
        .send();
 
-   int64_t _hdd_amount = 0;   
-   const auto &market = _hmarket.get(HDDCORE_SYMBOL_BANCOR, "hdd market does not exist");
-   _hmarket.modify(market, 0, [&](auto &es) {
-      _hdd_amount = (es.convert(quant, HDD_SYMBOL_BANCOR).amount) * 10000;
-   });
-   //print("_hdd_amount:  ", _hdd_amount, "\n");
-   //_ghddpriceState.price = (quant.amount * 100 ) / (_hdd_amount/10000);
-   eosio_assert(is_hdd_amount_within_range(_hdd_amount), "magnitude of _hdd_amount must be less than 2^62");
-   eosio_assert(is_hdd_amount_within_range(quant.amount * 10000), "magnitude of [quant.amount * 10000] must be less than 2^62");
 
-   _ghddpriceState.price = (int64_t)( ( (double)(quant.amount * 10000) / _hdd_amount ) * 100000000);
-   print("_hdd_amount:  ", _hdd_amount, "  price: ", _ghddpriceState.price ,"\n");
+   //_ghddpriceState.price = (int64_t)( ( (double)(quant.amount * 10000) / _hdd_amount ) * 100000000);
 
    userhdd_index _userhdd(_self, receiver.value);
    auto it = _userhdd.find(receiver.value);
    if (it == _userhdd.end())
    {
-      new_user_hdd(_userhdd, receiver, _hdd_amount, from);
+      new_user_hdd(_userhdd, receiver, amount, from);
    }
    else
    {
       _userhdd.modify(it, _self, [&](auto &row) {
-         row.hdd_balance += _hdd_amount;
-         eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");      
+         row.hdd_storehhdd += amount;
+         eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");      
       });
    }
 
-   update_total_hdd_balance(_hdd_amount);
 }
 
 void hddpool::sellhdd(name user, int64_t amount)
@@ -283,21 +199,23 @@ void hddpool::sellhdd(name user, int64_t amount)
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user not exists in userhdd table.");
-   eosio_assert(it->hdd_balance >= amount, "hdd overdrawn.");
+   eosio_assert(it->hdd_minerhdd >= amount, "hdd overdrawn.");
 
    _userhdd.modify(it, _self, [&](auto &row) {
-      row.hdd_balance -= amount;
-      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");      
+      row.hdd_minerhdd -= amount;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hdd_minerhdd must be less than 2^62");      
    });
 
-   int64_t _yta_amount = 0;
-   const auto &market = _hmarket.get(HDDCORE_SYMBOL_BANCOR, "hdd market does not exist");
-   _hmarket.modify(market, 0, [&](auto &es) {
-      /// the cast to int64_t of quant is safe because we certify quant is <= quota which is limited by prior purchases
-      _yta_amount = es.convert(asset(amount / 10000, HDD_SYMBOL_BANCOR), CORE_SYMBOL).amount;
-   });
-   _ghddpriceState.price = (int64_t) (((double)(_yta_amount * 10000 ) / amount ) * 100000000);
-   print("_yta_amount:  ", _yta_amount, "  price: ", _ghddpriceState.price ,"\n");
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
+
+   int64_t _yta_amount =(int64_t)((((amount/10000)*(((double)_gparmas_state.hdd_price)/10000))*(((double)_gparmas_state.dup_remove_ratio)/10000)*(((double)_gparmas_state.dup_remove_dist_ratio)/10000))/(((double)_gparmas_state.yta_price)/10000));
+
 
    asset quant{_yta_amount, CORE_SYMBOL};
    action(
@@ -306,7 +224,6 @@ void hddpool::sellhdd(name user, int64_t amount)
        std::make_tuple(hdd_exchg_acc, user, quant, std::string("sell hdd")))
        .send();
 
-   update_total_hdd_balance(-amount);
 }
 
 
@@ -333,11 +250,12 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
    _userhdd.modify(it, _self, [&](auto &row) {
       //设置每周期费用之前可能需要将以前的余额做一次计算，然后更改last_hdd_time
       uint64_t tmp_t = current_time();
-      int64_t tmp_last_balance = it->hdd_balance;
+      int64_t tmp_last_balance = it->hdd_storehhdd;
       int64_t new_balance;
-      if (calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, new_balance))
+      if (calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, 0, it->last_hdd_time, tmp_t, new_balance))
       {
-         row.hdd_balance = new_balance;
+         row.hdd_storehhdd = new_balance;
+         eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");            
          row.last_hdd_time = tmp_t;
       }
       row.hdd_per_cycle_fee = fee;
@@ -371,11 +289,10 @@ void hddpool::subbalance(name user, int64_t balance, uint8_t acc_type, name call
    check_bp_account(caller.value, user.value, true);
 
    _userhdd.modify(it, _self, [&](auto &row) {
-      row.hdd_balance -= balance;
-      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
+      row.hdd_storehhdd -= balance;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hddbalance must be less than 2^62");
    });   
 
-   update_total_hdd_balance(-balance);
 }
 
 void hddpool::addhspace(name user, uint64_t space, name caller)
@@ -466,8 +383,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    auto userhdd_itr = _userhdd.find(owner.value);
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-      row.hdd_balance += balance_delta;
-      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
+      row.hdd_minerhdd += balance_delta;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hddbalance must be less than 2^62");
       row.hdd_per_cycle_profit = 0;
    });
 
@@ -501,8 +418,8 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
    auto userhdd_itr = _userhdd.find(owner.value);
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-      row.hdd_balance += balance_delta;
-      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
+      row.hdd_minerhdd += balance_delta;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hddbalance must be less than 2^62");
       row.hdd_per_cycle_profit = 0;
    });
 }
@@ -588,8 +505,8 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
    auto userhdd_itr = _userhdd.find(owner.value);
    eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
    _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-      row.hdd_balance += balance_delta;
-      eosio_assert(is_hdd_amount_within_range(row.hdd_balance), "magnitude of user hddbalance must be less than 2^62");
+      row.hdd_minerhdd += balance_delta;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hddbalance must be less than 2^62");
       row.hdd_per_cycle_profit = 0;
    });
 
@@ -685,8 +602,7 @@ void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
 
 void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
 { 
-   //require_auth(_self);  
-   require_auth(N(hddpooladmin));
+   require_auth(N(hddpooladml1));
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(pool_id.value);
    eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
@@ -749,7 +665,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
 
    maccount_index _maccount(_self, minerowner.value);
    if (_maccount.begin() == _maccount.end()){
-      _gstate3.hdd_macc_user += 1;
+      _gstatem.hdd_macc_user += 1;
    }
 
    auto itmaccount = _maccount.find(minerid);
@@ -768,7 +684,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    auto userhdd_itr = _userhdd.find(minerowner.value);
    if (userhdd_itr == _userhdd.end())
    {
-      new_user_hdd(_userhdd, minerowner, inc_hdd_amount, _self);
+      new_user_hdd(_userhdd, minerowner, 0, _self);
    }
 }
 
@@ -932,101 +848,215 @@ void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) 
     //require_auth(bpacc);
 }
 
+void hddpool::sethddprice(uint64_t price) {
+   require_auth(_self);
 
-asset exchange_state::convert_to_exchange(connector &c, asset in)
-{
-   real_type R(supply.amount);
-   real_type C(c.balance.amount + in.amount);
-   real_type F(c.weight / 1000.0);
-   real_type T(in.amount);
-   real_type ONE(1.0);
-
-   real_type E = -R * (ONE - std::pow(ONE + T / C, F));
-   //print( "E: ", E, "\n");
-   int64_t issued = int64_t(E);
-
-   supply.amount += issued;
-   c.balance.amount += in.amount;
-
-   return asset(issued, supply.symbol);
-}
-
-asset exchange_state::convert_from_exchange(connector &c, asset in)
-{
-   eosio_assert(in.symbol == supply.symbol, "unexpected asset symbol input");
-
-   real_type R(supply.amount - in.amount);
-   real_type C(c.balance.amount);
-   real_type F(1000.0 / c.weight);
-   real_type E(in.amount);
-   real_type ONE(1.0);
-
-   // potentially more accurate:
-   // The functions std::expm1 and std::log1p are useful for financial calculations, for example,
-   // when calculating small daily interest rates: (1+x)n
-   // -1 can be expressed as std::expm1(n * std::log1p(x)).
-   // real_type T = C * std::expm1( F * std::log1p(E/R) );
-
-   real_type T = C * (std::pow(ONE + E / R, F) - ONE);
-   //print( "T: ", T, "\n");
-   int64_t out = int64_t(T);
-
-   supply.amount -= in.amount;
-   c.balance.amount -= out;
-
-   return asset(out, c.balance.symbol);
-}
-
-asset exchange_state::convert(asset from, symbol_type to)
-{
-   auto sell_symbol = from.symbol;
-   auto ex_symbol = supply.symbol;
-   auto base_symbol = base.balance.symbol;
-   auto quote_symbol = quote.balance.symbol;
-
-   //print( "From: ", from, " TO ", asset( 0,to), "\n" );
-   //print( "base: ", base_symbol, "\n" );
-   //print( "quote: ", quote_symbol, "\n" );
-   //print( "ex: ", supply.symbol, "\n" );
-
-   if (sell_symbol != ex_symbol)
-   {
-      if (sell_symbol == base_symbol)
-      {
-         from = convert_to_exchange(base, from);
-      }
-      else if (sell_symbol == quote_symbol)
-      {
-         from = convert_to_exchange(quote, from);
-      }
-      else
-      {
-         eosio_assert(false, "invalid sell");
-      }
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
    }
-   else
-   {
-      if (to == base_symbol)
-      {
-         from = convert_from_exchange(base, from);
-      }
-      else if (to == quote_symbol)
-      {
-         from = convert_from_exchange(quote, from);
-      }
-      else
-      {
-         eosio_assert(false, "invalid conversion");
-      }
+   _gparmas_state.hdd_price = price;
+   _gparams.set(_gparmas_state,_self);
+
+}
+
+void hddpool::setdrdratio(uint64_t ratio) {
+   require_auth(_self);
+
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
+   _gparmas_state.dup_remove_dist_ratio = ratio;
+   _gparams.set(_gparmas_state,_self);
+
+}
+
+void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
+   if(acc_type == 1) {
+      require_auth( N(hddpooladml1) );
+   }
+   else if(acc_type == 2) {
+      require_auth( N(hddpooladmin) );
+   } else {
+      require_auth( _self );
    }
 
-   if (to != from.symbol)
-      return convert(from, to);
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
 
-   return from;
+   paramguard_singleton _paramguard(_self, _self);
+   hdd_price_guard  _paramguard_state;
+   if (_paramguard.exists()) {
+      _paramguard_state = _paramguard.get();
+   } else {
+      _paramguard_state = hdd_price_guard{};
+   }
+
+   if(acc_type == 1) {    
+
+      do{
+         uint64_t tmp_t;
+         uint64_t delta;
+         uint64_t ct = current_time();
+         uint64_t guard_time1 =  8 * 60;
+         uint64_t guard_time2 =  60 * 60 * 24;
+
+
+         tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time1) / 1000000ll; //seconds
+         delta = (uint64_t)(abs((int64_t)price - (int64_t)_paramguard_state.last_yta_guard_price1)) * 100 / _paramguard_state.last_yta_guard_price1;
+         
+         if(tmp_t < guard_time1) {
+            if(delta > 15) break; //8分钟内波动小于15%
+         }
+         tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time2) / 1000000ll; //seconds
+         delta = (uint64_t)(abs((int64_t)price - (int64_t)_paramguard_state.last_yta_guard_price2)) * 100 / _paramguard_state.last_yta_guard_price2;
+         if(tmp_t < guard_time2) {
+            if(delta > 50) break; //24小时内波动小于50%
+         }
+
+         _gparmas_state.yta_price = price;
+
+         tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time1) / 1000000ll; //seconds
+         if(tmp_t > guard_time1) {
+            _paramguard_state.last_yta_guard_price1 = price;
+            _paramguard_state.last_ytaprice_guard_time1 = ct;
+         }
+
+         tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time2) / 1000000ll; //seconds
+         if(tmp_t > guard_time2) {
+            _paramguard_state.last_yta_guard_price2 = price;
+            _paramguard_state.last_ytaprice_guard_time2 = ct;            
+         }
+
+      } while(false);
+
+   } else {
+      _gparmas_state.yta_price = price;
+      _paramguard_state.last_yta_guard_price1 = price;
+      _paramguard_state.last_yta_guard_price2 = price;
+      _paramguard_state.last_ytaprice_guard_time1 = current_time();
+      _paramguard_state.last_ytaprice_guard_time2 = current_time();
+   }
+   _gparams.set(_gparmas_state,_self);
+   _paramguard.set(_paramguard_state,_self);
+
 }
+
+void hddpool::setdrratio(uint64_t ratio, uint8_t acc_type) {
+   if(acc_type == 1) {
+      require_auth( N(hddpooladml1) );
+   }
+   else if(acc_type == 2) {
+      require_auth( N(hddpooladmin) );
+   } else {
+      require_auth( _self );
+   }
+
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
+
+   paramguard_singleton _paramguard(_self, _self);
+   hdd_price_guard  _paramguard_state;
+   if (_paramguard.exists()) {
+      _paramguard_state = _paramguard.get();
+   } else {
+      _paramguard_state = hdd_price_guard{};
+   }
+
+   if(acc_type == 1) {
+
+      do{
+         uint64_t tmp_t;
+         uint64_t delta;
+         uint64_t ct = current_time();
+         uint64_t guard_time1 =  60 * 60 * 24; //1天
+         uint64_t guard_time2 =  60 * 60 * 240; //10天
+
+
+         tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time1) / 1000000ll; //seconds
+         delta = (uint64_t)(abs((int64_t)ratio - (int64_t)_paramguard_state.last_dup_remove_guard_ratio1)) * 100 / _paramguard_state.last_dup_remove_guard_ratio1;
+         
+         if(tmp_t < guard_time1) {
+            if(delta > 10) break; //1天内波动小于10%
+         }
+         tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time2) / 1000000ll; //seconds
+         delta = (uint64_t)(abs((int64_t)ratio - (int64_t)_paramguard_state.last_dup_remove_guard_ratio2)) * 100 / _paramguard_state.last_dup_remove_guard_ratio2;
+         if(tmp_t < guard_time2) {
+            if(delta > 50) break; //10天内波动小于50%
+         }
+
+         _gparmas_state.dup_remove_ratio = ratio;
+
+         tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time1) / 1000000ll; //seconds
+         if(tmp_t > guard_time1) {
+            _paramguard_state.last_dup_remove_guard_ratio1 = ratio;
+            _paramguard_state.last_duprmv_ratio_guard_time1 = ct;
+         }
+
+         tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time2) / 1000000ll; //seconds
+         if(tmp_t > guard_time2) {
+            _paramguard_state.last_dup_remove_guard_ratio2 = ratio;
+            _paramguard_state.last_duprmv_ratio_guard_time2 = ct;            
+         }
+
+      } while(false);
+
+
+   } else {
+      _gparmas_state.dup_remove_ratio = ratio;
+      _paramguard_state.last_dup_remove_guard_ratio1 = ratio;
+      _paramguard_state.last_dup_remove_guard_ratio2 = ratio;
+      _paramguard_state.last_duprmv_ratio_guard_time1 = current_time();
+      _paramguard_state.last_duprmv_ratio_guard_time2 = current_time();
+   }
+   _gparams.set(_gparmas_state,_self);
+   _paramguard.set(_paramguard_state,_self);
+
+}
+
+void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
+   if(acc_type == 1) {
+      require_auth( N(hddpooladml1) );
+   }
+   else if(acc_type == 2) {
+      require_auth( N(hddpooladmin) );
+   } else {
+      require_auth( _self );
+   }
+
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if (_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
+   _gparmas_state.hdd_counter += count;
+   _gparams.set(_gparmas_state,_self);
+   
+}
+
+
+
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
                   (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)
-                  (mdeactive)(mactive))
+                  (mdeactive)(mactive)(sethddprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

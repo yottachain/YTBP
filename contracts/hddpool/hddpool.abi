@@ -69,40 +69,8 @@
                     "type": "name"
                 },
                 {
-                    "name": "quant",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "connector",
-            "base": "",
-            "fields": [
-                {
-                    "name": "balance",
-                    "type": "asset"
-                },
-                {
-                    "name": "weight",
-                    "type": "float64"
-                }
-            ]
-        },
-        {
-            "name": "exchange_state",
-            "base": "",
-            "fields": [
-                {
-                    "name": "supply",
-                    "type": "asset"
-                },
-                {
-                    "name": "base",
-                    "type": "connector"
-                },
-                {
-                    "name": "quote",
-                    "type": "connector"
+                    "name": "amount",
+                    "type": "int64"
                 }
             ]
         },
@@ -285,12 +253,66 @@
             ]
         },        
         {
-            "name": "hdd_global_state",
+            "name": "hdd_global_param",
             "base": "",
             "fields": [
                 {
-                    "name": "hdd_total_balance",
+                    "name": "hdd_price",
+                    "type": "uint64"
+                },
+                {
+                    "name": "yta_price",
+                    "type": "uint64"
+                },
+                {
+                    "name": "dup_remove_ratio",
+                    "type": "uint64"
+                },
+                {
+                    "name": "dup_remove_dist_ratio",
+                    "type": "uint64"
+                },
+                {
+                    "name": "hdd_counter",
                     "type": "int64"
+                },
+            ]
+        },
+        {
+            "name": "hdd_price_guard",
+            "base": "",
+            "fields": [
+                {
+                    "name": "last_yta_guard_price1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_ytaprice_guard_time1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_yta_guard_price2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_ytaprice_guard_time2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_dup_remove_guard_ratio1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_duprmv_ratio_guard_time1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_dup_remove_guard_ratio2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_duprmv_ratio_guard_time2",
+                    "type": "uint64"
                 }
             ]
         },
@@ -311,16 +333,6 @@
                 {
                     "name": "hdd_macc_user",
                     "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "hdd_global_price",
-            "base": "",
-            "fields": [
-                {
-                    "name": "price",
-                    "type": "int64"
                 }
             ]
         },
@@ -516,7 +528,7 @@
             ]
         },
         {
-            "name": "userhdd",
+            "name": "useracchdd",
             "base": "",
             "fields": [
                 {
@@ -524,15 +536,15 @@
                     "type": "name"
                 },
                 {
-                    "name": "hdd_balance",
+                    "name": "hdd_storehdd",
+                    "type": "int64"
+                },
+                {
+                    "name": "hdd_minerhdd",
                     "type": "int64"
                 },
                 {
                     "name": "hdd_per_cycle_fee",
-                    "type": "int64"
-                },
-                {
-                    "name": "hdd_per_cycle_profit",
                     "type": "int64"
                 },
                 {
@@ -542,6 +554,72 @@
                 {
                     "name": "last_hdd_time",
                     "type": "uint64"
+                },
+                {
+                    "name": "hdd_per_cycle_profit",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "sethddprice",
+            "base": "",
+            "fields": [
+                {
+                    "name": "price",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "setytaprice",
+            "base": "",
+            "fields": [
+                {
+                    "name": "price",
+                    "type": "uint64"
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "setdrratio",
+            "base": "",
+            "fields": [
+                {
+                    "name": "ratio",
+                    "type": "uint64"
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "setdrdratio",
+            "base": "",
+            "fields": [
+                {
+                    "name": "ratio",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "addhddcnt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "count",
+                    "type": "int64"
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
                 }
             ]
         }
@@ -648,19 +726,32 @@
             "ricardian_contract": ""
         },
         {
-            "name": "mchgowneracc",
-            "type": "mchgowneracc",
+            "name": "sethddprice",
+            "type": "sethddprice",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setytaprice",
+            "type": "setytaprice",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setdrratio",
+            "type": "setdrratio",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setdrdratio",
+            "type": "setdrdratio",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "addhddcnt",
+            "type": "addhddcnt",
             "ricardian_contract": ""
         }
     ],
     "tables": [
-        {
-            "name": "hddglobal",
-            "type": "hdd_global_state",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
         {
             "name": "gusercount",
             "type": "hdd_global_state2",
@@ -676,15 +767,15 @@
             "key_types": []
         },
         {
-            "name": "ghddprice",
-            "type": "hdd_global_price",
+            "name": "gparams",
+            "type": "hdd_global_param",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
-        },   
+        },
         {
-            "name": "hmarket",
-            "type": "exchange_state",
+            "name": "paramguard",
+            "type": "hdd_price_guard",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -711,8 +802,8 @@
             "key_types": []
         },
         {
-            "name": "userhdd",
-            "type": "userhdd",
+            "name": "useracchdd",
+            "type": "useracchdd",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
