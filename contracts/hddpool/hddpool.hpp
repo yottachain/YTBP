@@ -140,9 +140,25 @@ private:
     uint64_t  last_dup_remove_guard_ratio1 = 10000;
     uint64_t  last_duprmv_ratio_guard_time1 = current_time();
     uint64_t  last_dup_remove_guard_ratio2 = 10000;
-    uint64_t  last_duprmv_ratio_guard_time2 = current_time();   
+    uint64_t  last_duprmv_ratio_guard_time2 = current_time();  
+    uint64_t  yta_price_delta_1 = 15; 
+    uint64_t  yta_price_timespan_1 = 8*60; 
+    uint64_t  yta_price_delta_2 = 50;
+    uint64_t  yta_price_timespan_2 = 60 * 60 * 24; 
+    uint64_t  duprmv_ratio_delta_1 = 10;
+    uint64_t  duprmv_ratio_timespan_1 = 60 * 60 * 24; 
+    uint64_t  duprmv_ratio_delta_2 = 50;
+    uint64_t  duprmv_ratio_timespan_2 = 60 * 60 * 240; 
 
-    EOSLIB_SERIALIZE( hdd_price_guard, (last_ytaprice_guard_time1)(last_ytaprice_guard_time2)(last_duprmv_ratio_guard_time1)(last_duprmv_ratio_guard_time2))
+
+    EOSLIB_SERIALIZE( hdd_price_guard,  (last_yta_guard_price1)(last_ytaprice_guard_time1)
+                                        (last_yta_guard_price2)(last_ytaprice_guard_time2)
+                                        (last_dup_remove_guard_ratio1)(last_duprmv_ratio_guard_time1)
+                                        (last_dup_remove_guard_ratio2)(last_duprmv_ratio_guard_time2)
+                                        (yta_price_delta_1)(yta_price_timespan_1)
+                                        (yta_price_delta_2)(yta_price_timespan_2)
+                                        (duprmv_ratio_delta_1)(duprmv_ratio_timespan_1)
+                                        (duprmv_ratio_delta_2)(duprmv_ratio_timespan_2))
   };
 
   struct hdd_global_state2

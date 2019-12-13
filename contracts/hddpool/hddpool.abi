@@ -313,7 +313,40 @@
                 {
                     "name": "last_duprmv_ratio_guard_time2",
                     "type": "uint64"
+                },
+                {
+                    "name": "yta_price_delta_1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "yta_price_timespan_1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "yta_price_delta_2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "yta_price_timespan_2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "duprmv_ratio_delta_1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "duprmv_ratio_timespan_1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "duprmv_ratio_delta_2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "duprmv_ratio_timespan_2",
+                    "type": "uint64"
                 }
+
             ]
         },
         {

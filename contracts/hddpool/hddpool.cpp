@@ -910,32 +910,29 @@ void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
          uint64_t tmp_t;
          uint64_t delta;
          uint64_t ct = current_time();
-         uint64_t guard_time1 =  8 * 60;
-         uint64_t guard_time2 =  60 * 60 * 24;
-
 
          tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time1) / 1000000ll; //seconds
          delta = (uint64_t)(abs((int64_t)price - (int64_t)_paramguard_state.last_yta_guard_price1)) * 100 / _paramguard_state.last_yta_guard_price1;
          
-         if(tmp_t < guard_time1) {
-            if(delta > 15) break; //8分钟内波动小于15%
+         if(tmp_t < _paramguard_state.yta_price_timespan_1) {
+            if(delta > _paramguard_state.yta_price_delta_1) break; 
          }
          tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time2) / 1000000ll; //seconds
          delta = (uint64_t)(abs((int64_t)price - (int64_t)_paramguard_state.last_yta_guard_price2)) * 100 / _paramguard_state.last_yta_guard_price2;
-         if(tmp_t < guard_time2) {
-            if(delta > 50) break; //24小时内波动小于50%
+         if(tmp_t < _paramguard_state.yta_price_timespan_2) {
+            if(delta > _paramguard_state.yta_price_delta_2) break; 
          }
 
          _gparmas_state.yta_price = price;
 
          tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time1) / 1000000ll; //seconds
-         if(tmp_t > guard_time1) {
+         if(tmp_t > _paramguard_state.yta_price_timespan_1) {
             _paramguard_state.last_yta_guard_price1 = price;
             _paramguard_state.last_ytaprice_guard_time1 = ct;
          }
 
          tmp_t = (ct-_paramguard_state.last_ytaprice_guard_time2) / 1000000ll; //seconds
-         if(tmp_t > guard_time2) {
+         if(tmp_t > _paramguard_state.yta_price_timespan_2) {
             _paramguard_state.last_yta_guard_price2 = price;
             _paramguard_state.last_ytaprice_guard_time2 = ct;            
          }
@@ -986,32 +983,30 @@ void hddpool::setdrratio(uint64_t ratio, uint8_t acc_type) {
          uint64_t tmp_t;
          uint64_t delta;
          uint64_t ct = current_time();
-         uint64_t guard_time1 =  60 * 60 * 24; //1天
-         uint64_t guard_time2 =  60 * 60 * 240; //10天
 
 
          tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time1) / 1000000ll; //seconds
          delta = (uint64_t)(abs((int64_t)ratio - (int64_t)_paramguard_state.last_dup_remove_guard_ratio1)) * 100 / _paramguard_state.last_dup_remove_guard_ratio1;
          
-         if(tmp_t < guard_time1) {
-            if(delta > 10) break; //1天内波动小于10%
+         if(tmp_t < _paramguard_state.duprmv_ratio_timespan_1) {
+            if(delta > _paramguard_state.duprmv_ratio_delta_1) break; 
          }
          tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time2) / 1000000ll; //seconds
          delta = (uint64_t)(abs((int64_t)ratio - (int64_t)_paramguard_state.last_dup_remove_guard_ratio2)) * 100 / _paramguard_state.last_dup_remove_guard_ratio2;
-         if(tmp_t < guard_time2) {
-            if(delta > 50) break; //10天内波动小于50%
+         if(tmp_t < _paramguard_state.duprmv_ratio_timespan_2) {
+            if(delta > _paramguard_state.duprmv_ratio_delta_2) break; 
          }
 
          _gparmas_state.dup_remove_ratio = ratio;
 
          tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time1) / 1000000ll; //seconds
-         if(tmp_t > guard_time1) {
+         if(tmp_t > _paramguard_state.duprmv_ratio_timespan_1) {
             _paramguard_state.last_dup_remove_guard_ratio1 = ratio;
             _paramguard_state.last_duprmv_ratio_guard_time1 = ct;
          }
 
          tmp_t = (ct-_paramguard_state.last_duprmv_ratio_guard_time2) / 1000000ll; //seconds
-         if(tmp_t > guard_time2) {
+         if(tmp_t > _paramguard_state.duprmv_ratio_timespan_2) {
             _paramguard_state.last_dup_remove_guard_ratio2 = ratio;
             _paramguard_state.last_duprmv_ratio_guard_time2 = ct;            
          }
