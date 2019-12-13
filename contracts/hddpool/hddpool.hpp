@@ -14,7 +14,7 @@ using eosio::name;
 using eosio::symbol_type;
 typedef double real_type;
 
-class hddpool : public contract
+class hddpool : public eosio::contract
 {
 public:
   using contract::contract;
@@ -48,7 +48,6 @@ public:
   //change miner info related actions
   void mchgadminacc(uint64_t minerid, name new_adminacc);
   void mchgowneracc(uint64_t minerid, name new_owneracc);
-  void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
 
   //update hddpool params
@@ -58,8 +57,6 @@ public:
   void setdrdratio(uint64_t ratio);
   void addhddcnt(int64_t count, uint8_t acc_type);
 
-  inline bool     is_miner_exist(uint64_t minerid)const;
-  inline uint64_t get_miner_max_space(uint64_t minerid)const;
 private:
   struct userhdd
   {
@@ -192,8 +189,31 @@ private:
 
 
   void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
+
+public:  
+
+  static bool is_miner_exist(uint64_t minerid)
+  {
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end())
+      return true;    
+
+    return false;
+  }
+
+  static uint64_t get_miner_max_space(uint64_t minerid)
+  {
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end())
+      return itminerinfo->max_space;    
+    return 0;  
+  }
+
 };
 
+/*
 bool hddpool::is_miner_exist(uint64_t minerid) const
 {
   minerinfo_table _minerinfo( _self , _self );
@@ -212,3 +232,4 @@ uint64_t hddpool::get_miner_max_space(uint64_t minerid) const
     return itminerinfo->max_space;    
   return 0;  
 }
+*/

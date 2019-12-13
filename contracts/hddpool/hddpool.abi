@@ -211,20 +211,6 @@
             ]
         },
         {
-            "name": "mchgstrpool",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "new_poolid",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "mchgadminacc",
             "base": "",
             "fields": [
@@ -746,11 +732,6 @@
         {
             "name": "mchgspace",
             "type": "mchgspace",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "mchgstrpool",
-            "type": "mchgstrpool",
             "ricardian_contract": ""
         },
         {
