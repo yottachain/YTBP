@@ -180,7 +180,21 @@
                     "type": "int64"
                 }
             ]
-        }
+        },
+        {
+            "name": "mchgdepacc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "new_depacc",
+                    "type": "name"
+                }
+            ]
+        }              
     ],
     "actions": [
         {
@@ -216,6 +230,11 @@
         {
             "name": "setrate",
             "type": "setrate",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "mchgdepacc",
+            "type": "mchgdepacc",
             "ricardian_contract": ""
         }
     ],

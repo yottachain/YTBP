@@ -25,6 +25,8 @@ class hdddeposit : public eosio::contract {
         void delminer(uint64_t minerid);
         void setrate(int64_t rate);
 
+        void mchgdepacc(uint64_t minerid, name new_depacc);
+        
         inline asset get_deposit( account_name user )const;
         inline asset get_miner_deposit( uint64_t minerid )const;
         inline bool is_deposit_enough( asset deposit, uint64_t max_space ) const;

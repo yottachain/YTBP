@@ -259,6 +259,40 @@ void hdddeposit::setrate(int64_t rate) {
 
 }
 
+void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
+    require_auth(new_depacc);
+
+    minerdeposit_table _mdeposit(_self, _self);
+    const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid");
+    eosio_assert(miner.account_name != new_depacc, "must use different account to change deposit user");
+
+    depositpool_table   _deposit_old(_self, miner.account_name.value);
+    const auto& acc_old = _deposit_old.get( miner.account_name, "no deposit pool record for original deposit user");
+
+    depositpool_table   _deposit_new(_self, new_depacc.value);
+    const auto& acc_new = _deposit_new.get( new_depacc.value, "no deposit pool record for new deposit user");
+
+    eosio_assert( acc_new.deposit_free.amount >= miner.dep_total.amount, "new deposit user free deposit not enough" );
+
+    eosio_assert(hddpool::get_miner_pool(minerid) == new_depacc, "minerid not exist in new_depacc's storepool ");
+
+
+    //变更原抵押账户的押金数量
+    _deposit_old.modify( acc_old, 0, [&]( auto& a ) {
+        a.deposit_free += miner.deposit;
+    });  
+
+    //将矿机的押金数量重新恢复到未扣罚金的初始额度
+    _mdeposit.modify( miner, 0, [&]( auto& a ) {
+        a.account_name = new_depacc;
+        a.deposit = a.dep_total;
+    });
+
+    _deposit_new.modify( acc_new, 0, [&]( auto& a ) {
+        a.deposit_free -= miner.dep_total;
+    });
+}
+
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
@@ -272,4 +306,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(delminer)(setrate))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(delminer)(setrate)(mchgdepacc))

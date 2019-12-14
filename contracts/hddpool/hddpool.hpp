@@ -23,6 +23,7 @@ public:
   ~hddpool();
 
   void getbalance(name user, uint8_t acc_type, name caller);
+  void calcprofit(name user);
   void buyhdd(name from, name receiver, int64_t amount);
   void sellhdd(name user, int64_t amount);
   void sethfee(name user, int64_t fee, name caller);
@@ -48,6 +49,7 @@ public:
   //change miner info related actions
   void mchgadminacc(uint64_t minerid, name new_adminacc);
   void mchgowneracc(uint64_t minerid, name new_owneracc);
+  void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
 
   //update hddpool params
@@ -62,14 +64,16 @@ private:
   {
     name      account_name;         //账户名
     int64_t   hdd_storehhdd;        //用户数据存储的HDD数量
-    int64_t   hdd_minerhdd;         //存储服务提供者的HDD收益数量  
     int64_t   hdd_per_cycle_fee;    //用户存储数据的每周期费用
-    uint64_t  hdd_space;            //用户存储数据占用的存储空间
-    uint64_t  last_hdd_time;        //上次余额计算时间 microseconds from 1970
-    int64_t   hdd_per_cycle_profit; //reserve
+    uint64_t  hdd_space_store;      //用户存储数据占用的存储空间
+    uint64_t  last_hddstore_time;   //上次存储hdd余额计算时间 microseconds from 1970
+    int64_t   hdd_minerhdd;         //存储服务提供者的HDD收益数量  
+    int64_t   hdd_per_cycle_profit; //每周期收益
+    uint64_t  hdd_space_profit;     //该收益账户名下所有矿机的总生产空间
+    uint64_t  last_hddprofit_time;  //上次收益hdd余额计算时间 microseconds from 1970
     uint64_t  primary_key() const { return account_name.value; }
   };
-  typedef multi_index<N(useracchdd), userhdd> userhdd_index;
+  typedef multi_index<N(userhddinfo), userhdd> userhdd_index;
 
   struct maccount
   {
@@ -211,25 +215,16 @@ public:
     return 0;  
   }
 
+  static name get_miner_pool(uint64_t minerid)
+  {
+    name pool;
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end()) {
+      pool = itminerinfo->owner;    
+    }
+    return pool;  
+  }
+
 };
 
-/*
-bool hddpool::is_miner_exist(uint64_t minerid) const
-{
-  minerinfo_table _minerinfo( _self , _self );
-  auto itminerinfo = _minerinfo.find(minerid);
-  if(itminerinfo != _minerinfo.end())
-    return true;    
-
-  return false;
-}
-
-uint64_t hddpool::get_miner_max_space(uint64_t minerid) const
-{
-  minerinfo_table _minerinfo( _self , _self );
-  auto itminerinfo = _minerinfo.find(minerid);
-  if(itminerinfo != _minerinfo.end())
-    return itminerinfo->max_space;    
-  return 0;  
-}
-*/

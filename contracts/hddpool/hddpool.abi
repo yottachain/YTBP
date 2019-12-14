@@ -197,6 +197,16 @@
             ]
         },
         {
+            "name": "calcprofit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "mchgspace",
             "base": "",
             "fields": [
@@ -547,7 +557,7 @@
             ]
         },
         {
-            "name": "useracchdd",
+            "name": "userhddinfo",
             "base": "",
             "fields": [
                 {
@@ -559,24 +569,32 @@
                     "type": "int64"
                 },
                 {
-                    "name": "hdd_minerhdd",
-                    "type": "int64"
-                },
-                {
                     "name": "hdd_per_cycle_fee",
                     "type": "int64"
                 },
                 {
-                    "name": "hdd_space",
+                    "name": "hdd_space_store",
                     "type": "uint64"
                 },
                 {
-                    "name": "last_hdd_time",
+                    "name": "last_hddstore_time",
                     "type": "uint64"
+                },
+                {
+                    "name": "hdd_minerhdd",
+                    "type": "int64"
                 },
                 {
                     "name": "hdd_per_cycle_profit",
                     "type": "int64"
+                },
+                {
+                    "name": "hdd_space_profit",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_hddprofit_time",
+                    "type": "uint64"
                 }
             ]
         },
@@ -674,6 +692,11 @@
             "type": "getbalance",
             "ricardian_contract": ""
         },
+        {
+            "name": "calcprofit",
+            "type": "calcprofit",
+            "ricardian_contract": ""
+        },        
         {
             "name": "sellhdd",
             "type": "sellhdd",
@@ -816,8 +839,8 @@
             "key_types": []
         },
         {
-            "name": "useracchdd",
-            "type": "useracchdd",
+            "name": "userhddinfo",
+            "type": "userhddinfo",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
