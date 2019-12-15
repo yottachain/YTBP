@@ -274,7 +274,7 @@ void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
 
     eosio_assert( acc_new.deposit_free.amount >= miner.dep_total.amount, "new deposit user free deposit not enough" );
 
-    eosio_assert(hddpool::get_miner_pool(minerid) == new_depacc, "minerid not exist in new_depacc's storepool ");
+    eosio_assert(hddpool::get_miner_pool_owner(minerid) == new_depacc, "minerid not exist in new_depacc's storepool ");
 
 
     //变更原抵押账户的押金数量

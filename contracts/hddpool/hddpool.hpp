@@ -215,15 +215,31 @@ public:
     return 0;  
   }
 
-  static name get_miner_pool(uint64_t minerid)
+  static name get_miner_pool_id(uint64_t minerid)
   {
-    name pool;
+    name pool_id;
     minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
     auto itminerinfo = _minerinfo.find(minerid);
     if(itminerinfo != _minerinfo.end()) {
-      pool = itminerinfo->owner;    
+      pool_id = itminerinfo->pool_id;  
     }
-    return pool;  
+    return pool_id;  
+  }
+
+  static name get_miner_pool_owner(uint64_t minerid)
+  {
+    name pool_owner;
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end()) {
+     storepool_index _storepool( N(hddpool12345) , N(hddpool12345));
+     auto itstorepool = _storepool.find(itminerinfo->pool_id);
+     if(itstorepool != _storepool.end()) {
+       pool_owner = itstorepool->pool_owner;
+     }
+
+    }
+    return pool_owner;  
   }
 
 };

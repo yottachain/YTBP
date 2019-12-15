@@ -732,7 +732,7 @@ void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
    auto itstorepool = _storepool.find(new_poolid.value);
    eosio_assert(itstorepool != _storepool.end(), "storepool not registered");
 
-   //require_auth(itminerinfo->admin);
+   require_auth(itminerinfo->admin);
    require_auth(itstorepool->pool_owner);
 
    //归还旧矿池空间
@@ -772,6 +772,9 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
 
    require_auth(itminerinfo->admin);
+
+   name pool_owner = get_miner_pool_owner(minerid);
+   require_auth(pool_owner);
 
    //--- check miner deposit and max_space
    asset deposit = hdddeposit(hdd_deposit).get_miner_deposit(minerid);
@@ -836,6 +839,10 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
    auto itmaccount_old = _maccount_old.find(minerid);
    eosio_assert(itmaccount_old != _maccount_old.end(), "minerid not register");
    uint64_t space = itmaccount_old->space;
+
+   name pool_owner = get_miner_pool_owner(minerid);
+   require_auth(pool_owner);
+
 
    uint64_t tmp_t = current_time();
 
