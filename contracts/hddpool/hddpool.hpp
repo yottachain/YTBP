@@ -194,6 +194,8 @@ private:
 
   void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 
+  void chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct);
+
 public:  
 
   static bool is_miner_exist(uint64_t minerid)

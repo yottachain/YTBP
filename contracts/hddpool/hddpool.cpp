@@ -106,6 +106,37 @@ void hddpool::calcprofit(name user)
    });
 }
 
+void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct)
+{
+   auto userhdd_itr = userhdd.find(minerowner.value);
+   eosio_assert(userhdd_itr != userhdd.end(), "no owner exists in userhdd table");
+   userhdd.modify(userhdd_itr, _self, [&](auto &row) {
+      if(is_calc) 
+      {
+         int64_t tmp_last_balance = userhdd_itr->hdd_minerhdd;
+         int64_t new_balance;
+         if (calculate_balance(tmp_last_balance, 0, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, ct, new_balance))
+         {
+            eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
+            row.hdd_minerhdd = new_balance;
+            row.last_hddprofit_time = ct;
+         }
+      }
+      uint64_t newspace = 0;
+      if(is_increase) {
+          newspace = row.hdd_space_profit + space_delta;
+      }
+      else {
+         if(row.hdd_space_profit > space_delta) {
+            newspace = row.hdd_space_profit - space_delta;
+         }
+      }   
+      row.hdd_space_profit = newspace;
+      row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
+   });
+
+}
+
 
 void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 {
@@ -400,22 +431,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   auto userhdd_itr = _userhdd.find(owner.value);
-   eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
-   _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-      int64_t tmp_last_balance = userhdd_itr->hdd_minerhdd;
-      int64_t new_balance;
-      if (calculate_balance(tmp_last_balance, 0, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, tmp_t, new_balance))
-      {
-         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
-         row.hdd_minerhdd = new_balance;
-         row.last_hddprofit_time = tmp_t;
-      }
-      uint64_t newspace = row.hdd_space_profit + space;
-      row.hdd_space_profit = newspace;
-      row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
-   });
-
+   chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
 }
 
 void hddpool::calcmbalance(name owner, uint64_t minerid)
@@ -456,7 +472,6 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
       require_auth(N(hddpooladmin));
    }
 
-
    action(
        permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(delminer),
@@ -469,20 +484,10 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
       auto itmaccount = _maccount.find(minerid);
       if(itmaccount != _maccount.end()) {
 
-         _maccount.erase(itmaccount);    
-
          userhdd_index _userhdd(_self, itminerinfo->owner.value);
-         auto userhdd_itr = _userhdd.find(itminerinfo->owner.value);
-         eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
-         _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-            uint64_t newspace = 0;
-            if(row.hdd_space_profit >= itmaccount->space) {
-               newspace = row.hdd_space_profit - itmaccount->space;
-            }
-            row.hdd_space_profit = newspace;
-            row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
-         });
+         chg_owner_space(_userhdd, itminerinfo->owner, itmaccount->space, false, false, current_time());
 
+         _maccount.erase(itmaccount);    
       }
    }
 
@@ -529,24 +534,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   auto userhdd_itr = _userhdd.find(owner.value);
-   eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
-   _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-      int64_t tmp_last_balance = userhdd_itr->hdd_minerhdd;
-      int64_t new_balance;
-      if (calculate_balance(tmp_last_balance, 0, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, tmp_t, new_balance))
-      {
-         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
-         row.hdd_minerhdd = new_balance;
-         row.last_hddprofit_time = tmp_t;
-      }
-      uint64_t newspace = 0;
-      if(row.hdd_space_profit >= space) {
-         newspace = row.hdd_space_profit - space;
-      }
-      row.hdd_space_profit = newspace;
-      row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
-   });
+   chg_owner_space(_userhdd, owner, space, false, true, tmp_t);
 }
 
 void hddpool::mactive(name owner, uint64_t minerid, name caller)
@@ -571,23 +559,7 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   auto userhdd_itr = _userhdd.find(owner.value);
-   eosio_assert(userhdd_itr != _userhdd.end(), "no owner exists in userhdd table");
-   _userhdd.modify(userhdd_itr, _self, [&](auto &row) {
-      int64_t tmp_last_balance = userhdd_itr->hdd_minerhdd;
-      int64_t new_balance;
-      if (calculate_balance(tmp_last_balance, 0, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, tmp_t, new_balance))
-      {
-         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
-         row.hdd_minerhdd = new_balance;
-         row.last_hddprofit_time = tmp_t;
-      }
-      uint64_t newspace = 0;
-      newspace = row.hdd_space_profit + space;
-      row.hdd_space_profit = newspace;
-      row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
-   });
-
+   chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
 }
 
 void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount)
@@ -868,24 +840,7 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
 
    //结算旧owner账户当前的收益
    userhdd_index _userhdd_old(_self, itminerinfo->owner.value);
-   auto userhdd_old_itr = _userhdd_old.find(itminerinfo->owner.value);
-   eosio_assert(userhdd_old_itr != _userhdd_old.end(), "old owner not exists in userhdd table");
-   _userhdd_old.modify(userhdd_old_itr, _self, [&](auto &row) {
-      int64_t tmp_last_balance = userhdd_old_itr->hdd_minerhdd;
-      int64_t new_balance;
-      if (calculate_balance(tmp_last_balance, 0, userhdd_old_itr->hdd_per_cycle_profit, userhdd_old_itr->last_hddprofit_time, tmp_t, new_balance))
-      {
-         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
-         row.hdd_minerhdd = new_balance;
-         row.last_hddprofit_time = tmp_t;
-      }
-      uint64_t newspace = 0;
-      if(row.hdd_space_profit >= space) {
-         newspace = row.hdd_space_profit - space;
-      }
-      row.hdd_space_profit = newspace;
-      row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
-   });
+   chg_owner_space(_userhdd_old, itminerinfo->owner, space, false, true, tmp_t);
 
    //结算新owner账户当前的收益
    userhdd_index _userhdd_new(_self, new_owneracc.value);
@@ -895,20 +850,7 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
       new_user_hdd(_userhdd_new, new_owneracc, 0, _self);
       userhdd_new_itr = _userhdd_new.find(new_owneracc.value);
    }
-   _userhdd_new.modify(userhdd_new_itr, _self, [&](auto &row) {
-      int64_t tmp_last_balance = userhdd_new_itr->hdd_minerhdd;
-      int64_t new_balance;
-      if (calculate_balance(tmp_last_balance, 0, userhdd_new_itr->hdd_per_cycle_profit, userhdd_new_itr->last_hddprofit_time, tmp_t, new_balance))
-      {
-         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
-         row.hdd_minerhdd = new_balance;
-         row.last_hddprofit_time = tmp_t;
-      }
-      uint64_t newspace = 0;
-      newspace = row.hdd_space_profit + space;
-      row.hdd_space_profit = newspace;
-      row.hdd_per_cycle_profit = (int64_t)(((double)(newspace * data_slice_size) / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
-   });
+   chg_owner_space(_userhdd_new, new_owneracc, space, true, true, tmp_t);
 
    maccount_index _maccount_new(_self, new_owneracc.value);
    auto itmaccount_new = _maccount_new.find(minerid);
