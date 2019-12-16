@@ -20,7 +20,9 @@ static constexpr eosio::name hdd_lock_account{N(hddlock12345)};
 
 void hdddeposit::paydeppool(account_name user, asset quant) {
     require_auth(user);
-    
+
+    account_name payer = user;
+
     bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
     eosio_assert( !is_frozen, "frozen user can not create deposit pool" );
 
@@ -41,7 +43,7 @@ void hdddeposit::paydeppool(account_name user, asset quant) {
     //insert or update accdeposit table
     if ( it == _deposit.end() ) {
         //_deposit.emplace( _self, [&]( auto& a ){
-        _deposit.emplace( user, [&]( auto& a ){
+        _deposit.emplace( payer, [&]( auto& a ){
             a.account_name = name{user};
             a.pool_type = 0;
             a.deposit_total = quant;
@@ -96,7 +98,7 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
 void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     require_auth(user);
 
-    eosio_assert(1 == 2, "can not paydeposit now");
+    account_name payer = _self;
 
     eosio_assert(hddpool::is_miner_exist(minerid), "miner not registered");
 
@@ -119,7 +121,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     auto miner = _mdeposit.find( minerid );
     eosio_assert(miner == _mdeposit.end(), "already deposit.");
     if ( miner == _mdeposit.end() ) {
-        _mdeposit.emplace( _self, [&]( auto& a ){
+        _mdeposit.emplace( payer, [&]( auto& a ){
             a.minerid = minerid;
             a.miner_type = 0;
             a.account_name = name{user};
