@@ -18,6 +18,8 @@ static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name system_account{N(eosio)};
 static constexpr eosio::name hdd_lock_account{N(hddlock12345)};
 
+const uint32_t min_miner_space = 100 * (1024 * 64); //100GB，以16k分片为单位
+
 void hdddeposit::paydeppool(account_name user, asset quant) {
     require_auth(user);
 
@@ -28,7 +30,7 @@ void hdddeposit::paydeppool(account_name user, asset quant) {
 
     eosio_assert(is_account(user), "user is not an account.");
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert( quant.amount > 0, "must use positive quant" );
+    eosio_assert(quant.amount > 0, "must use positive quant" );
 
     //check if user has enough YTA balance for deposit
     auto balance   = eosio::token(N(eosio.token)).get_balance( user , quant.symbol.name() );
@@ -70,7 +72,7 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
     require_auth(user);
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert( quant.amount > 0, "must use positive quant" );
+    eosio_assert(quant.amount > 0, "must use positive quant");
 
     depositpool_table _deposit(_self, user);
     const auto& it = _deposit.get( user, "no deposit pool record for this user.");
@@ -103,7 +105,9 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     eosio_assert(hddpool::is_miner_exist(minerid), "miner not registered");
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert( quant.amount > 0, "must use positive quant" );
+    eosio_assert(quant.amount > 0, "must use positive quant");
+    eosio_assert(is_deposit_enough(quant, min_miner_space),"deposit quant is too low!");
+
 
     //check if user has enough YTA balance for deposit
     depositpool_table _deposit(_self, user);
@@ -135,7 +139,7 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset
     require_auth(user); // need hdd official account to sign this action.
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert( quant.amount > 0, "must use positive quant" );
+    eosio_assert(quant.amount > 0, "must use positive quant");
     
 
     minerdeposit_table _mdeposit(_self, _self);
@@ -275,9 +279,6 @@ void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     const auto& acc_new = _deposit_new.get( new_depacc.value, "no deposit pool record for new deposit user");
 
     eosio_assert( acc_new.deposit_free.amount >= miner.dep_total.amount, "new deposit user free deposit not enough" );
-
-    eosio_assert(hddpool::get_miner_pool_owner(minerid) == new_depacc, "minerid not exist in new_depacc's storepool ");
-
 
     //变更原抵押账户的押金数量
     _deposit_old.modify( acc_old, 0, [&]( auto& a ) {

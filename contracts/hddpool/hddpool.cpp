@@ -570,12 +570,6 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
    eosio_assert(is_account(dep_acc), "dep_acc invalidate");
    eosio_assert( dep_amount.amount > 0, "must use positive dep_amount" );
 
-   storepool_index _storepool( _self , _self );
-   auto itmstorepool = _storepool.find(dep_acc.value);
-   eosio_assert(itmstorepool != _storepool.end(), "dep_acc must use a stroepool name");  
-
-   eosio_assert(itmstorepool->space_left > 0, "dep_acc's storepool doesn't have enough space");
-
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo == _minerinfo.end(), "miner already registered \n");  
@@ -613,8 +607,6 @@ void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
    ((void)max_space);
 
    eosio_assert(is_account(pool_owner), "pool_owner invalidate");
-   eosio_assert(pool_owner == pool_id, "pool_owner and pool_id must equal");
-
    require_auth(pool_owner);
 
    storepool_index _storepool( _self , _self );
@@ -625,8 +617,6 @@ void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
    _storepool.emplace(payer, [&](auto &row) {
       row.pool_id    = pool_id;
       row.pool_owner = pool_owner;
-      //row.max_space  = max_space;
-      //row.space_left = max_space;
       row.max_space  = 0;
       row.space_left = 0;
    });       
@@ -662,12 +652,10 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
-   eosio_assert(itminerinfo->pool_id == pool_id, "pool_id invalidate \n");  
 
    require_auth(itminerinfo->admin);
    
-
-   eosio_assert(itminerinfo->max_space == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
+   eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
    eosio_assert(max_space <= max_minerspace, "miner max_space overflow\n");  
    eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left > max_space),"pool space not enough");
 
@@ -744,17 +732,10 @@ void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
    }); 
    
 
-   //修改minerinfo表中该矿机的矿机id 
+   //修改minerinfo表中该矿机的矿池id 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.pool_id = new_poolid;
    });  
-
-   //变更矿池其实就是变更抵押   
-   action(
-       permission_level{itstorepool->pool_owner, active_permission},
-       hdd_deposit, N(mchgdepacc),
-       std::make_tuple(minerid, itstorepool->pool_owner))
-       .send(); 
 }
 
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
@@ -820,20 +801,18 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+   eosio_assert(is_account(new_owneracc), "new owner is not an account.");
+   eosio_assert(itminerinfo->owner.value != 0, "no owner for this miner");
+
+   name pool_owner = get_miner_pool_owner(minerid);
 
    require_auth(itminerinfo->admin);
-
-   eosio_assert(is_account(new_owneracc), "new owner is not an account.");
-
-   eosio_assert(itminerinfo->owner.value != 0, "no owner for this miner");
+   require_auth(pool_owner);
 
    maccount_index _maccount_old(_self, itminerinfo->owner.value);
    auto itmaccount_old = _maccount_old.find(minerid);
    eosio_assert(itmaccount_old != _maccount_old.end(), "minerid not register");
    uint64_t space = itmaccount_old->space;
-
-   name pool_owner = get_miner_pool_owner(minerid);
-   require_auth(pool_owner);
 
 
    uint64_t tmp_t = current_time();
