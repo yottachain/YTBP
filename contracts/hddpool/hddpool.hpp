@@ -24,8 +24,8 @@ public:
 
   void getbalance(name user, uint8_t acc_type, name caller);
   void calcprofit(name user);
-  void buyhdd(name from, name receiver, int64_t amount);
-  void sellhdd(name user, int64_t amount);
+  void buyhdd(name from, name receiver, int64_t amount, std::string memo);
+  void sellhdd(name user, int64_t amount, std::string memo);
   void sethfee(name user, int64_t fee, name caller);
   void subbalance(name user, int64_t balance, uint8_t acc_type, name caller);
   void addhspace(name user, uint64_t space, name caller);
@@ -39,7 +39,7 @@ public:
   //store pool related actions -- start
   void delstrpool(name poolid);
   void regstrpool(name pool_id, name pool_owner, uint64_t max_space);
-  void chgpoolspace(name pool_id, uint64_t max_space);
+  void chgpoolspace(name pool_id, bool is_increace, uint64_t delta_space);
   void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
 
@@ -127,7 +127,7 @@ private:
     uint64_t  yta_price = 8000;
     uint64_t  dup_remove_ratio = 10000;
     uint64_t  dup_remove_dist_ratio = 10000;
-    int64_t   hdd_counter = 100000000000000000ll;
+    int64_t   hdd_counter = 2 * 1024 * 1024 * 100000000ll;
 
     EOSLIB_SERIALIZE( hdd_global_param, (hdd_price)(yta_price)(dup_remove_ratio)(dup_remove_dist_ratio)(hdd_counter))
   };

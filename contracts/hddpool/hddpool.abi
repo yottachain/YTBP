@@ -71,6 +71,10 @@
                 {
                     "name": "amount",
                     "type": "int64"
+                },
+                {
+                    "name":"memo",         
+                    "type":"string"
                 }
             ]
         },
@@ -129,7 +133,11 @@
                     "type": "name"
                 },
                 {
-                    "name": "max_space",
+                    "name": "is_increace",
+                    "type": "bool"
+                },
+                {
+                    "name": "delta_space",
                     "type": "uint64"
                 }
             ]
@@ -458,6 +466,10 @@
                 {
                     "name": "amount",
                     "type": "int64"
+                },
+                {
+                    "name":"memo",         
+                    "type":"string"
                 }
             ]
         },

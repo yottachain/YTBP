@@ -194,7 +194,7 @@ bool hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, i
    return true;
 }
 
-void hddpool::buyhdd(name from, name receiver, int64_t amount)
+void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
 {
    require_auth(from);
 
@@ -221,7 +221,7 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount)
    action(
        permission_level{from, active_permission},
        token_account, N(transfer),
-       std::make_tuple(from, hdd_exchg_acc, quant, std::string("buy hdd")))
+       std::make_tuple(from, hdd_exchg_acc, quant, memo))
        .send();
 
 
@@ -244,7 +244,7 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount)
 
 }
 
-void hddpool::sellhdd(name user, int64_t amount)
+void hddpool::sellhdd(name user, int64_t amount, std::string memo)
 {
    require_auth(user);
 
@@ -277,7 +277,7 @@ void hddpool::sellhdd(name user, int64_t amount)
    action(
        permission_level{hdd_exchg_acc, active_permission},
        token_account, N(transfer),
-       std::make_tuple(hdd_exchg_acc, user, quant, std::string("sell hdd")))
+       std::make_tuple(hdd_exchg_acc, user, quant, memo))
        .send();
 
 }
@@ -578,7 +578,6 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
    _minerinfo.emplace(payer, [&](auto &row) {      
       row.minerid    = minerid;
       row.admin      = adminacc;
-      row.pool_id    = dep_acc;
       row.max_space  = 0;
       row.space_left = 0;
    });       
@@ -622,7 +621,7 @@ void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
    });       
 }
 
-void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
+void hddpool::chgpoolspace(name pool_id, bool is_increace, uint64_t delta_space)
 { 
 //   require_auth(N(hddpooladml1));
    require_auth(N(hddpooladmin));
@@ -630,6 +629,15 @@ void hddpool::chgpoolspace(name pool_id, uint64_t max_space)
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(pool_id.value);
    eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
+
+   uint64_t max_space = 0;
+   if(is_increace) {
+      max_space = itmstorepool->max_space + delta_space;
+   } else {
+      if(itmstorepool->max_space > delta_space) {
+         max_space = itmstorepool->max_space - delta_space;
+      }
+   }
 
    _storepool.modify(itmstorepool, _self, [&](auto &row) {
       uint64_t space_used = row.max_space - row.space_left;
