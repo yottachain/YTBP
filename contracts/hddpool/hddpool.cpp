@@ -30,10 +30,10 @@ const uint32_t one_gb = 1024 * 1024 * 1024; //1GB
 const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
 //以下空间量按照16k一个分片大小为单位
-const uint64_t max_userspace = 64 * 1024 * 1024 * uint64_t(1024 * 500);  //500P 最大用户存储空间量
-const uint64_t max_minerspace = 64 * 1024 * uint64_t(1024 * 100); //100T 单个矿机最大的采购空间量
+const uint64_t max_user_space = 64 * 1024 * 1024 * uint64_t(1024 * 500);  //500P 最大用户存储空间量
+const uint64_t max_miner_space = 64 * 1024 * uint64_t(1024 * 100); //100T 单个矿机最大的采购空间量
 //const uint32_t per_profit_space = 64 * 1024; //1G //每次增加的采购空间容量
-
+const uint32_t min_miner_space = 100 * (1024 * 64); //100GB，以16k分片为单位
 
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
@@ -364,7 +364,7 @@ void hddpool::addhspace(name user, uint64_t space, name caller)
 
    _userhdd.modify(it, _self, [&](auto &row) {
       row.hdd_space_store += space;
-      eosio_assert(row.hdd_space_store <= max_userspace , "overflow max_userspace");
+      eosio_assert(row.hdd_space_store <= max_user_space , "overflow max_userspace");
    });
 
 }
@@ -656,7 +656,8 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    require_auth(itminerinfo->admin);
    
    eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
-   eosio_assert(max_space <= max_minerspace, "miner max_space overflow\n");  
+   eosio_assert(max_space <= max_miner_space, "miner max_space overflow\n");  
+   eosio_assert(max_space >= min_miner_space, "miner max_space underflow\n");  
    eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left > max_space),"pool space not enough");
 
    //--- check miner deposit and max_space
@@ -743,6 +744,9 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+   eosio_assert(max_space <= max_miner_space, "miner max_space overflow\n");  
+   eosio_assert(max_space >= min_miner_space, "miner max_space underflow\n");  
+
 
    require_auth(itminerinfo->admin);
 

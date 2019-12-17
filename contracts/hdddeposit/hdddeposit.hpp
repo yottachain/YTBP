@@ -105,15 +105,13 @@ bool hdddeposit::is_deposit_enough( asset deposit, uint64_t max_space ) const
         rate = grate.get().rate;
     }
     double drate = ((double)rate)/100;
-    uint32_t one_gb = 1024 * 1024 * 1024; //1GB
-    uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
-    
-    int64_t am = (int64_t)((((double)((max_space * data_slice_size)))/one_gb) * drate * 10000);
+    uint32_t one_gb = 64 * 1024; //1GB, 以16k一个分片大小为单位
+
+    int64_t am = (int64_t)((((double)max_space)/one_gb) * drate * 10000);
     if(deposit.amount >= am)
         return true;
 
-    //return false;
-    return true;
+    return false;
 }
 
 
