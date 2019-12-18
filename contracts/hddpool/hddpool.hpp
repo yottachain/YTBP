@@ -187,10 +187,8 @@ private:
   //bool is_bp_account(uint64_t uservalue);
   void check_bp_account(account_name bpacc, uint64_t id, bool isCheckId);
 
-  bool calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit,
-                          uint64_t last_hdd_time, uint64_t current_time,
-                          int64_t &new_balance);
-
+  int64_t calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit,
+                          uint64_t last_hdd_time, uint64_t current_time);
 
   void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 
