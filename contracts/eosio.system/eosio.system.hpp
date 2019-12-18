@@ -277,8 +277,6 @@ namespace eosiosystem {
          void unregprod( const account_name producer );
 
 //##YTA-Change  start:  
-         void clsprods2();
-
          void seqproducer( const account_name producer, const account_name shadow, uint16_t seq , uint8_t level );
 
          void reprodlevel();       

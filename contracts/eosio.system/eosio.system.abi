@@ -340,10 +340,6 @@
         {"name":"producer",     "type":"account_name"}
       ]
     },{
-      "name": "clsprods2",
-      "base": "",
-      "fields": []
-    },{
       "name": "seqproducer",
       "base": "",
       "fields": [
@@ -569,10 +565,6 @@
    },{
       "name": "unregprod",
       "type": "unregprod",
-      "ricardian_contract": ""
-   },{
-      "name": "clsprods2",
-      "type": "clsprods2",
       "ricardian_contract": ""
    },{
       "name": "seqproducer",

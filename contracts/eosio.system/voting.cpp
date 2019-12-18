@@ -85,28 +85,6 @@ namespace eosiosystem {
       change_producer_yta_info(producer, public_key(), false);
    }
 //##YTA-Change  start: 
-   void system_contract::clsprods2() {
-      //require_auth( _self );
-      require_auth(N(ytaadminuser));
-
-      while (_producersext.begin() != _producersext.end()) {
-         _producersext.erase(_producersext.begin()); 
-      }
-
-      _gstateex.total_unpaid_base_cnt = 0;
-
-      all_prods_singleton _all_prods(_self, _self);
-      all_prods_level     _all_prods_state;
-
-      if (_all_prods.exists()) {
-         _all_prods_state = _all_prods.get();
-         _all_prods_state.prods_l1.clear();
-         _all_prods_state.prods_l2.clear();
-         _all_prods.set(_all_prods_state,_self);
-      }
-
-   }
-
    void system_contract::delproducer( const account_name producer ) {
       auto itp = _producers.find(producer);
       if( itp != _producers.end() ) {
