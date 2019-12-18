@@ -606,8 +606,7 @@ void hddpool::regstrpool(name pool_id, name pool_owner, uint64_t max_space)
 
 void hddpool::chgpoolspace(name pool_id, bool is_increace, uint64_t delta_space)
 { 
-//   require_auth(N(hddpooladml1));
-   require_auth(N(hddpooladmin));
+   require_auth(N(hddpooladml2));
 
    storepool_index _storepool( _self , _self );
    auto itmstorepool = _storepool.find(pool_id.value);
