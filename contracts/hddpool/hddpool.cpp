@@ -598,13 +598,13 @@ void hddpool::regstrpool(name pool_id, name pool_owner)
       row.pool_owner = pool_owner;
       row.max_space  = 0;
       row.space_left = 0;
-   });       
+   });
 
    asset quant{100000, CORE_SYMBOL};
    action(
        permission_level{pool_owner, active_permission},
        token_account, N(transfer),
-       std::make_tuple(pool_owner, hdd_exchg_acc, quant, "pay for creation storepool"))
+       std::make_tuple(pool_owner, hdd_exchg_acc, quant, std::string("pay for creation storepool")))
        .send();
 }
 
