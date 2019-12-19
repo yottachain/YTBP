@@ -315,10 +315,7 @@ void hddpool::subbalance(name user, int64_t balance, uint8_t acc_type, name call
 {
    eosio_assert(is_account(user), "user invalidate");
 
-   if(acc_type == 1) {
-      require_auth( user );
-   }
-   else if(acc_type == 2) {
+   if(acc_type == 2) {
       eosio_assert(is_account(caller), "caller not a account.");
       check_bp_account(caller.value, user.value, false);
 
