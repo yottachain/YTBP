@@ -135,7 +135,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     }
 }
 
-void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset quant) {
+void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant) {
     require_auth(user); // need hdd official account to sign this action.
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
@@ -148,7 +148,7 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increace, asset
     depositpool_table _deposit(_self, user);
     const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
 
-    if(!is_increace) {
+    if(!is_increase) {
         eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
 
         _mdeposit.modify( miner, 0, [&]( auto& a ) {

@@ -20,7 +20,7 @@ class hdddeposit : public eosio::contract {
         void unpaydeppool(account_name user, asset quant);
 
         void paydeposit(account_name user, uint64_t minerid, asset quant);
-        void chgdeposit(name user, uint64_t minerid, bool is_increace, asset quant);
+        void chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant);
         void payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller);
         void delminer(uint64_t minerid);
         void setrate(int64_t rate);

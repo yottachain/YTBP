@@ -39,7 +39,7 @@ public:
   //store pool related actions -- start
   void delstrpool(name poolid);
   void regstrpool(name pool_id, name pool_owner);
-  void chgpoolspace(name pool_id, bool is_increace, uint64_t delta_space);
+  void chgpoolspace(name pool_id, bool is_increase, uint64_t delta_space);
   void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
 

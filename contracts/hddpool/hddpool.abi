@@ -129,7 +129,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "is_increace",
+                    "name": "is_increase",
                     "type": "bool"
                 },
                 {

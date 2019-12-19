@@ -608,7 +608,7 @@ void hddpool::regstrpool(name pool_id, name pool_owner)
        .send();
 }
 
-void hddpool::chgpoolspace(name pool_id, bool is_increace, uint64_t delta_space)
+void hddpool::chgpoolspace(name pool_id, bool is_increase, uint64_t delta_space)
 { 
    require_auth(N(hddpooladml2));
 
@@ -617,7 +617,7 @@ void hddpool::chgpoolspace(name pool_id, bool is_increace, uint64_t delta_space)
    eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
 
    uint64_t max_space = 0;
-   if(is_increace) {
+   if(is_increase) {
       max_space = itmstorepool->max_space + delta_space;
    } else {
       if(itmstorepool->max_space > delta_space) {
