@@ -117,10 +117,6 @@
                 {
                     "name": "pool_owner",
                     "type": "name"
-                },
-                {
-                    "name": "max_space",
-                    "type": "uint64"
                 }
             ]
         },
