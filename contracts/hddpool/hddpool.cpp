@@ -34,7 +34,8 @@ const uint64_t max_profit_space = one_gb * 1024 * uint64_t(1024 * 500);    //500
 const uint64_t max_pool_space = one_gb * 1024 * uint64_t(1024 * 500);      //500P 矿池配额最大上限
 const uint64_t max_miner_space = one_gb * uint64_t(1024 * 100);            //100T 单个矿机最大的物理空间
 const uint64_t min_miner_space = 100 * one_gb;                             //100G 单个矿机最小的物理空间    
-const int64_t  max_buy_sell_hdd_amount = 2* 1024 * 1024 * 100000000ll;      //2P   单次买卖最大的HDD数量   
+const int64_t  max_buy_sell_hdd_amount = 2* 1024 * 1024 * 100000000ll;     //2P  单次买卖最大的HDD数量   
+const int64_t  min_buy_hdd_amount = 2 * 100000000ll;                       //2   单次购买的最小的HDD数量  
 
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
@@ -137,11 +138,11 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 {
    eosio_assert(is_account(user), "user not a account.");
 
-   account_name payer = _self;
+   //account_name payer = _self;
 
    if(acc_type == 1) {
       require_auth( user );
-      payer = user.value;
+      //payer = user.value;
    }
    else if(acc_type == 2) {
       eosio_assert(is_account(caller), "caller not a account.");
@@ -154,7 +155,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    auto it = _userhdd.find(user.value);
    if (it == _userhdd.end())
    {
-      new_user_hdd(_userhdd, user, 0, payer);
+      //new_user_hdd(_userhdd, user, 0, payer);
       print("{\"balance\":", 0, "}");
    }
    else
@@ -193,7 +194,7 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
    eosio_assert(is_account(from), "user not a account");
    eosio_assert(is_account(receiver), "receiver not a account");
    eosio_assert(is_account(hdd_exchg_acc), "to not a account");
-   eosio_assert(amount > 0, "must buy positive quantity");
+   eosio_assert(amount > min_buy_hdd_amount, "amount too low");
    eosio_assert(amount <= max_buy_sell_hdd_amount, "exceed single purchase volume");
    eosio_assert(is_hdd_amount_within_range(amount), "magnitude of amount must be less than 2^62");
 
