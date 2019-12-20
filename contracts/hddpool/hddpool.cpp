@@ -23,7 +23,7 @@ const uint64_t minutes_in_one_day = hours_in_one_day * 60;
 const uint64_t milliseconds_in_one_day = minutes_in_one_day * 60 * 1000;
 const uint64_t milliseconds_in_one_year = milliseconds_in_one_day * 365;
 
-const uint64_t fee_cycle = milliseconds_in_one_day; //计费周期(秒为单位)
+const uint64_t fee_cycle = milliseconds_in_one_day; //计费周期毫秒为单位)
 
 //const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
