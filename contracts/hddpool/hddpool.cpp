@@ -18,12 +18,12 @@
 
 using namespace eosio;
 
-const uint32_t hours_in_one_day = 24;
-const uint32_t minutes_in_one_day = hours_in_one_day * 60;
-const uint32_t seconds_in_one_day = minutes_in_one_day * 60;
-const uint32_t seconds_in_one_year = seconds_in_one_day * 365;
+const uint64_t hours_in_one_day = 24;
+const uint64_t minutes_in_one_day = hours_in_one_day * 60;
+const uint64_t milliseconds_in_one_day = minutes_in_one_day * 60 * 1000;
+const uint64_t milliseconds_in_one_year = milliseconds_in_one_day * 365;
 
-const uint32_t fee_cycle = seconds_in_one_day; //计费周期(秒为单位)
+const uint64_t fee_cycle = milliseconds_in_one_day; //计费周期(秒为单位)
 
 //const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
@@ -128,7 +128,7 @@ void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t 
       }
       eosio_assert(newspace <= max_profit_space, "execeed max profie space");
       row.hdd_space_profit = newspace;
-      row.hdd_per_cycle_profit = (int64_t)(((double)newspace / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
+      row.hdd_per_cycle_profit = (int64_t)(((double)newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
    });
 
 }
@@ -176,7 +176,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 int64_t hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time)
 {
 
-   uint64_t slot_t = (current_time - last_hdd_time) / 1000000ll; //convert to seconds
+   uint64_t slot_t = (current_time - last_hdd_time) / 1000ll; //convert to milliseconds
    int64_t new_balance = 0;
 
    double tick = (double)((double)slot_t / fee_cycle);
@@ -414,7 +414,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       uint64_t newspace = row.space + space;
       row.space = newspace;
       //每周期收益 += (生产空间/1GB）*（记账周期/ 1年）
-      row.hdd_per_cycle_profit = (int64_t)((double)(newspace / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
+      row.hdd_per_cycle_profit = (int64_t)((double)(newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
    });
 
    userhdd_index _userhdd(_self, owner.value);
@@ -530,7 +530,7 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
    
    int64_t profit = 0;
    //每周期收益 += (生产空间*数据分片大小/1GB）*（记账周期/ 1年）
-   profit = (int64_t)(((double)it->space / (double)one_gb) * ((double)fee_cycle / (double)seconds_in_one_year) * 100000000);
+   profit = (int64_t)(((double)it->space / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
 
    uint64_t tmp_t = current_time();
    uint64_t space = it->space;
