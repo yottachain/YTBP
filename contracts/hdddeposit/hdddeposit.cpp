@@ -74,6 +74,9 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant");
 
+    bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
+    eosio_assert( !is_frozen, "user is frozen" );
+
     depositpool_table _deposit(_self, user);
     const auto& it = _deposit.get( user, "no deposit pool record for this user.");
 
@@ -103,6 +106,9 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     account_name payer = _self;
 
     eosio_assert(hddpool::is_miner_exist(minerid), "miner not registered");
+
+    bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
+    eosio_assert( !is_frozen, "user is frozen" );
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant");
@@ -141,6 +147,8 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant");
     
+    bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
+    eosio_assert( !is_frozen, "user is frozen" );
 
     minerdeposit_table _mdeposit(_self, _self);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
