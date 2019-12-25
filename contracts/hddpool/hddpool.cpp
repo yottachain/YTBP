@@ -882,6 +882,8 @@ void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) 
 void hddpool::sethddprice(uint64_t price) {
    require_auth(_self);
 
+   eosio_assert( price > 0, "invalid price" );
+
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
    if (_gparams.exists()) {
@@ -896,6 +898,8 @@ void hddpool::sethddprice(uint64_t price) {
 
 void hddpool::setdrdratio(uint64_t ratio) {
    require_auth(_self);
+
+   eosio_assert( ratio >= 10000, "invalid deduplication ratio" );
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
@@ -918,6 +922,8 @@ void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
    } else {
       require_auth( _self );
    }
+
+   eosio_assert( price > 0, "invalid price" );
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
@@ -991,6 +997,8 @@ void hddpool::setdrratio(uint64_t ratio, uint8_t acc_type) {
    } else {
       require_auth( _self );
    }
+
+   eosio_assert( ratio > 0 && ratio <= 10000, "invalid deduplication distribute ratio" );
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
