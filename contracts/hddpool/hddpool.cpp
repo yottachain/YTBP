@@ -652,7 +652,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
    eosio_assert(max_space <= max_miner_space, "miner max_space overflow\n");  
    eosio_assert(max_space >= min_miner_space, "miner max_space underflow\n");  
-   eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left > max_space),"pool space not enough");
+   eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left >= max_space),"pool space not enough");
 
    //--- check miner deposit and max_space
    asset deposit = hdddeposit(hdd_deposit).get_miner_deposit(minerid);
