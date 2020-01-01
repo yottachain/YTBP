@@ -446,12 +446,15 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 
    eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo table");
 
+   
    if(acc_type == 1) {
       eosio_assert(is_account(caller), "caller not a account.");
       check_bp_account(caller.value, minerid, true);
+      eosio_assert(1 == 2, "not support");
 
    } else if(acc_type == 2) {
       require_auth(itminerinfo->admin);
+      eosio_assert(1 == 2, "not support");
    } else {
       require_auth(N(hddpooladmin));
    }
