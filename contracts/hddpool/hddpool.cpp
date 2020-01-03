@@ -456,7 +456,7 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
       require_auth(itminerinfo->admin);
       eosio_assert(1 == 2, "not support");
    } else {
-      require_auth(N(hddpooladmin));
+      require_auth(N(hddpooladml2));
    }
 
    action(
