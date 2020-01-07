@@ -195,7 +195,7 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
    eosio_assert(is_account(from), "user not a account");
    eosio_assert(is_account(receiver), "receiver not a account");
    eosio_assert(is_account(hdd_exchg_acc), "to not a account");
-   eosio_assert(amount > min_buy_hdd_amount, "amount too low");
+   eosio_assert(amount >= min_buy_hdd_amount, "amount too low");
    eosio_assert(amount <= max_buy_sell_hdd_amount, "exceed single purchase volume");
    eosio_assert(is_hdd_amount_within_range(amount), "magnitude of amount must be less than 2^62");
 
