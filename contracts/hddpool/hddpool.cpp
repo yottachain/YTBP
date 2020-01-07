@@ -41,6 +41,7 @@ static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name hdd_exchg_acc{N(hddpoolexchg)};
 static constexpr eosio::name hdd_deposit{N(hdddeposit12)};
+static constexpr eosio::name hdd_subsidy_acc{N(hddsubsidyeu)}; //补贴账户
 
 static constexpr int64_t max_hdd_amount    = (1LL << 62) - 1;
 bool is_hdd_amount_within_range(int64_t amount) { return -max_hdd_amount <= amount && amount <= max_hdd_amount; }
@@ -275,6 +276,16 @@ void hddpool::sellhdd(name user, int64_t amount, std::string memo)
        token_account, N(transfer),
        std::make_tuple(hdd_exchg_acc, user, quant, memo))
        .send();
+
+   if(_gparmas_state.dup_remove_ratio < 40000) {
+      int64_t _yta_amount2 =(int64_t)( ( (double)amount/10000) * ((double)_gparmas_state.hdd_price/(double)_gparmas_state.yta_price) * ((double)(40000-_gparmas_state.dup_remove_ratio)/10000) * ((double)_gparmas_state.dup_remove_dist_ratio/10000) );
+      asset quant2{_yta_amount2, CORE_SYMBOL};
+      action(
+         permission_level{hdd_subsidy_acc, active_permission},
+         token_account, N(transfer),
+         std::make_tuple(hdd_subsidy_acc, user, quant2, std::string("hdd subsidy")))
+         .send();
+   }    
 
 }
 
