@@ -18,7 +18,8 @@ namespace eosiosystem {
    const uint64_t useconds_per_day      = 24 * 3600 * uint64_t(1000000);
    const uint64_t useconds_per_year     = seconds_per_year*1000000ll;
 
-   const int64_t block_initial_timestamp = 1551369600ll;  // epoch year 2019.03.01    unix timestamp 1551369600s
+   const int64_t block_initial_timestamp = 1578621600ll;  // epoch year 2020.01.10 10:00    unix timestamp 1578621600s
+   
    //yta seo total= yta_seo_year[i] * YTA_SEO_BASE
    const uint32_t YTA_SEO_BASE = 10'0000;
    const double YTA_PRECISION =10000.0000;
