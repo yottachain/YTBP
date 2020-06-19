@@ -472,6 +472,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 
 void hddpool::calcmbalance(name owner, uint64_t minerid)
 {
+   eosio_assert(false, "not support now!");
+   
    require_auth(owner);
 
    maccount_index _maccount(_self, owner.value);
