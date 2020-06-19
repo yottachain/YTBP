@@ -243,12 +243,15 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
 
 void hddpool::transhdds(name from, name to, int64_t amount, std::string memo)
 {
+   eosio_assert(false, "not support now!");
+
    require_auth(from);
 
    eosio_assert(is_account(from), "user not a account");
    eosio_assert(is_account(to), "to not a account");
    eosio_assert(amount > 0, "cannot transfer negative hdd amount");
    eosio_assert(is_hdd_amount_within_range(amount), "magnitude of amount must be less than 2^62");
+   eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
    userhdd_index _userhddfrom(_self, from.value);
    auto itfrom = _userhddfrom.find(from.value);
