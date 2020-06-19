@@ -241,6 +241,41 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
 
 }
 
+void hddpool::transhdds(name from, name to, int64_t amount, std::string memo)
+{
+   require_auth(from);
+
+   eosio_assert(is_account(from), "user not a account");
+   eosio_assert(is_account(to), "to not a account");
+   eosio_assert(amount > 0, "cannot transfer negative hdd amount");
+   eosio_assert(is_hdd_amount_within_range(amount), "magnitude of amount must be less than 2^62");
+
+   userhdd_index _userhddfrom(_self, from.value);
+   auto itfrom = _userhddfrom.find(from.value);
+   eosio_assert(itfrom != _userhddfrom.end(), "from not exists in userhdd table");
+   eosio_assert(itfrom->hdd_storehhdd >= amount, "hdd overdrawn.");
+   _userhddfrom.modify(itfrom, _self, [&](auto &row) {
+      row.hdd_storehhdd -= amount;
+      eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");      
+   });
+
+   userhdd_index _userhddto(_self, to.value);
+   auto itto = _userhddto.find(to.value);
+   account_name payer = from;
+   if (itto == _userhddto.end())
+   {
+      new_user_hdd(_userhddto, to, amount, payer);
+   }
+   else
+   {
+      _userhddto.modify(itto, _self, [&](auto &row) {
+         row.hdd_storehhdd += amount;
+         eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");      
+      });
+   }
+
+}
+
 void hddpool::sellhdd(name user, int64_t amount, std::string memo)
 {
    require_auth(user);
@@ -1104,7 +1139,7 @@ void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
 
 
 
-EOSIO_ABI(hddpool, (getbalance)(buyhdd)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
+EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
                   (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)
                   (mdeactive)(mactive)(sethddprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

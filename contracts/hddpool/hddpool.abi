@@ -79,6 +79,28 @@
             ]
         },
         {
+            "name": "transhdds",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name":"memo",         
+                    "type":"string"
+                }
+            ]
+        },
+        {
             "name": "delminer",
             "base": "",
             "fields": [
@@ -702,6 +724,11 @@
         {
             "name": "buyhdd",
             "type": "buyhdd",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "transhdds",
+            "type": "transhdds",
             "ricardian_contract": ""
         },
         {

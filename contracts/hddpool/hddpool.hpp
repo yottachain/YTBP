@@ -25,6 +25,7 @@ public:
   void getbalance(name user, uint8_t acc_type, name caller);
   void calcprofit(name user);
   void buyhdd(name from, name receiver, int64_t amount, std::string memo);
+  void transhdds(name from, name to, int64_t amount, std::string memo);
   void sellhdd(name user, int64_t amount, std::string memo);
   void sethfee(name user, int64_t fee, name caller);
   void subbalance(name user, int64_t balance, uint8_t acc_type, name caller);
