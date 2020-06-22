@@ -37,11 +37,17 @@ const uint64_t min_miner_space = 100 * one_gb;                             //100
 const int64_t  max_buy_sell_hdd_amount = 2* 1024 * 1024 * 100000000ll;     //2P  单次买卖最大的HDD数量   
 const int64_t  min_buy_hdd_amount = 2 * 100000000ll;                       //2   单次购买的最小的HDD数量  
 
+const double  profit_percent = 0.9;  //存储收益划归矿工的部分,剩余部分画给生态节点奖励池
+
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name hdd_exchg_acc{N(hddpoolexchg)};
 static constexpr eosio::name hdd_deposit{N(hdddeposit12)};
 static constexpr eosio::name hdd_subsidy_acc{N(hddsubsidyeu)}; //补贴账户
+static constexpr eosio::name ecologyfound_acc{N(ecologyfound)}; //生态节点奖励池
+
+
+
 
 static constexpr int64_t max_hdd_amount    = (1LL << 62) - 1;
 bool is_hdd_amount_within_range(int64_t amount) { return -max_hdd_amount <= amount && amount <= max_hdd_amount; }
@@ -89,33 +95,52 @@ void hddpool::new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, a
 void hddpool::calcprofit(name user)
 {
    require_auth( user );
+   
+   if(user.value == ecologyfound_acc.value) 
+      return;
+
    userhdd_index _userhdd(_self, user.value);
    auto it = _userhdd.find(user.value);
    eosio_assert(it != _userhdd.end(), "user is not a storage provider");
 
+   int64_t eco_inc_balance = 0;
    _userhdd.modify(it, _self, [&](auto &row) {
       uint64_t tmp_t = current_time();
       int64_t tmp_last_balance = it->hdd_minerhdd;
       int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hddprofit_time, tmp_t);
-      row.hdd_minerhdd = new_balance;
-      eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hdd_minerhdd must be less than 2^62");      
+      eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of user hdd_minerhdd must be less than 2^62");      
+      row.hdd_minerhdd = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
+      eco_inc_balance = new_balance - row.hdd_minerhdd;
       row.last_hddprofit_time = tmp_t;
       print("{\"balance\":", it->hdd_minerhdd, "}");
 
    });
+
+   if(eco_inc_balance > 0 ) {
+      userhdd_index _userhdd_eco(_self, ecologyfound_acc.value);
+      auto it_eco = _userhdd_eco.find(ecologyfound_acc.value);
+      eosio_assert(it_eco != _userhdd_eco.end(), "ecologyfound account is not open");
+      _userhdd_eco.modify(it_eco, _self, [&](auto &row) {
+         int64_t tmp_last_balance = it_eco->hdd_minerhdd;
+         row.hdd_minerhdd = tmp_last_balance + eco_inc_balance;
+         eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hdd_minerhdd must be less than 2^62");      
+      });
+   }
 }
 
 void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct)
 {
    auto userhdd_itr = userhdd.find(minerowner.value);
    eosio_assert(userhdd_itr != userhdd.end(), "no owner exists in userhdd table");
+   int64_t eco_inc_balance = 0;
    userhdd.modify(userhdd_itr, _self, [&](auto &row) {
       if(is_calc) 
       {
          int64_t tmp_last_balance = userhdd_itr->hdd_minerhdd;
          int64_t new_balance = calculate_balance(tmp_last_balance, 0, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, ct);
-         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of new_balance must be less than 2^62");
-         row.hdd_minerhdd = new_balance;
+         eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of user hdd_minerhdd must be less than 2^62");      
+         row.hdd_minerhdd = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
+         eco_inc_balance = new_balance - row.hdd_minerhdd;
          row.last_hddprofit_time = ct;
       }
       uint64_t newspace = 0;
@@ -131,6 +156,18 @@ void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t 
       row.hdd_space_profit = newspace;
       row.hdd_per_cycle_profit = (int64_t)(((double)newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
    });
+
+   if(eco_inc_balance > 0 ) {
+      userhdd_index _userhdd_eco(_self, ecologyfound_acc.value);
+      auto it_eco = _userhdd_eco.find(ecologyfound_acc.value);
+      eosio_assert(it_eco != _userhdd_eco.end(), "ecologyfound account is not open");
+      _userhdd_eco.modify(it_eco, _self, [&](auto &row) {
+         int64_t tmp_last_balance = it_eco->hdd_minerhdd;
+         row.hdd_minerhdd = tmp_last_balance + eco_inc_balance;
+         eosio_assert(is_hdd_amount_within_range(row.hdd_minerhdd), "magnitude of user hdd_minerhdd must be less than 2^62");      
+      });
+   }
+
 
 }
 
@@ -458,7 +495,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       int64_t tmp_last_balance = it->hdd_balance;
       int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
-      row.hdd_balance = new_balance;
+      row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       row.last_hdd_time = tmp_t;
       uint64_t newspace = row.space + space;
       row.space = newspace;
@@ -473,7 +510,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 void hddpool::calcmbalance(name owner, uint64_t minerid)
 {
    eosio_assert(false, "not support now!");
-   
+
    require_auth(owner);
 
    maccount_index _maccount(_self, owner.value);
@@ -485,7 +522,7 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
       int64_t tmp_last_balance = it->hdd_balance;
       int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
-      row.hdd_balance = new_balance;
+      row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       row.last_hdd_time = tmp_t;
    });
 }
@@ -563,7 +600,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
       int64_t tmp_last_balance = it->hdd_balance;
       int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
-      row.hdd_balance = new_balance;
+      row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       row.last_hdd_time = tmp_t;
       row.hdd_per_cycle_profit = 0;
    });
