@@ -817,6 +817,11 @@
             "ricardian_contract": ""
         },
         {
+            "name": "mchgowneracc",
+            "type": "mchgowneracc",
+            "ricardian_contract": ""
+        },
+        {
             "name": "sethddprice",
             "type": "sethddprice",
             "ricardian_contract": ""
