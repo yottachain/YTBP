@@ -112,7 +112,8 @@ void hddpool::calcprofit(name user)
       row.hdd_minerhdd = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       eco_inc_balance = new_balance - row.hdd_minerhdd;
       row.last_hddprofit_time = tmp_t;
-      print("{\"balance\":", it->hdd_minerhdd, "}");
+      //print("{\"balance\":", it->hdd_minerhdd, "}");
+      //print(new_balance, " -- ", row.hdd_minerhdd, " -- ", eco_inc_balance, "--", (int64_t)(profit_percent * (new_balance - tmp_last_balance)), "--" , tmp_last_balance);
 
    });
 
@@ -130,6 +131,9 @@ void hddpool::calcprofit(name user)
 
 void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct)
 {
+   if(minerowner.value == ecologyfound_acc.value) 
+      return;
+
    auto userhdd_itr = userhdd.find(minerowner.value);
    eosio_assert(userhdd_itr != userhdd.end(), "no owner exists in userhdd table");
    int64_t eco_inc_balance = 0;
@@ -142,6 +146,8 @@ void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t 
          row.hdd_minerhdd = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
          eco_inc_balance = new_balance - row.hdd_minerhdd;
          row.last_hddprofit_time = ct;
+         //print(new_balance, " -- ", row.hdd_minerhdd, " -- ", (int64_t)(profit_percent * (new_balance - tmp_last_balance)), "--", new_balance - row.hdd_minerhdd);
+
       }
       uint64_t newspace = 0;
       if(is_increase) {
@@ -496,6 +502,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
       row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
+      //print(new_balance, " -- ", row.hdd_balance, " -- ", (int64_t)(profit_percent * (new_balance - tmp_last_balance)), "--", new_balance - row.hdd_balance);
       row.last_hdd_time = tmp_t;
       uint64_t newspace = row.space + space;
       row.space = newspace;
