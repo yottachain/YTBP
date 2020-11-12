@@ -362,7 +362,11 @@ void hddpool::sellhdd(name user, int64_t amount, std::string memo)
    
    if(user.value == ecologyfound_acc.value) 
       return;
-
+   
+   uint64_t curtime = current_time()/1000000ll; //seconds
+   if(curtime>1605243600) //2020-11-13 13:00:00
+      return;
+   
    if(_gparmas_state.dup_remove_ratio < 40000) {
       int64_t _yta_amount2 =(int64_t)( ( (double)amount/10000) * ((double)_gparmas_state.hdd_price/(double)_gparmas_state.yta_price) * ((double)(40000-_gparmas_state.dup_remove_ratio)/10000) * ((double)_gparmas_state.dup_remove_dist_ratio/10000) );
       asset quant2{_yta_amount2, CORE_SYMBOL};
@@ -371,7 +375,7 @@ void hddpool::sellhdd(name user, int64_t amount, std::string memo)
          token_account, N(transfer),
          std::make_tuple(hdd_subsidy_acc, user, quant2, std::string("hdd subsidy")))
          .send();
-   }    
+   }
 
 }
 
