@@ -18,7 +18,7 @@ namespace eosio { namespace chain {
       block_state() = default;
 
       /// weak_ptr prev_block_state....
-      signed_bloc k_ptr                                    block;
+      signed_block_ptr                                    block;
       bool                                                validated = false;
       bool                                                in_current_chain = false;
 
