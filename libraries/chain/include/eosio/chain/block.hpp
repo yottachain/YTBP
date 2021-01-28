@@ -62,7 +62,7 @@ namespace eosio { namespace chain {
       explicit signed_block( const signed_block_header& h ):signed_block_header(h){}
       signed_block( signed_block&& ) = default;
       signed_block& operator=(const signed_block&) = delete;
-      signed_block clone() const { return *this; }
+      signed_ block clone() const { return *this; }
 
       vector<transaction_receipt>   transactions; /// new or generated transactions
       extensions_type               block_extensions;
