@@ -43,6 +43,28 @@
             ]
         },
         {
+            "name": "submprofit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "calcmbalance",
             "base": "",
             "fields": [
@@ -714,6 +736,11 @@
         {
             "name": "addmprofit",
             "type": "addmprofit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "submprofit",
+            "type": "submprofit",
             "ricardian_contract": ""
         },
         {

@@ -33,6 +33,7 @@ public:
   void subhspace(name user, uint64_t space, name caller);
   //void newmaccount(name owner, uint64_t minerid, name caller);
   void addmprofit(name owner, uint64_t minerid, uint64_t space, name caller);
+  void submprofit(name owner, uint64_t minerid, uint64_t space, name caller);
   void delminer(uint64_t minerid, uint8_t acc_type, name caller);
   void calcmbalance(name owner, uint64_t minerid);
   void newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount);

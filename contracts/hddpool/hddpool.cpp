@@ -523,6 +523,50 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
 }
 
+void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name caller)
+{
+   eosio_assert(is_account(owner), "owner invalidate");
+   eosio_assert(is_account(caller), "caller not an account.");
+   check_bp_account(caller.value, minerid, true);
+
+   maccount_index _maccount(_self, owner.value);
+   auto it = _maccount.find(minerid);
+   eosio_assert(it != _maccount.end(), "minerid not register");
+   
+   //check space left -- (is it enough)  -- start ----------
+   minerinfo_table _minerinfo(_self, _self);
+   auto itminerinfo = _minerinfo.find(minerid);   
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
+
+   eosio_assert(itminerinfo->space_left + space >= itminerinfo->max_space, "exceed max space");
+   eosio_assert(itminerinfo->owner == owner, "invalid owner");
+
+   _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
+      row.space_left += space;
+   });         
+   //check space left -- (is it enough)  -- end   ----------
+
+   uint64_t tmp_t = current_time();
+
+   _maccount.modify(it, _self, [&](auto &row) {
+      int64_t tmp_last_balance = it->hdd_balance;
+      int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
+      eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
+      row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
+      //print(new_balance, " -- ", row.hdd_balance, " -- ", (int64_t)(profit_percent * (new_balance - tmp_last_balance)), "--", new_balance - row.hdd_balance);
+      row.last_hdd_time = tmp_t;
+      eosio_assert(row.space >= space, "invalid new production space");
+      uint64_t newspace = row.space - space;
+      row.space = newspace;
+      //每周期收益 += (生产空间/1GB）*（记账周期/ 1年）
+      row.hdd_per_cycle_profit = (int64_t)((double)(newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
+   });
+
+   userhdd_index _userhdd(_self, owner.value);
+   chg_owner_space(_userhdd, owner, space, false, true, tmp_t);
+
+}
+
 void hddpool::calcmbalance(name owner, uint64_t minerid)
 {
    eosio_assert(false, "not support now!");
