@@ -1242,6 +1242,6 @@ void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
 
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
-                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)
+                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)
                   (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)
                   (mdeactive)(mactive)(sethddprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
