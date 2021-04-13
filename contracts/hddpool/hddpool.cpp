@@ -525,6 +525,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 
 void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
+   return;
+   
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
@@ -655,6 +657,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
    eosio_assert(it != _maccount.end(), "minerid not register");
 
    uint64_t space = it->space;
+   eosio_assert(it->hdd_per_cycle_profit > 0, "miner has no cycle profit");  
    uint64_t tmp_t = current_time();   
    _maccount.modify(it, _self, [&](auto &row) {
       int64_t tmp_last_balance = it->hdd_balance;
@@ -685,6 +688,7 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
 
    uint64_t tmp_t = current_time();
    uint64_t space = it->space;
+   eosio_assert(it->hdd_per_cycle_profit == 0, "miner already has cycle profit");  
    _maccount.modify(it, _self, [&](auto &row) {
       row.hdd_per_cycle_profit = profit;
       row.last_hdd_time = tmp_t;
