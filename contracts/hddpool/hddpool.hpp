@@ -60,7 +60,7 @@ public:
   void setdrratio(uint64_t ratio, uint8_t acc_type);
   void setdrdratio(uint64_t ratio);
   void addhddcnt(int64_t count, uint8_t acc_type);
-
+ 
 private:
   struct userhdd
   {
