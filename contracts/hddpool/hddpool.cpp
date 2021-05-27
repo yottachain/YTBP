@@ -534,6 +534,13 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
    maccount_index _maccount(_self, owner.value);
    auto it = _maccount.find(minerid);
    eosio_assert(it != _maccount.end(), "minerid not register");
+
+   bool mactive = true;
+   if( it->space > 0 ) {
+      if( it->hdd_per_cycle_profit == 0) {
+         mactive = false;
+      }
+   }
    
    //check space left -- (is it enough)  -- start ----------
    minerinfo_table _minerinfo(_self, _self);
@@ -561,11 +568,13 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
       uint64_t newspace = row.space - space;
       row.space = newspace;
       //每周期收益 += (生产空间/1GB）*（记账周期/ 1年）
-      row.hdd_per_cycle_profit = (int64_t)((double)(newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
+      if(mactive) {
+         row.hdd_per_cycle_profit = (int64_t)((double)(newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
+      }
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, false, true, tmp_t);
+   chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t);
 
 }
 
@@ -965,6 +974,9 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
    maccount_index _maccount_old(_self, itminerinfo->owner.value);
    auto itmaccount_old = _maccount_old.find(minerid);
    eosio_assert(itmaccount_old != _maccount_old.end(), "minerid not register");
+   //@@@封禁矿机不能变更收益账户,没有被采购任何空间的矿机也不能变更
+   eosio_assert(itmaccount_old->hdd_per_cycle_profit > 0, "miner has no cycle profit.");  
+
    uint64_t space = itmaccount_old->space;
 
 
