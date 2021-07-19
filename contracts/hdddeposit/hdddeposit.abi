@@ -58,16 +58,6 @@
             ]
         },
         {
-            "name": "deposit_rate",
-            "base": "",
-            "fields": [
-                {
-                    "name": "rate",
-                    "type": "int64"
-                }
-            ]
-        },
-        {
             "name": "paydeppool",
             "base": "",
             "fields": [
@@ -96,13 +86,9 @@
             ]
         },
         {
-            "name": "paydeposit",
+            "name": "mforfeitold",
             "base": "",
             "fields": [
-                {
-                    "name": "user",
-                    "type": "account_name"
-                },
                 {
                     "name": "minerid",
                     "type": "uint64"
@@ -114,55 +100,7 @@
             ]
         },
         {
-            "name": "chgdeposit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "is_increase",
-                    "type": "bool"
-                },
-                {
-                    "name": "quant",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "payforfeit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "quant",
-                    "type": "asset"
-                },
-                {
-                    "name": "acc_type",
-                    "type": "uint8"
-                },
-                {
-                    "name": "caller",
-                    "type": "name"
-                }                                
-            ]
-        },
-        {
-            "name": "delminer",
+            "name": "rmdeposit",
             "base": "",
             "fields": [
                 {
@@ -170,31 +108,7 @@
                     "type": "uint64"
                 }
             ]
-        },   
-        {
-            "name": "setrate",
-            "base": "",
-            "fields": [
-                {
-                    "name": "rate",
-                    "type": "int64"
-                }
-            ]
-        },
-        {
-            "name": "mchgdepacc",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "new_depacc",
-                    "type": "name"
-                }
-            ]
-        }              
+        }
     ],
     "actions": [
         {
@@ -208,33 +122,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "paydeposit",
-            "type": "paydeposit",
+            "name": "mforfeitold",
+            "type": "mforfeitold",
             "ricardian_contract": ""
         },
         {
-            "name": "chgdeposit",
-            "type": "chgdeposit",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "payforfeit",
-            "type": "payforfeit",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "delminer",
-            "type": "delminer",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "setrate",
-            "type": "setrate",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "mchgdepacc",
-            "type": "mchgdepacc",
+            "name": "rmdeposit",
+            "type": "rmdeposit",
             "ricardian_contract": ""
         }
     ],
@@ -252,14 +146,7 @@
             "index_type": "i64",
             "key_names": [],
             "key_types": []
-        },
-        {
-            "name": "gdepositrate",
-            "type": "deposit_rate",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        }        
+        }
     ],
     "ricardian_clauses": [],
     "variants": []

@@ -8,6 +8,7 @@
 //##YTA-Change  start:
 #include <hdddeposit/hdddeposit.hpp>
 #include <hddlock/hddlock.hpp>
+#include <hddpool/hddpool.hpp>
 
 const account_name hdd_deposit_account = N(hdddeposit12);
 const account_name hdd_lock_account = N(hddlock12345);
@@ -126,8 +127,8 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
       eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
    } else if( to == N(eosio.stake) ) { //用来抵押带宽和CPU
       eosio_assert( !is_frozen, "user is frozen" );
-      //forfeit can not use to delegatebw and vote
       auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit(owner);
+      deposit_and_forfeit.amount += hddpool::get_dep_lock(owner);
       eosio_assert( deposit_and_forfeit.symbol == value.symbol, "symbol precision mismatch" );
       eosio_assert( from.balance.amount - deposit_and_forfeit.amount >= value.amount, "overdrawn balance" );
    } else { //普通转账，需要考虑锁仓和存储抵押
@@ -137,6 +138,7 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
       auto lock_asset = hddlock(hdd_lock_account).get_lock_asset(owner);
       eosio_assert( frozen_asset.symbol == lock_asset.symbol, "symbol precision mismatch" );
       frozen_asset.amount += lock_asset.amount;
+      frozen_asset.amount += hddpool::get_dep_lock(owner);
       eosio_assert( frozen_asset.symbol == value.symbol, "symbol precision mismatch" );
       eosio_assert( from.balance.amount - frozen_asset.amount >= value.amount, "overdrawn balance" );
    }
