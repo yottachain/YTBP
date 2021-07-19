@@ -487,9 +487,13 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
 
+   //eosio_assert(owner.value != N(hddpool12345), "owner can not addmprofit now.");  
+
    maccount_index _maccount(_self, owner.value);
    auto it = _maccount.find(minerid);
    eosio_assert(it != _maccount.end(), "minerid not register");
+   if(it->space > 0)
+      eosio_assert(it->hdd_per_cycle_profit > 0, "miner is deactive");  
 
    //check space left -- (is it enough)  -- start ----------
    minerinfo_table _minerinfo(_self, _self);
@@ -525,7 +529,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 
 void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
-   return;
+   eosio_assert(false, "not support now!");
    
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
@@ -631,7 +635,8 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
       if(itmaccount != _maccount.end()) {
 
          userhdd_index _userhdd(_self, itminerinfo->owner.value);
-         chg_owner_space(_userhdd, itminerinfo->owner, itmaccount->space, false, false, current_time());
+         if(itmaccount->hdd_per_cycle_profit > 0)
+            chg_owner_space(_userhdd, itminerinfo->owner, itmaccount->space, false, false, current_time());
 
          _maccount.erase(itmaccount);    
       }
