@@ -18,8 +18,6 @@ static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name system_account{N(eosio)};
 static constexpr eosio::name hdd_lock_account{N(hddlock12345)};
 
-const uint32_t min_miner_space = 100 * (1024 * 64); //100GB，以16k分片为单位
-
 void hdddeposit::paydeppool(account_name user, asset quant) {
     require_auth(user);
 

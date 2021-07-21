@@ -291,6 +291,20 @@
             ]
         },
         {
+            "name": "mchgdepacc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "new_depacc",
+                    "type": "name"
+                }
+            ]
+        },              
+        {
             "name": "fixownspace",
             "base": "",
             "fields": [
@@ -342,6 +356,10 @@
                 },
                 {
                     "name": "hdd_macc_user",
+                    "type": "uint64"
+                },
+                {
+                    "name": "total_profit_space",
                     "type": "uint64"
                 },
                 {
@@ -757,6 +775,14 @@
                 {
                     "name": "last_hddprofit_time",
                     "type": "uint64"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "internal_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -941,6 +967,11 @@
         {
             "name": "chgdeposit",
             "type": "chgdeposit",
+            "ricardian_contract": ""
+        },        
+        {
+            "name": "mchgdepacc",
+            "type": "mchgdepacc",
             "ricardian_contract": ""
         },
         {

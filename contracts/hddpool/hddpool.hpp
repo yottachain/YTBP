@@ -49,6 +49,7 @@ public:
   void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
   void chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant);
+  void mchgdepacc(uint64_t minerid, name new_depacc);
 
 
   //update hddpool params
@@ -151,6 +152,8 @@ private:
     int64_t   hdd_per_cycle_profit; //每周期收益
     uint64_t  hdd_space_profit;     //该收益账户名下所有矿机的总生产空间
     uint64_t  last_hddprofit_time;  //上次收益hdd余额计算时间 microseconds from 1970
+    uint64_t  max_space = 0;        //该收益账户提供的最大可被采购的空间
+    uint64_t  internal_id = 0;      //预留字段
     uint64_t  primary_key() const { return account_name.value; }
   };
   typedef multi_index<N(usermhddinfo), usermhdd> usermhdd_index;
@@ -243,6 +246,7 @@ private:
   {
     uint64_t hdd_total_user = 0;
     uint64_t hdd_macc_user = 0;
+    uint64_t total_profit_space = 0;  //以G为单位   
     uint64_t total_sapce = 0; //以G为单位 
   };
   typedef eosio::singleton<N(ghddtotal), hdd_total_info> ghddtotal_singleton;
@@ -286,6 +290,8 @@ private:
 
   void chg_owner_space(usermhdd_index& usermhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct);
 
+  //变更全网空间
+  void chg_total_space(uint64_t space, bool is_increate, bool is_profit);
 public:  
 
   static int64_t get_dep_lock( account_name user) {
