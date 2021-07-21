@@ -64,7 +64,7 @@ void hddpool::new_users_hdd(usershdd_index& usershdd, name user, int64_t balance
       row.account_name = user;
       userhdd1_index _userhdd1(_self, user.value);
       auto it = _userhdd1.find(user.value);
-      if (it != _userhdd1.end()){
+      if(it != _userhdd1.end()){
          row.hdd_storehhdd = balance + it->hdd_storehhdd;
          row.hdd_per_cycle_fee = it->hdd_per_cycle_fee;
          row.hdd_space_store = it->hdd_space_store;
@@ -81,7 +81,7 @@ void hddpool::new_users_hdd(usershdd_index& usershdd, name user, int64_t balance
    if(is_inc_user) {
       ghddtotal_singleton _gtotal(_self, _self);
       hdd_total_info  _gtotal_state;
-      if (_gtotal.exists()) {
+      if(_gtotal.exists()) {
          _gtotal_state = _gtotal.get();
       } else {
          _gtotal_state = hdd_total_info{};
@@ -114,7 +114,7 @@ void hddpool::new_userm_hdd(usermhdd_index& usermhdd, name user, account_name pa
    if(is_inc_user) {
       ghddtotal_singleton _gtotal(_self, _self);
       hdd_total_info  _gtotal_state;
-      if (_gtotal.exists()) {
+      if(_gtotal.exists()) {
          _gtotal_state = _gtotal.get();
       } else {
          _gtotal_state = hdd_total_info{};
@@ -212,7 +212,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
 
    usershdd_index _usershdd(_self, user.value);
    auto it = _usershdd.find(user.value);
-   if (it == _usershdd.end())
+   if(it == _usershdd.end())
    {
       userhdd1_index _userhdd1(_self, user.value);
       auto itold = _userhdd1.find(user.value);
@@ -353,7 +353,7 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -379,7 +379,7 @@ void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
    usershdd_index _usershdd(_self, receiver.value);
    auto it = _usershdd.find(receiver.value);
    account_name payer = from;
-   if (it == _usershdd.end())
+   if(it == _usershdd.end())
    {
       new_users_hdd(_usershdd, receiver, amount, payer);
    }
@@ -419,7 +419,7 @@ void hddpool::transhdds(name from, name to, int64_t amount, std::string memo)
    usershdd_index _usershddto(_self, to.value);
    auto itto = _usershddto.find(to.value);
    account_name payer = from;
-   if (itto == _usershddto.end())
+   if(itto == _usershddto.end())
    {
       new_users_hdd(_usershddto, to, amount, payer);
    }
@@ -454,7 +454,7 @@ void hddpool::sellhdd(name user, int64_t amount, std::string memo)
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -498,7 +498,7 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
 
    usershdd_index _usershdd(_self, user.value);
    auto it = _usershdd.find(user.value);
-   if (it == _usershdd.end())
+   if(it == _usershdd.end())
    {
       userhdd1_index _userhdd1(_self, user.value);
       auto itold = _userhdd1.find(user.value);
@@ -550,7 +550,7 @@ void hddpool::subbalance(name user, int64_t balance, uint8_t acc_type, name call
 
    usershdd_index _usershdd(_self, user.value);
    auto it = _usershdd.find(user.value);
-   if (it == _usershdd.end())
+   if(it == _usershdd.end())
    {
       userhdd1_index _userhdd1(_self, user.value);
       auto itold = _userhdd1.find(user.value);
@@ -577,7 +577,7 @@ void hddpool::addhspace(name user, uint64_t space, name caller)
 
    usershdd_index _usershdd(_self, user.value);
    auto it = _usershdd.find(user.value);
-   if (it == _usershdd.end())
+   if(it == _usershdd.end())
    {
       userhdd1_index _userhdd1(_self, user.value);
       auto itold = _userhdd1.find(user.value);
@@ -604,7 +604,7 @@ void hddpool::subhspace(name user, uint64_t space, name caller)
 
    usershdd_index _usershdd(_self, user.value);
    auto it = _usershdd.find(user.value);
-   if (it == _usershdd.end())
+   if(it == _usershdd.end())
    {
       userhdd1_index _userhdd1(_self, user.value);
       auto itold = _userhdd1.find(user.value);
@@ -927,7 +927,7 @@ void hddpool::check_deposit_enough( asset deposit, uint64_t max_space )
 {
    int64_t rate;
    gdeprate_singleton _grate(_self, _self);
-   if (_grate.exists()) {
+   if(_grate.exists()) {
       rate = _grate.get().rate;
    } else {
       rate = 10000;
@@ -1055,7 +1055,7 @@ void hddpool::redeposit(uint64_t minerid, name dep_acc, asset dep_amount) {
 
    usermhdd_index _usermhdd(_self, itminerinfo1->owner.value);
    auto usermhdd_itr = _usermhdd.find(itminerinfo1->owner.value);
-   if (usermhdd_itr == _usermhdd.end())
+   if(usermhdd_itr == _usermhdd.end())
    {
       new_userm_hdd(_usermhdd, itminerinfo1->owner, _self);
    }
@@ -1140,7 +1140,7 @@ void hddpool::regminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
 
    usermhdd_index _usermhdd(_self, minerowner.value);
    auto usermhdd_itr = _usermhdd.find(minerowner.value);
-   if (usermhdd_itr == _usermhdd.end())
+   if(usermhdd_itr == _usermhdd.end())
    {
       new_userm_hdd(_usermhdd, minerowner, _self);
    }
@@ -1458,7 +1458,7 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
    //结算新owner账户当前的收益
    usermhdd_index _usermhdd_new(_self, new_owneracc.value);
    auto usermhdd_new_itr = _usermhdd_new.find(new_owneracc.value);
-   if (usermhdd_new_itr == _usermhdd_new.end())
+   if(usermhdd_new_itr == _usermhdd_new.end())
    {
       new_userm_hdd(_usermhdd_new, new_owneracc, _self);
       usermhdd_new_itr = _usermhdd_new.find(new_owneracc.value);
@@ -1509,7 +1509,7 @@ void hddpool::chg_total_space(uint64_t space, bool is_increate, bool is_profit)
 {
    ghddtotal_singleton _gtotal(_self, _self);
    hdd_total_info  _gtotal_state;
-   if (_gtotal.exists()) {
+   if(_gtotal.exists()) {
       _gtotal_state = _gtotal.get();
    } else {
       _gtotal_state = hdd_total_info{};
@@ -1528,12 +1528,13 @@ void hddpool::chg_total_space(uint64_t space, bool is_increate, bool is_profit)
       else 
          _gtotal_state.total_sapce += delta;
    } else {
-      if(is_profit)
+      if(is_profit) {
          if(_gtotal_state.total_profit_space >= delta)
             _gtotal_state.total_profit_space -= delta;
-      else 
+      } else {
          if(_gtotal_state.total_sapce >= delta)
-         _gtotal_state.total_sapce -= delta;
+            _gtotal_state.total_sapce -= delta;
+      }
    }
    _gtotal.set(_gtotal_state,_self);
 }
@@ -1557,7 +1558,7 @@ void hddpool::sethddprice(uint64_t price) {
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -1574,7 +1575,7 @@ void hddpool::setdrdratio(uint64_t ratio) {
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -1587,7 +1588,7 @@ void hddpool::setdrdratio(uint64_t ratio) {
 void hddpool::calc_deposit_rate() {   
    gusdprice_singleton _gusdprice(_self, _self);
    usd_price  _gusdprice_state;
-   if (_gusdprice.exists()) {
+   if(_gusdprice.exists()) {
       _gusdprice_state = _gusdprice.get();
    } else {
       _gusdprice_state = usd_price{};
@@ -1595,7 +1596,7 @@ void hddpool::calc_deposit_rate() {
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -1612,7 +1613,7 @@ void hddpool::calc_deposit_rate() {
 
    gdeprate_singleton _grate(_self, _self);
    deposit_rate  _grate_state;
-   if (_grate.exists()) {
+   if(_grate.exists()) {
       _grate_state = _grate.get();
    } else {
       _grate_state = deposit_rate{};
@@ -1630,7 +1631,7 @@ void hddpool::setusdprice(uint64_t price, uint8_t acc_type) {
 
    gusdprice_singleton _gusdprice(_self, _self);
    usd_price  _gusdprice_state;
-   if (_gusdprice.exists()) {
+   if(_gusdprice.exists()) {
       _gusdprice_state = _gusdprice.get();
    } else {
       _gusdprice_state = usd_price{};
@@ -1657,7 +1658,7 @@ void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -1665,7 +1666,7 @@ void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
 
    paramguard_singleton _paramguard(_self, _self);
    hdd_price_guard  _paramguard_state;
-   if (_paramguard.exists()) {
+   if(_paramguard.exists()) {
       _paramguard_state = _paramguard.get();
    } else {
       _paramguard_state = hdd_price_guard{};
@@ -1733,7 +1734,7 @@ void hddpool::setdrratio(uint64_t ratio, uint8_t acc_type) {
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
@@ -1741,7 +1742,7 @@ void hddpool::setdrratio(uint64_t ratio, uint8_t acc_type) {
 
    paramguard_singleton _paramguard(_self, _self);
    hdd_price_guard  _paramguard_state;
-   if (_paramguard.exists()) {
+   if(_paramguard.exists()) {
       _paramguard_state = _paramguard.get();
    } else {
       _paramguard_state = hdd_price_guard{};
@@ -1808,7 +1809,7 @@ void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
 
    gparams_singleton _gparams(_self, _self);
    hdd_global_param  _gparmas_state;
-   if (_gparams.exists()) {
+   if(_gparams.exists()) {
       _gparmas_state = _gparams.get();
    } else {
       _gparmas_state = hdd_global_param{};
