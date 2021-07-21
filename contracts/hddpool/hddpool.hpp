@@ -253,7 +253,8 @@ private:
 
   struct deposit_rate
   {
-    int64_t rate = 10000;
+    int64_t   rate = 10000;
+    uint64_t  last_rate_time = current_time();
   };
   typedef eosio::singleton<N(gdeprate), deposit_rate> gdeprate_singleton;
 

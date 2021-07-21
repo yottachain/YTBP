@@ -375,6 +375,10 @@
                 {
                     "name": "rate",
                     "type": "int64"
+                },
+                {
+                    "name": "last_rate_time",
+                    "type": "uint64"
                 }
             ]
         },
