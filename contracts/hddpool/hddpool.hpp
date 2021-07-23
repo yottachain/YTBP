@@ -19,6 +19,9 @@ class hddpool : public eosio::contract
 public:
   using contract::contract;
 
+  hddpool(account_name s);
+  ~hddpool();
+
   void getbalance(name user, uint8_t acc_type, name caller);
   void calcprofit(name user);
   void buyhdd(name from, name receiver, int64_t amount, std::string memo);
@@ -28,29 +31,28 @@ public:
   void subbalance(name user, int64_t balance, uint8_t acc_type, name caller);
   void addhspace(name user, uint64_t space, name caller);
   void subhspace(name user, uint64_t space, name caller);
-  void addmprofit(uint64_t minerid, uint64_t space, name caller);
+  //void newmaccount(name owner, uint64_t minerid, name caller);
+  void addmprofit(name owner, uint64_t minerid, uint64_t space, name caller);
+  void submprofit(name owner, uint64_t minerid, uint64_t space, name caller);
   void delminer(uint64_t minerid, uint8_t acc_type, name caller);
-  void regminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount, name pool_id, name minerowner, uint64_t max_space);
-  void redeposit(uint64_t minerid, name dep_acc, asset dep_amount);
-  void mforfeit(uint64_t minerid, asset quant, name caller);
+  void calcmbalance(name owner, uint64_t minerid);
+  void newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount);
 
   //store pool related actions -- start
   void delstrpool(name poolid);
   void regstrpool(name pool_id, name pool_owner);
   void chgpoolspace(name pool_id, bool is_increase, uint64_t delta_space);
+  void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
 
-  void mdeactive(uint64_t minerid, name caller);
-  void mactive(uint64_t minerid, name caller);
+  void mdeactive(name owner, uint64_t minerid, name caller);
+  void mactive(name owner, uint64_t minerid, name caller);
 
   //change miner info related actions
   void mchgadminacc(uint64_t minerid, name new_adminacc);
   void mchgowneracc(uint64_t minerid, name new_owneracc);
   void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
-  void chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant);
-  void mchgdepacc(uint64_t minerid, name new_depacc);
-
 
   //update hddpool params
   void sethddprice(uint64_t price);
@@ -59,16 +61,9 @@ public:
   void setdrdratio(uint64_t ratio);
   void addhddcnt(int64_t count, uint8_t acc_type);
 
-  //update usd price
-  void setusdprice(uint64_t price, uint8_t acc_type);
-
   void fixownspace(name owner, uint64_t space);
  
 private:
-  //-------------------------------------------------------------------------------
-  //旧模型数据，作为合约内部表暂时保留用作数据迁移 ----- start 
-  //-------------------------------------------------------------------------------
-
   struct userhdd
   {
     name      account_name;         //账户名
@@ -76,13 +71,13 @@ private:
     int64_t   hdd_per_cycle_fee;    //用户存储数据的每周期费用
     uint64_t  hdd_space_store;      //用户存储数据占用的存储空间
     uint64_t  last_hddstore_time;   //上次存储hdd余额计算时间 microseconds from 1970
-    int64_t   hdd_minerhdd;         //废弃
-    int64_t   hdd_per_cycle_profit; //废弃
-    uint64_t  hdd_space_profit;     //废弃
-    uint64_t  last_hddprofit_time;  //废弃
+    int64_t   hdd_minerhdd;         //存储服务提供者的HDD收益数量  
+    int64_t   hdd_per_cycle_profit; //每周期收益
+    uint64_t  hdd_space_profit;     //该收益账户名下所有矿机的总生产空间
+    uint64_t  last_hddprofit_time;  //上次收益hdd余额计算时间 microseconds from 1970
     uint64_t  primary_key() const { return account_name.value; }
   };
-  typedef multi_index<N(userhddinfo), userhdd> userhdd1_index;
+  typedef multi_index<N(userhddinfo), userhdd> userhdd_index;
 
   struct maccount
   {
@@ -95,7 +90,20 @@ private:
     uint64_t primary_key() const { return minerid; }
     //uint64_t  get_owner() const { return owner.value; }
   };
-  typedef multi_index<N(maccount), maccount> maccount1_index;
+  typedef multi_index<N(maccount), maccount> maccount_index;
+
+  //store poll tables start -----------------
+  //store pool (scope : self)
+  struct storepool
+  {
+    name        pool_id;  //pool id use eos name type  
+    name        pool_owner; //pool owner is a ytachain account
+    uint64_t    max_space;  //max space for this pool
+    uint64_t    space_left; //space left for this pool 
+    uint64_t    primary_key() const { return pool_id.value; }
+  };
+  typedef multi_index<N(storepool), storepool> storepool_index;
+  //store poll tables end -------------------
 
   struct minerinfo
   {
@@ -115,88 +123,7 @@ private:
                       indexed_by<N(owner),  const_mem_fun<minerinfo, uint64_t, &minerinfo::by_owner> >,
                       indexed_by<N(admin),  const_mem_fun<minerinfo, uint64_t, &minerinfo::by_admin> >,
                       indexed_by<N(poolid), const_mem_fun<minerinfo, uint64_t, &minerinfo::by_poolid> >
-                     > minerinfo1_table;   
-
-
-  //-------------------------------------------------------------------------------
-  //旧模型数据，作为合约内部表暂时保留用作数据迁移 ----- end 
-  //-------------------------------------------------------------------------------
-
-  struct storepool
-  {
-    name        pool_id;  //pool id use eos name type  
-    name        pool_owner; //pool owner is a ytachain account
-    uint64_t    max_space;  //max space for this pool
-    uint64_t    space_left; //space left for this pool 
-    uint64_t    primary_key() const { return pool_id.value; }
-  };
-  typedef multi_index<N(storepool), storepool> storepool_index;
-
-  //新模型存储用户hdd信息表
-  struct usershdd 
-  {
-    name      account_name;         //账户名
-    int64_t   hdd_storehhdd;        //用户数据存储的HDD数量
-    int64_t   hdd_per_cycle_fee;    //用户存储数据的每周期费用
-    uint64_t  hdd_space_store;      //用户存储数据占用的存储空间
-    uint64_t  last_hddstore_time;   //上次存储hdd余额计算时间 microseconds from 1970
-    uint64_t  primary_key() const { return account_name.value; }
-  };
-  typedef multi_index<N(usershddinfo), usershdd> usershdd_index;
-
-  //新模型收益账户hdd信息表
-  struct usermhdd
-  {
-    name      account_name;         //账户名
-    int64_t   hdd_minerhdd;         //存储服务提供者的HDD收益数量  
-    int64_t   hdd_per_cycle_profit; //每周期收益
-    uint64_t  hdd_space_profit;     //该收益账户名下所有矿机的总生产空间
-    uint64_t  last_hddprofit_time;  //上次收益hdd余额计算时间 microseconds from 1970
-    uint64_t  max_space = 0;        //该收益账户提供的最大可被采购的空间
-    uint64_t  internal_id = 0;      //预留字段
-    uint64_t  primary_key() const { return account_name.value; }
-  };
-  typedef multi_index<N(usermhddinfo), usermhdd> usermhdd_index;
-
-  //新模型收益账户miner信息表
-  struct maccount2
-  {
-    uint64_t minerid;             //矿机id
-    name owner;                   //拥有矿机的矿主的账户名
-    uint64_t space;               //生产空间
-    int64_t hdd_per_cycle_profit; //每周期收益
-    int64_t hdd_balance;          //余额
-    uint64_t last_hdd_time;       //上次余额计算时间 microseconds from 1970
-    uint64_t primary_key() const { return minerid; }
-  };
-  typedef multi_index<N(maccount2), maccount2> maccount2_index;
-
-  //新模型miner信息表
-  struct minerinfo2
-  {
-    uint64_t  minerid;
-    name      owner;      //收益账号
-    name      admin;      //管理员账号
-    name      depacc;     //抵押账户
-    name      pool_id;    //所在的矿池子id
-    asset     deposit;    //当前剩余押金
-    asset     dep_total;  //总押金  
-    uint64_t  max_space;  //最大可被采购生产空间
-    uint64_t  space;      //当前的生产空间
-    uint64_t  internal_id = 0;    //(预留字段,用来表示以后的内部紧凑重构矿机id)
-    uint8_t   miner_type = 0; //矿机类型(预留)
-    uint8_t   status = 0; //矿机状态 0-正常 1-封禁 2-永久封禁
-    uint64_t  primary_key() const { return minerid; }
-  };
-  typedef multi_index<N(minerinfo2), minerinfo2> minerinfo2_table;   
-
-  struct depositinfo
-  {
-    name      user;               //抵押账户
-    asset     deposit;            //当前剩余押金
-    uint64_t  primary_key() const { return user.value; }
-  };
-  typedef multi_index<N(depositinfo), depositinfo> depositinfo_index;
+                     > minerinfo_table;   
 
   struct hdd_global_param
   {
@@ -239,81 +166,82 @@ private:
                                         (duprmv_ratio_delta_2)(duprmv_ratio_timespan_2))
   };
 
+  struct hdd_global_state2
+  {
+    uint64_t hdd_total_user = 0;
+  };
+
+  struct hdd_global_state3
+  {
+    uint64_t hdd_macc_user = 0;
+  };
+
   typedef eosio::singleton<N(gparams), hdd_global_param> gparams_singleton;
   typedef eosio::singleton<N(paramguard), hdd_price_guard> paramguard_singleton;
 
-  struct hdd_total_info
-  {
-    uint64_t hdd_total_user = 0;
-    uint64_t hdd_macc_user = 0;
-    uint64_t total_profit_space = 0;  //以G为单位   
-    uint64_t total_sapce = 0; //以G为单位 
-  };
-  typedef eosio::singleton<N(ghddtotal), hdd_total_info> ghddtotal_singleton;
+  typedef eosio::singleton<N(gusercount), hdd_global_state2> gusercount_singleton;
+  typedef eosio::singleton<N(gmacccount), hdd_global_state3> gmacccount_singleton;
 
-  struct deposit_rate
-  {
-    int64_t rate = 10000;
-  };
-  typedef eosio::singleton<N(gdeprate), deposit_rate> gdeprate_singleton;
+  gusercount_singleton _globalu;
+  hdd_global_state2 _gstateu;
 
-  struct usd_price
-  {
-    uint64_t usdprice = 64200;
-  };
-  typedef eosio::singleton<N(gusdprice), usd_price> gusdprice_singleton;
+  gmacccount_singleton _globalm;
+  hdd_global_state3 _gstatem;
 
+  //bool is_bp_account(uint64_t uservalue);
   void check_bp_account(account_name bpacc, uint64_t id, bool isCheckId);
 
   int64_t calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit,
                           uint64_t last_hdd_time, uint64_t current_time);
 
-  //新增存储用户
-  void new_users_hdd(usershdd_index& usershdd, name user, int64_t balance, account_name payer);
-  //新增矿工用户
-  void new_userm_hdd(usermhdd_index& usermhdd, name user, account_name payer);
-  //结算矿工旧模式下的收益到指定的时间点(该时间点需呀小于当前时间)
-  int64_t cacl_old_hddm(name user);
-  void addmprofitnew(uint64_t minerid, uint64_t space);
-  void addmprofitold(uint64_t minerid, uint64_t space);
-  void mdeactivenew(uint64_t minerid);
-  void mdeactiveold(uint64_t minerid);
-  void mactivenew(uint64_t minerid);
-  void mactiveold(uint64_t minerid);
+  void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 
-  //计算抵押系数
-  void calc_deposit_rate();
-  void check_deposit_enough( asset deposit, uint64_t max_space ); 
-  void check_token_enough( asset deposit, name user ); 
-  void add_deposit( asset deposit, name user );
+  void chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct);
 
-
-  void chg_owner_space(usermhdd_index& usermhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct);
-
-  //变更全网空间
-  void chg_total_space(uint64_t space, bool is_increate, bool is_profit);
 public:  
 
-  static int64_t get_dep_lock( account_name user) {
-    depositinfo_index _deposit_info( N(hddpool12345) , N(hddpool12345) );
-    auto it = _deposit_info.find(user);
-    if(it != _deposit_info.end()) {
-      return it->deposit.amount;
+  static bool is_miner_exist(uint64_t minerid)
+  {
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end())
+      return true;    
+
+    return false;
+  }
+
+  static uint64_t get_miner_max_space(uint64_t minerid)
+  {
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end())
+      return itminerinfo->max_space;    
+    return 0;  
+  }
+
+  static name get_miner_pool_id(uint64_t minerid)
+  {
+    name pool_id;
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end()) {
+      pool_id = itminerinfo->pool_id;  
     }
-    return 0;
+    return pool_id;  
   }
 
   static name get_miner_pool_owner(uint64_t minerid)
   {
     name pool_owner;
-    minerinfo2_table _minerinfo2( N(hddpool12345) , N(hddpool12345) );
-    auto itminerinfo = _minerinfo2.find(minerid);
-    if(itminerinfo != _minerinfo2.end()) {
+    minerinfo_table _minerinfo( N(hddpool12345) , N(hddpool12345) );
+    auto itminerinfo = _minerinfo.find(minerid);
+    if(itminerinfo != _minerinfo.end()) {
      storepool_index _storepool( N(hddpool12345) , N(hddpool12345));
      auto itstorepool = _storepool.find(itminerinfo->pool_id);
      if(itstorepool != _storepool.end()) {
        pool_owner = itstorepool->pool_owner;
      }
+
     }
     return pool_owner;  
   }

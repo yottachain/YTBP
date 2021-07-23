@@ -25,6 +25,10 @@
             "base": "",
             "fields": [
                 {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
                     "name": "minerid",
                     "type": "uint64"
                 },
@@ -35,6 +39,42 @@
                 {
                     "name": "caller",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "submprofit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "calcmbalance",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -143,7 +183,7 @@
             ]
         },
         {
-            "name": "regminer",
+            "name": "newminer",
             "base": "",
             "fields": [
                 {
@@ -161,6 +201,16 @@
                 {
                     "name": "dep_amount",
                     "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "addm2pool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
                 },
                 {
                     "name": "pool_id",
@@ -173,42 +223,6 @@
                 {
                     "name": "max_space",
                     "type": "uint64"
-                }                
-            ]
-        },
-        {
-            "name": "redeposit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "dep_acc",
-                    "type": "name"
-                },
-                {
-                    "name": "dep_amount",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "mforfeit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "quant",
-                    "type": "asset"
-                },
-                {
-                    "name": "caller",
-                    "type": "name"
                 }
             ]
         },
@@ -269,42 +283,6 @@
             ]
         },
         {
-            "name": "chgdeposit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "is_increase",
-                    "type": "bool"
-                },
-                {
-                    "name": "quant",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "mchgdepacc",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "new_depacc",
-                    "type": "name"
-                }
-            ]
-        },              
-        {
             "name": "fixownspace",
             "base": "",
             "fields": [
@@ -345,49 +323,7 @@
                     "type": "name"
                 }
             ]
-        }, 
-        {
-            "name": "hdd_total_info",
-            "base": "",
-            "fields": [
-                {
-                    "name": "hdd_total_user",
-                    "type": "uint64"
-                },
-                {
-                    "name": "hdd_macc_user",
-                    "type": "uint64"
-                },
-                {
-                    "name": "total_profit_space",
-                    "type": "uint64"
-                },
-                {
-                    "name": "total_sapce",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "deposit_rate",
-            "base": "",
-            "fields": [
-                {
-                    "name": "rate",
-                    "type": "int64"
-                }
-            ]
-        },
-        {
-            "name": "usd_price",
-            "base": "",
-            "fields": [
-                {
-                    "name": "usdprice",
-                    "type": "uint64"
-                }
-            ]
-        },
+        },        
         {
             "name": "hdd_global_param",
             "base": "",
@@ -411,7 +347,7 @@
                 {
                     "name": "hdd_counter",
                     "type": "int64"
-                }
+                },
             ]
         },
         {
@@ -486,7 +422,27 @@
             ]
         },
         {
-            "name": "maccount2",
+            "name": "hdd_global_state2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "hdd_total_user",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "hdd_global_state3",
+            "base": "",
+            "fields": [
+                {
+                    "name": "hdd_macc_user",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "maccount",
             "base": "",
             "fields": [
                 {
@@ -568,60 +524,6 @@
             ]
         },
         {
-            "name": "minerinfo2",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "owner",
-                    "type": "name"
-                },
-                {
-                    "name": "admin",
-                    "type": "name"
-                },
-                {
-                    "name": "depacc",
-                    "type": "name"
-                },
-                {
-                    "name": "pool_id",
-                    "type": "name"
-                },
-                {
-                    "name": "deposit",
-                    "type": "asset"
-                },
-                {
-                    "name": "dep_total",
-                    "type": "asset"
-                },
-                {
-                    "name": "max_space",
-                    "type": "uint64"
-                },                                
-                {
-                    "name": "space",
-                    "type": "uint64"
-                },
-                {
-                    "name": "internal_id",
-                    "type": "uint64"
-                },                                
-                {
-                    "name": "miner_type",
-                    "type": "uint8"
-                },                                
-                {
-                    "name": "status",
-                    "type": "uint8"
-                }                                
-            ]
-        },
-        {
             "name": "sellhdd",
             "base": "",
             "fields": [
@@ -662,6 +564,10 @@
             "base": "",
             "fields": [
                 {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
                     "name": "minerid",
                     "type": "uint64"
                 },
@@ -675,6 +581,10 @@
             "name": "mactive",
             "base": "",
             "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
                 {
                     "name": "minerid",
                     "type": "uint64"
@@ -727,7 +637,7 @@
             ]
         },
         {
-            "name": "usershddinfo",
+            "name": "userhddinfo",
             "base": "",
             "fields": [
                 {
@@ -749,16 +659,6 @@
                 {
                     "name": "last_hddstore_time",
                     "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "usermhddinfo",
-            "base": "",
-            "fields": [
-                {
-                    "name": "account_name",
-                    "type": "name"
                 },
                 {
                     "name": "hdd_minerhdd",
@@ -775,14 +675,6 @@
                 {
                     "name": "last_hddprofit_time",
                     "type": "uint64"
-                },
-                {
-                    "name": "max_space",
-                    "type": "uint64"
-                },
-                {
-                    "name": "internal_id",
-                    "type": "uint64"
                 }
             ]
         },
@@ -793,20 +685,6 @@
                 {
                     "name": "price",
                     "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "setusdprice",
-            "base": "",
-            "fields": [
-                {
-                    "name": "price",
-                    "type": "uint64"
-                },
-                {
-                    "name": "acc_type",
-                    "type": "uint8"
                 }
             ]
         },
@@ -875,6 +753,16 @@
             "ricardian_contract": ""
         },
         {
+            "name": "submprofit",
+            "type": "submprofit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "calcmbalance",
+            "type": "calcmbalance",
+            "ricardian_contract": ""
+        },        
+        {
             "name": "buyhdd",
             "type": "buyhdd",
             "ricardian_contract": ""
@@ -935,18 +823,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "regminer",
-            "type": "regminer",
-            "ricardian_contract": ""
-        },        
-        {
-            "name": "redeposit",
-            "type": "redeposit",
-            "ricardian_contract": ""
-        },        
-        {
-            "name": "mforfeit",
-            "type": "mforfeit",
+            "name": "newminer",
+            "type": "newminer",
             "ricardian_contract": ""
         },        
         {
@@ -960,18 +838,13 @@
             "ricardian_contract": ""
         },         
         {
+            "name": "addm2pool",
+            "type": "addm2pool",
+            "ricardian_contract": ""
+        },
+        {
             "name": "mchgspace",
             "type": "mchgspace",
-            "ricardian_contract": ""
-        },        
-        {
-            "name": "chgdeposit",
-            "type": "chgdeposit",
-            "ricardian_contract": ""
-        },        
-        {
-            "name": "mchgdepacc",
-            "type": "mchgdepacc",
             "ricardian_contract": ""
         },
         {
@@ -1000,11 +873,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "setusdprice",
-            "type": "setusdprice",
-            "ricardian_contract": ""
-        },
-        {
             "name": "setytaprice",
             "type": "setytaprice",
             "ricardian_contract": ""
@@ -1027,15 +895,15 @@
     ],
     "tables": [
         {
-            "name": "gdeprate",
-            "type": "deposit_rate",
+            "name": "gusercount",
+            "type": "hdd_global_state2",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "gusdprice",
-            "type": "usd_price",
+            "name": "gmacccount",
+            "type": "hdd_global_state3",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -1043,13 +911,6 @@
         {
             "name": "gparams",
             "type": "hdd_global_param",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "ghddtotal",
-            "type": "hdd_total_info",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -1069,13 +930,6 @@
             "key_types": []
         },
         {
-            "name": "minerinfo2",
-            "type": "minerinfo2",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
             "name": "minerinfo",
             "type": "minerinfo",
             "index_type": "i64",
@@ -1083,27 +937,19 @@
             "key_types": []
         },
         {
-            "name": "maccount2",
-            "type": "maccount2",
+            "name": "maccount",
+            "type": "maccount",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "usershddinfo",
-            "type": "usershddinfo",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "usermhddinfo",
-            "type": "usermhddinfo",
+            "name": "userhddinfo",
+            "type": "userhddinfo",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         }
-
     ],
     "ricardian_clauses": [],
     "variants": []
