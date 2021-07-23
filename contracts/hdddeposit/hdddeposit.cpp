@@ -139,6 +139,14 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
             a.dep_total = quant;
         });
     }
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }    
+
 }
 
 void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant) {
@@ -187,6 +195,57 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset
     eosio_assert(is_deposit_enough(deposit, max_space),"deposit not enough for miner's max_space -- chgdeposit");
     //--- check miner deposit and max_space
 
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }    
+
+}
+
+void hdddeposit::mforfeit(name user, uint64_t minerid, asset quant, std::string memo, uint8_t acc_type, name caller) {
+
+    if(acc_type == 2) {
+        eosio_assert(is_account(caller), "caller not a account.");
+        //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
+        //require_auth( caller );
+        check_bp_account(caller.value, minerid, true);
+    } else {
+        require_auth( _self );
+    }
+
+    eosio_assert(is_account(user), "user is not an account.");
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert( quant.amount > 0, "must use positive quant" );
+
+    minerdeposit_table _mdeposit(_self, _self);
+    depositpool_table   _deposit(_self, user.value);
+    const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
+
+    asset quatreal = quant;
+    if(miner.deposit.amount < quatreal.amount)
+        quatreal.amount = miner.deposit.amount;
+
+    //eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
+    eosio_assert(miner.account_name == user, "must use same account to pay forfeit.");
+    const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
+    eosio_assert( acc.deposit_total.amount - acc.deposit_free.amount >= quatreal.amount, "overdrawn deposit." );
+
+    _mdeposit.modify( miner, 0, [&]( auto& a ) {
+        a.deposit.amount -= quatreal.amount;
+    });
+
+    _deposit.modify( acc, 0, [&]( auto& a ) {
+        a.deposit_total -= quatreal;
+    });  
+
+    action(
+       permission_level{user, active_permission},
+       token_account, N(transfer),
+       std::make_tuple(user, N(yottaforfeit), quatreal, memo))
+       .send();
+
 }
 
 void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller) {
@@ -207,31 +266,29 @@ void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t ac
     minerdeposit_table _mdeposit(_self, _self);
     depositpool_table   _deposit(_self, user.value);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
-    eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
+
+    asset quatreal = quant;
+    if(miner.deposit.amount < quatreal.amount)
+        quatreal.amount = miner.deposit.amount;
+
+    //eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
     eosio_assert(miner.account_name == user, "must use same account to pay forfeit.");
     const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
-    eosio_assert( acc.deposit_total.amount - acc.deposit_free.amount >= quant.amount, "overdrawn deposit." );
+    eosio_assert( acc.deposit_total.amount - acc.deposit_free.amount >= quatreal.amount, "overdrawn deposit." );
 
     _mdeposit.modify( miner, 0, [&]( auto& a ) {
-        a.deposit.amount -= quant.amount;
+        a.deposit.amount -= quatreal.amount;
     });
 
     _deposit.modify( acc, 0, [&]( auto& a ) {
-        a.deposit_total -= quant;
+        a.deposit_total -= quatreal;
     });  
 
     action(
        permission_level{user, active_permission},
        token_account, N(transfer),
-       std::make_tuple(user, N(yottaforfeit), quant, std::string("draw forfeit")))
+       std::make_tuple(user, N(yottaforfeit), quatreal, std::string("draw forfeit")))
        .send();
-
-    if( eosiosystem::isActiveVoter(user) ) {
-        action(
-            permission_level{user, active_permission},
-            system_account, N(changevotes),
-            std::make_tuple(user)).send();
-    }
 
 }
 
@@ -252,7 +309,15 @@ void hdddeposit::delminer(uint64_t minerid) {
         });    
     }
 
+    if( eosiosystem::isActiveVoter(miner->account_name) ) {
+        action(
+            permission_level{miner->account_name, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(miner->account_name)).send();
+    }      
+
     _mdeposit.erase( miner );
+  
 }
 
 void hdddeposit::setrate(int64_t rate) {
@@ -287,11 +352,18 @@ void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     const auto& acc_new = _deposit_new.get( new_depacc.value, "no deposit pool record for new deposit user");
 
     eosio_assert( acc_new.deposit_free.amount >= miner.dep_total.amount, "new deposit user free deposit not enough" );
-
+    
     //变更原抵押账户的押金数量
     _deposit_old.modify( acc_old, 0, [&]( auto& a ) {
         a.deposit_free += miner.deposit;
-    });  
+    });
+
+    if( eosiosystem::isActiveVoter(miner.account_name) ) {
+        action(
+            permission_level{miner.account_name, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(miner.account_name)).send();
+    }        
 
     //将矿机的押金数量重新恢复到未扣罚金的初始额度
     _mdeposit.modify( miner, 0, [&]( auto& a ) {
@@ -302,6 +374,13 @@ void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     _deposit_new.modify( acc_new, 0, [&]( auto& a ) {
         a.deposit_free -= miner.dep_total;
     });
+
+    if( eosiosystem::isActiveVoter(new_depacc) ) {
+        action(
+            permission_level{new_depacc, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(new_depacc)).send();
+    }        
 }
 
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
@@ -317,4 +396,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(delminer)(setrate)(mchgdepacc))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(mforfeit)(delminer)(setrate)(mchgdepacc))

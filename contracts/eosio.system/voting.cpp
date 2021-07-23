@@ -580,7 +580,7 @@ namespace eosiosystem {
       }
 
       auto new_vote_weight = stake2vote( voter->staked );
-      new_vote_weight += hdddeposit(hdd_deposit_account).get_deposit(voter_name).amount;
+      new_vote_weight += hdddeposit(hdd_deposit_account).get_depositfree(voter_name).amount;
       if( voter->is_proxy ) {
          new_vote_weight += voter->proxied_vote_weight;
       }

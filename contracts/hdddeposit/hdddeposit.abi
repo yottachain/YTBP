@@ -150,7 +150,37 @@
                 {
                     "name": "quant",
                     "type": "asset"
+                },              
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
                 },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }                                
+            ]
+        },
+        {
+            "name": "mforfeit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name":"memo",         
+                    "type":"string"
+                },                
                 {
                     "name": "acc_type",
                     "type": "uint8"
@@ -220,6 +250,11 @@
         {
             "name": "payforfeit",
             "type": "payforfeit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "mforfeit",
+            "type": "mforfeit",
             "ricardian_contract": ""
         },
         {

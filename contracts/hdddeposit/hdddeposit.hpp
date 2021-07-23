@@ -22,12 +22,14 @@ class hdddeposit : public eosio::contract {
         void paydeposit(account_name user, uint64_t minerid, asset quant);
         void chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant);
         void payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller);
+        void mforfeit(name user, uint64_t minerid, asset quant, std::string memo, uint8_t acc_type, name caller);
         void delminer(uint64_t minerid);
         void setrate(int64_t rate);
 
         void mchgdepacc(uint64_t minerid, name new_depacc);
         
         inline asset get_deposit( account_name user )const;
+        inline asset get_depositfree( account_name user )const;
         inline asset get_miner_deposit( uint64_t minerid )const;
         inline bool is_deposit_enough( asset deposit, uint64_t max_space ) const;
 
@@ -81,6 +83,18 @@ asset hdddeposit::get_deposit( account_name user ) const
     asset zero{0, CORE_SYMBOL};
     return zero;
 }
+
+asset hdddeposit::get_depositfree( account_name user ) const
+{
+    depositpool_table _deposit(_self, user);
+    auto acc = _deposit.find( user );    
+    if ( acc != _deposit.end() ) {
+        return acc->deposit_free;
+    } 
+    asset zero{0, CORE_SYMBOL};
+    return zero;
+}
+
 
 asset hdddeposit::get_miner_deposit( uint64_t minerid ) const 
 {
