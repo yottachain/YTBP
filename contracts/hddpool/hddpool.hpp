@@ -61,6 +61,9 @@ public:
   void setdrdratio(uint64_t ratio);
   void addhddcnt(int64_t count, uint8_t acc_type);
 
+  //update usd price
+  void setusdprice(uint64_t price, uint8_t acc_type);
+
   void fixownspace(name owner, uint64_t space);
  
 private:
@@ -188,6 +191,19 @@ private:
   gmacccount_singleton _globalm;
   hdd_global_state3 _gstatem;
 
+  struct deposit_rate
+  {
+    int64_t   rate = 10000;
+    uint64_t  last_rate_time = current_time();
+  };
+  typedef eosio::singleton<N(gdeprate), deposit_rate> gdeprate_singleton;
+
+  struct usd_price
+  {
+    uint64_t usdprice = 64200;
+  };
+  typedef eosio::singleton<N(gusdprice), usd_price> gusdprice_singleton;
+
   //bool is_bp_account(uint64_t uservalue);
   void check_bp_account(account_name bpacc, uint64_t id, bool isCheckId);
 
@@ -197,6 +213,9 @@ private:
   void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 
   void chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct);
+
+  //计算抵押系数
+  void calc_deposit_rate();  
 
 public:  
 

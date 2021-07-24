@@ -1071,6 +1071,54 @@ void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) 
     //require_auth(bpacc);
 }
 
+void hddpool::calc_deposit_rate() {   
+   gusdprice_singleton _gusdprice(_self, _self);
+   usd_price  _gusdprice_state;
+   if(_gusdprice.exists()) {
+      _gusdprice_state = _gusdprice.get();
+   } else {
+      _gusdprice_state = usd_price{};
+   }
+
+   gparams_singleton _gparams(_self, _self);
+   hdd_global_param  _gparmas_state;
+   if(_gparams.exists()) {
+      _gparmas_state = _gparams.get();
+   } else {
+      _gparmas_state = hdd_global_param{};
+   }
+
+   uint64_t yta_u_price = (uint64_t)( (_gparmas_state.yta_price * 10000) / _gusdprice_state.usdprice );
+   int64_t rate = 10000;
+   if(yta_u_price <= 2000){
+      rate = 10000;
+   } else {
+      double drate = (1.0 / sqrt((double)yta_u_price/10000)) * 0.38;
+      rate = (int64_t) (drate * 10000);
+   }
+
+   gdeprate_singleton _grate(_self, _self);
+   deposit_rate  _grate_state;
+   if(_grate.exists()) {
+      _grate_state = _grate.get();
+   } else {
+      _grate_state = deposit_rate{};
+   }
+   _grate_state.rate = rate;
+   _grate.set(_grate_state,_self);
+
+   int64_t rate2 = rate/100;
+   action(
+       permission_level{N(hddpooladmin), active_permission},
+       hdd_deposit, N(setrate),
+       std::make_tuple(rate2))
+       .send(); 
+
+
+
+}
+
+
 void hddpool::sethddprice(uint64_t price) {
    require_auth(_self);
 
@@ -1104,6 +1152,28 @@ void hddpool::setdrdratio(uint64_t ratio) {
    _gparams.set(_gparmas_state,_self);
 
 }
+
+void hddpool::setusdprice(uint64_t price, uint8_t acc_type) {
+   eosio_assert( acc_type >= 1, "invalid acc_type" );
+   require_auth( N(hddpooladmin) );
+
+   eosio_assert( price > 0, "invalid price" );
+
+   gusdprice_singleton _gusdprice(_self, _self);
+   usd_price  _gusdprice_state;
+   if(_gusdprice.exists()) {
+      _gusdprice_state = _gusdprice.get();
+   } else {
+      _gusdprice_state = usd_price{};
+   }
+
+   _gusdprice_state.usdprice = price;
+
+   _gusdprice.set(_gusdprice_state,_self);
+
+   calc_deposit_rate();      
+}
+
 
 void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
    if(acc_type == 1) {
@@ -1178,6 +1248,7 @@ void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
    _gparams.set(_gparmas_state,_self);
    _paramguard.set(_paramguard_state,_self);
 
+   calc_deposit_rate();
 }
 
 void hddpool::setdrratio(uint64_t ratio, uint8_t acc_type) {
@@ -1284,4 +1355,4 @@ void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)
                   (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)
-                  (mdeactive)(mactive)(sethddprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
+                  (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

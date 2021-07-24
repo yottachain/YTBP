@@ -323,7 +323,31 @@
                     "type": "name"
                 }
             ]
-        },        
+        },  
+        {
+            "name": "deposit_rate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "rate",
+                    "type": "int64"
+                },
+                {
+                    "name": "last_rate_time",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "usd_price",
+            "base": "",
+            "fields": [
+                {
+                    "name": "usdprice",
+                    "type": "uint64"
+                }
+            ]
+        },
         {
             "name": "hdd_global_param",
             "base": "",
@@ -894,6 +918,20 @@
         }
     ],
     "tables": [
+        {
+            "name": "gdeprate",
+            "type": "deposit_rate",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "gusdprice",
+            "type": "usd_price",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },        
         {
             "name": "gusercount",
             "type": "hdd_global_state2",
