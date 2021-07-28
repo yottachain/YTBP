@@ -713,6 +713,20 @@
             ]
         },
         {
+            "name": "setusdprice",
+            "base": "",
+            "fields": [
+                {
+                    "name": "price",
+                    "type": "uint64"
+                },
+                {
+                    "name": "acc_type",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
             "name": "setytaprice",
             "base": "",
             "fields": [
@@ -894,6 +908,11 @@
         {
             "name": "sethddprice",
             "type": "sethddprice",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setusdprice",
+            "type": "setusdprice",
             "ricardian_contract": ""
         },
         {
