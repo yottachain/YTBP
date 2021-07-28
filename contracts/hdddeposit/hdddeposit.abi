@@ -212,6 +212,16 @@
             ]
         },
         {
+            "name": "updatevote",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },   
+        {
             "name": "mchgdepacc",
             "base": "",
             "fields": [
@@ -265,6 +275,11 @@
         {
             "name": "setrate",
             "type": "setrate",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "updatevote",
+            "type": "updatevote",
             "ricardian_contract": ""
         },
         {

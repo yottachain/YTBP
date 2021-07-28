@@ -27,6 +27,9 @@ class hdddeposit : public eosio::contract {
         void setrate(int64_t rate);
 
         void mchgdepacc(uint64_t minerid, name new_depacc);
+
+        void updatevote(name user);
+
         
         inline asset get_deposit( account_name user )const;
         inline asset get_depositfree( account_name user )const;

@@ -383,6 +383,18 @@ void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     }        
 }
 
+void hdddeposit::updatevote(name user)
+{
+    require_auth(N(hddpooladmin));
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }        
+}
+
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
@@ -396,4 +408,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(mforfeit)(delminer)(setrate)(mchgdepacc))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote))

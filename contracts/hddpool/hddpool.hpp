@@ -200,7 +200,7 @@ private:
 
   struct usd_price
   {
-    uint64_t usdprice = 64200;
+    uint64_t usdprice = 64500;
   };
   typedef eosio::singleton<N(gusdprice), usd_price> gusdprice_singleton;
 

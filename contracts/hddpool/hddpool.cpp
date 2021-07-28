@@ -1107,15 +1107,12 @@ void hddpool::calc_deposit_rate() {
    _grate_state.rate = rate;
    _grate.set(_grate_state,_self);
 
-   int64_t rate2 = rate/100;
-   action(
-       permission_level{N(hddpooladmin), active_permission},
-       hdd_deposit, N(setrate),
-       std::make_tuple(rate2))
-       .send(); 
-
-
-
+   //int64_t rate2 = rate/100;
+   //action(
+   //    permission_level{N(hddpooladmin), active_permission},
+   //    hdd_deposit, N(setrate),
+   //    std::make_tuple(rate2))
+   //    .send(); 
 }
 
 
