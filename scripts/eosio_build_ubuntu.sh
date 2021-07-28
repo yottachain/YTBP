@@ -149,7 +149,7 @@
 			printf "\\n\\tExiting now.\\n\\n"
 			exit 1;
 		fi
-		STATUS=$(curl -LO -w '%{http_code}' --connect-timeout 30 https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.bz2)
+		STATUS=$(curl -LO -w '%{http_code}' --connect-timeout 30 https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/boost_1_67_0.tar.bz2)
 		if [ "${STATUS}" -ne 200 ]; then
 			printf "\\tUnable to download Boost libraries at this time.\\n"
 			printf "\\tExiting now.\\n\\n"

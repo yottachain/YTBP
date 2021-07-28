@@ -347,7 +347,7 @@
 			printf "\\tExiting now.\\n"
 			exit 1;
 		fi
-		BOOSTURL="https://dl.bintray.com/boostorg/release/1.67.0/source/${BOOSTTGZ}"
+		BOOSTURL="https://boostorg.jfrog.io/artifactory/main/release/1.67.0/source/${BOOSTTGZ}"
 		STATUS=$(curl -LO -w '%{http_code}' --connect-timeout 30 "${BOOSTURL}")
 		if [ "${STATUS}" -ne 200 ]; then
 			printf "\\t!! Unable to download Boost libraries from ${BOOSTURL} !!\\n"
