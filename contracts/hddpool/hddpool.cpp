@@ -548,8 +548,6 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 
 void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
-   eosio_assert(false, "not support now!");
-   
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
@@ -570,7 +568,7 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
    auto itminerinfo = _minerinfo.find(minerid);   
    eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
 
-   eosio_assert(itminerinfo->space_left + space >= itminerinfo->max_space, "exceed max space");
+   eosio_assert(itminerinfo->space_left + space <= itminerinfo->max_space, "exceed max space");
    eosio_assert(itminerinfo->owner == owner, "invalid owner");
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
@@ -596,8 +594,10 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
       }
    });
 
-   userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t);
+   if(mactive) {
+      userhdd_index _userhdd(_self, owner.value);
+      chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t);
+   }
 
 }
 
@@ -1107,12 +1107,12 @@ void hddpool::calc_deposit_rate() {
    _grate_state.rate = rate;
    _grate.set(_grate_state,_self);
 
-   int64_t rate2 = rate/100;
-   action(
-       permission_level{N(hddpooladmin), active_permission},
-       hdd_deposit, N(setrate),
-       std::make_tuple(rate2))
-       .send(); 
+   //int64_t rate2 = rate/100;
+   //action(
+   //    permission_level{N(hddpooladmin), active_permission},
+   //    hdd_deposit, N(setrate),
+   //    std::make_tuple(rate2))
+   //    .send(); 
 }
 
 
