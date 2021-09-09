@@ -1200,7 +1200,7 @@ void hddpool::setytaprice(uint64_t price, uint8_t acc_type) {
       _paramguard_state = hdd_price_guard{};
    }
 
-   if(acc_type == 1) {    
+   if(acc_type == 100) {    
 
       do{
          uint64_t tmp_t;
