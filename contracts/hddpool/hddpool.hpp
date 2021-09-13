@@ -66,6 +66,8 @@ public:
 
   void fixownspace(name owner, uint64_t space);
 
+  void oldsync(uint64_t minerid);
+
  
 private:
   struct userhdd

@@ -297,6 +297,16 @@
             ]
         },
         {
+            "name": "oldsync",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "mchgadminacc",
             "base": "",
             "fields": [
@@ -888,6 +898,11 @@
         {
             "name": "fixownspace",
             "type": "fixownspace",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "oldsync",
+            "type": "oldsync",
             "ricardian_contract": ""
         },
         {

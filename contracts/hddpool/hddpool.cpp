@@ -39,6 +39,8 @@ const int64_t  min_buy_hdd_amount = 2 * 100000000ll;                       //2  
 
 const double  profit_percent = 0.9;  //存储收益划归矿工的部分,剩余部分画给生态节点奖励池
 
+const uint32_t defaul_miner_level = 66438; //矿机默认评级
+
 static constexpr eosio::name active_permission{N(active)};
 static constexpr eosio::name token_account{N(eosio.token)};
 static constexpr eosio::name hdd_exchg_acc{N(hddpoolexchg)};
@@ -546,6 +548,17 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 
    userhdd_index _userhdd(_self, owner.value);
    chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &row) {
+         row.space  += space;
+      });  
+   }
+   //-------------------- sync end ------------------
+
 }
 
 void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name caller)
@@ -602,6 +615,17 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
       userhdd_index _userhdd(_self, owner.value);
       chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t);
    }
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &row) {
+         row.space  -= space;
+      });  
+   }
+   //-------------------- sync end ------------------
+
 
 }
 
@@ -681,6 +705,15 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 
    //删除该矿机信息
    _minerinfo.erase( itminerinfo );
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.erase( itminer );
+   }
+   //-------------------- sync end ------------------
+
 }
 
 void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
@@ -709,6 +742,17 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
 
    userhdd_index _userhdd(_self, owner.value);
    chg_owner_space(_userhdd, owner, space, false, true, tmp_t);
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &row) {
+         row.status        = 1;
+      });  
+   }
+   //-------------------- sync end ------------------
+
 }
 
 void hddpool::mactive(name owner, uint64_t minerid, name caller)
@@ -735,6 +779,17 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
 
    userhdd_index _userhdd(_self, owner.value);
    chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &row) {
+         row.status        = 0;
+      });  
+   }
+   //-------------------- sync end ------------------
+
 }
 
 void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount)
@@ -759,7 +814,26 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
       row.admin      = adminacc;
       row.max_space  = 0;
       row.space_left = 0;
-   });       
+   });    
+   
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid);
+   eosio_assert(itminer == _miner.end(), "already sync"); 
+
+   _miner.emplace(payer, [&](auto &row) {      
+      row.minerid       = minerid;
+      row.admin         = adminacc;
+      row.max_space     = 0;
+      row.space         = 0;
+      row.round         = 0;
+      row.times         = 0;
+      row.reserve1      = 0;
+      row.level         = defaul_miner_level;
+      row.status        = 1;
+      row.internal_id   = 0;
+   });             
+   //-------------------- sync end ------------------
 
    action(
        permission_level{dep_acc, active_permission},
@@ -896,6 +970,23 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    {
       new_user_hdd(_userhdd, minerowner, 0, _self);
    }
+
+   //-------------------- sync start ------------------
+   //如果正式切换到该结构的时候需要处理重复加入矿池的问题
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &row) {
+         row.pool_id       = pool_id;
+         row.owner         = minerowner;
+         row.max_space     = max_space;
+         row.space         = 0;
+         row.status        = 0;
+         row.internal_id   = insert_miner2(minerid);
+      });  
+   }
+   //-------------------- sync end ------------------
+
 }
 
 void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
@@ -932,6 +1023,17 @@ void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.pool_id = new_poolid;
    });  
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &rowm) {
+         rowm.pool_id = new_poolid;
+      });  
+   }
+   //-------------------- sync end ------------------
+   
 }
 
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
@@ -978,6 +1080,17 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
       eosio_assert(space_used <= max_space, "invalid max_space");      
       row.space_left = max_space - space_used;
    });
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &rowm) {
+         rowm.max_space = max_space;
+      });  
+   }
+   //-------------------- sync end ------------------
+   
 }
 
 void hddpool::mchgadminacc(uint64_t minerid, name new_adminacc)
@@ -993,6 +1106,17 @@ void hddpool::mchgadminacc(uint64_t minerid, name new_adminacc)
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.admin = new_adminacc;
    });
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &row) {
+         row.admin = new_adminacc;
+      });  
+   }
+   //-------------------- sync end ------------------
+   
 
 }
 
@@ -1056,6 +1180,17 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
       //变更矿机表的收益账户名称
       rowminer.owner = new_owneracc;
    });
+
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
+   if(itminer != _miner.end()){
+      _miner.modify(itminer, _self, [&](auto &rowm) {
+         rowm.owner = new_owneracc;
+      });  
+   }
+   //-------------------- sync end ------------------
+
 }
 
 /*
@@ -1423,8 +1558,46 @@ void hddpool::del_miner2(uint64_t internal_id){
 
 }
 
+void hddpool::oldsync(uint64_t minerid){
+   require_auth( N(hddpooladmin) );
+
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid);
+   eosio_assert(itminer == _miner.end(), "already sync"); 
+
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered");
+
+   _miner.emplace(_self, [&](auto &row) {      
+      row.minerid       = minerid;
+      row.owner         = itminerinfo->owner;
+      row.admin         = itminerinfo->admin;
+      row.pool_id       = itminerinfo->pool_id;
+      row.max_space     = itminerinfo->max_space;
+      row.space         = itminerinfo->max_space - itminerinfo->space_left;
+      row.round         = 0;
+      row.times         = 0;
+      row.reserve1      = 0;
+      row.level         = defaul_miner_level;
+      row.status        = 0;
+      row.internal_id   = 0;
+      if(itminerinfo->max_space > 0) {
+         maccount_index _maccount(_self, itminerinfo->owner.value);
+         auto itmaccount = _maccount.find(minerid);
+         eosio_assert(itmaccount != _maccount.end(), "maccount not found");
+         if(itmaccount->space > 0) {
+            if(itmaccount->hdd_per_cycle_profit == 0){
+               row.status  = 1;
+            }
+         }
+         row.internal_id   = insert_miner2(minerid);
+      }
+   });       
+}
+
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
