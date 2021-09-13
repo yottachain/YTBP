@@ -40,6 +40,11 @@ void hdddeposit::paydeppool(account_name user, asset quant) {
     if ( it != _deposit.end() ) {
         real_balance.amount -= it->deposit_total.amount;
     }
+    depositpool2_table _deposit2(_self, user);
+    auto it2 = _deposit2.find( user );    
+    if ( it2 != _deposit2.end() ) {
+        real_balance.amount -= it2->deposit_total.amount;
+    }
     eosio_assert( real_balance.amount >= quant.amount, "user balance not enough." );
 
     //insert or update accdeposit table
@@ -99,6 +104,90 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
     }    
 }
 
+void hdddeposit::paydeppool2(account_name user, asset quant) {
+    require_auth(N(hddpooladml1));
+
+    account_name payer = _self;
+
+    bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
+    eosio_assert( !is_frozen, "frozen user can not create deposit pool" );
+
+    eosio_assert(is_account(user), "user is not an account.");
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert(quant.amount > 0, "must use positive quant" );
+
+    //check if user has enough YTA balance for deposit
+    auto balance   = eosio::token(N(eosio.token)).get_balance( user , quant.symbol.name() );
+    asset real_balance = balance;
+    depositpool_table _deposit(_self, user);
+    auto it = _deposit.find( user );    
+    if ( it != _deposit.end() ) {
+        real_balance.amount -= it->deposit_total.amount;
+    }
+    depositpool2_table _deposit2(_self, user);
+    auto it2 = _deposit2.find( user );    
+    if ( it2 != _deposit2.end() ) {
+        real_balance.amount -= it2->deposit_total.amount;
+    }
+    eosio_assert( real_balance.amount >= quant.amount, "user balance not enough." );
+
+    //insert or update accdeposit table
+    if ( it2 == _deposit2.end() ) {
+        //_deposit.emplace( _self, [&]( auto& a ){
+        _deposit2.emplace( payer, [&]( auto& a ){
+            a.account_name = name{user};
+            a.pool_type = 0;
+            a.deposit_total = quant;
+            a.deposit_free = quant;
+            a.deposit_his = quant;
+        });
+    } else {
+        _deposit2.modify( it2, 0, [&]( auto& a ) {
+            a.deposit_total += quant;
+            a.deposit_free += quant;
+            a.deposit_his += quant;
+        });
+    }
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }    
+}
+
+void hdddeposit::unpaydeppool2(account_name user, asset quant) {
+    require_auth(N(hddpooladml1));
+
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert(quant.amount > 0, "must use positive quant");
+
+    bool is_frozen = hddlock(hdd_lock_account).is_frozen(user);  
+    eosio_assert( !is_frozen, "user is frozen" );
+
+    depositpool2_table _deposit2(_self, user);
+    const auto& it2 = _deposit2.get( user, "no deposit pool record for this user.");
+
+    eosio_assert( it2.deposit_free.amount >= quant.amount, "free deposit not enough." );
+    eosio_assert( it2.deposit_total.amount >= quant.amount, "deposit not enough." );
+    eosio_assert( it2.deposit_his.amount >= quant.amount, "deposit not enough." );
+
+    _deposit2.modify( it2, 0, [&]( auto& a ) {
+        a.deposit_free -= quant;
+        a.deposit_total -= quant;
+        a.deposit_his -= quant;
+
+    });
+
+    if( eosiosystem::isActiveVoter(user) ) {
+        action(
+            permission_level{user, active_permission},
+            system_account, N(changevotes),
+            std::make_tuple(user)).send();
+    }    
+}
+
 
 void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     require_auth(user);
@@ -116,13 +205,13 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 
 
     //check if user has enough YTA balance for deposit
-    depositpool_table _deposit(_self, user);
-    const auto& it = _deposit.get( user, "no deposit pool record for this user.");
+    depositpool2_table _deposit2(_self, user);
+    const auto& it2 = _deposit2.get( user, "no deposit pool record for this user.");
 
-    eosio_assert( it.deposit_free.amount >= quant.amount, "free deposit not enough." );
+    eosio_assert( it2.deposit_free.amount >= quant.amount, "free deposit not enough." );
 
     //update depositpool table
-    _deposit.modify( it, 0, [&]( auto& a ) {
+    _deposit2.modify( it2, 0, [&]( auto& a ) {
         a.deposit_free -= quant;
     });
 
@@ -133,7 +222,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
     if ( miner == _mdeposit.end() ) {
         _mdeposit.emplace( payer, [&]( auto& a ){
             a.minerid = minerid;
-            a.miner_type = 0;
+            a.miner_type = 1;
             a.account_name = name{user};
             a.deposit = quant;
             a.dep_total = quant;
@@ -161,32 +250,46 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset
     minerdeposit_table _mdeposit(_self, _self);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
     eosio_assert(miner.account_name == user, "must use same account to change deposit.");
-    depositpool_table _deposit(_self, user);
-    const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
 
-    if(!is_increase) {
-        eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
+    if(miner.miner_type == 1) {
+        depositpool2_table _deposit2(_self, user);
+        const auto& acc2 = _deposit2.get( user.value, "no deposit pool2 record for this user.");
 
-        _mdeposit.modify( miner, 0, [&]( auto& a ) {
-            a.deposit -= quant;
-            a.dep_total -= quant;
-        });
+        if(!is_increase) {
+            eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
 
-        _deposit.modify( acc, 0, [&]( auto& a ) {
-            a.deposit_free += quant;
-        });
+            _mdeposit.modify( miner, 0, [&]( auto& a ) {
+                a.deposit -= quant;
+                a.dep_total = a.deposit;
+            });
+
+            _deposit2.modify( acc2, 0, [&]( auto& a ) {
+                a.deposit_free += quant;
+            });
+        } else {
+            eosio_assert( acc2.deposit_free.amount >= quant.amount, "free deposit not enough." );
+
+            _mdeposit.modify( miner, 0, [&]( auto& a ) {
+                a.deposit += quant;
+                a.dep_total = a.deposit; 
+            });
+
+            _deposit2.modify( acc2, 0, [&]( auto& a ) {
+                a.deposit_free -= quant;
+            });
+        }
     } else {
-        eosio_assert( acc.deposit_free.amount >= quant.amount, "free deposit not enough." );
+        depositpool_table _deposit(_self, user);
+        const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
 
-        _mdeposit.modify( miner, 0, [&]( auto& a ) {
-            a.deposit += quant;
-            if(a.deposit.amount > a.dep_total.amount)
-                a.dep_total.amount = a.deposit.amount; 
-        });
+        depositpool2_table _deposit2(_self, user);
+        const auto& acc2 = _deposit2.get( user.value, "no deposit pool2 record for this user.");
 
-        _deposit.modify( acc, 0, [&]( auto& a ) {
-            a.deposit_free -= quant;
-        });
+        //释放depositpool的矿机抵押
+
+
+
+
     }
 
     //--- check miner deposit and max_space
@@ -244,50 +347,6 @@ void hdddeposit::mforfeit(name user, uint64_t minerid, asset quant, std::string 
        permission_level{user, active_permission},
        token_account, N(transfer),
        std::make_tuple(user, N(yottaforfeit), quatreal, memo))
-       .send();
-
-}
-
-void hdddeposit::payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller) {
-
-    if(acc_type == 2) {
-        eosio_assert(is_account(caller), "caller not a account.");
-        //eosio_assert(is_bp_account(caller.value), "caller not a BP account.");
-        //require_auth( caller );
-        check_bp_account(caller.value, minerid, true);
-    } else {
-        require_auth( _self );
-    }
-
-    eosio_assert(is_account(user), "user is not an account.");
-    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert( quant.amount > 0, "must use positive quant" );
-
-    minerdeposit_table _mdeposit(_self, _self);
-    depositpool_table   _deposit(_self, user.value);
-    const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
-
-    asset quatreal = quant;
-    if(miner.deposit.amount < quatreal.amount)
-        quatreal.amount = miner.deposit.amount;
-
-    //eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
-    eosio_assert(miner.account_name == user, "must use same account to pay forfeit.");
-    const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
-    eosio_assert( acc.deposit_total.amount - acc.deposit_free.amount >= quatreal.amount, "overdrawn deposit." );
-
-    _mdeposit.modify( miner, 0, [&]( auto& a ) {
-        a.deposit.amount -= quatreal.amount;
-    });
-
-    _deposit.modify( acc, 0, [&]( auto& a ) {
-        a.deposit_total -= quatreal;
-    });  
-
-    action(
-       permission_level{user, active_permission},
-       token_account, N(transfer),
-       std::make_tuple(user, N(yottaforfeit), quatreal, std::string("draw forfeit")))
        .send();
 
 }
@@ -408,4 +467,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
 
 
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeposit)(chgdeposit)(payforfeit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote))

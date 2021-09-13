@@ -136,32 +136,6 @@
             ]
         },
         {
-            "name": "payforfeit",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "quant",
-                    "type": "asset"
-                },
-                {
-                    "name": "acc_type",
-                    "type": "uint8"
-                },
-                {
-                    "name": "caller",
-                    "type": "name"
-                }                                
-            ]
-        },
-        {
             "name": "mforfeit",
             "base": "",
             "fields": [
@@ -255,11 +229,6 @@
         {
             "name": "chgdeposit",
             "type": "chgdeposit",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "payforfeit",
-            "type": "payforfeit",
             "ricardian_contract": ""
         },
         {

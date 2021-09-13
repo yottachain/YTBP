@@ -19,9 +19,12 @@ class hdddeposit : public eosio::contract {
         void paydeppool(account_name user, asset quant);
         void unpaydeppool(account_name user, asset quant);
 
+        void paydeppool2(account_name user, asset quant);
+        void unpaydeppool2(account_name user, asset quant);
+
+
         void paydeposit(account_name user, uint64_t minerid, asset quant);
         void chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant);
-        void payforfeit(name user, uint64_t minerid, asset quant, uint8_t acc_type, name caller);
         void mforfeit(name user, uint64_t minerid, asset quant, std::string memo, uint8_t acc_type, name caller);
         void delminer(uint64_t minerid);
         void setrate(int64_t rate);
@@ -52,6 +55,18 @@ class hdddeposit : public eosio::contract {
         };        
         typedef multi_index<N(depositpool), depositpool> depositpool_table; 
 
+        //记录某个账户的存储押金池信息(跨链token存储抵押)
+        struct depositpool2 {
+            name        account_name;
+            uint8_t     pool_type = 0;
+            asset       deposit_total;  //用户押金池总额(扣除了罚金后的总额)
+            asset       deposit_free;   //用户押金池剩余的可以给矿机缴纳押金的总额
+            asset       deposit_his;    //用户总抵押量(包含罚金)
+            uint64_t    primary_key()const { return account_name.value; }
+        };        
+        typedef multi_index<N(depositpool2), depositpool2> depositpool2_table; 
+
+
         //记录哪个账户为哪个矿机抵押了多少钱
         struct miner2dep {
             uint64_t    minerid;    //矿机ID
@@ -78,24 +93,39 @@ class hdddeposit : public eosio::contract {
 
 asset hdddeposit::get_deposit( account_name user ) const
 {
-    depositpool_table _deposit(_self, user);
+    asset deposit{0, CORE_SYMBOL};
+
+    depositpool_table _deposit(_self, user);    
     auto acc = _deposit.find( user );    
     if ( acc != _deposit.end() ) {
-        return acc->deposit_total;
+        deposit += acc->deposit_total;
     } 
-    asset zero{0, CORE_SYMBOL};
-    return zero;
+    depositpool2_table _deposit2(_self, user);    
+    auto acc2 = _deposit2.find( user );    
+    if ( acc2 != _deposit2.end() ) {
+        deposit += acc2->deposit_total;
+    } 
+
+    return deposit;
 }
 
 asset hdddeposit::get_depositfree( account_name user ) const
 {
+    asset deposit{0, CORE_SYMBOL};
+
     depositpool_table _deposit(_self, user);
     auto acc = _deposit.find( user );    
     if ( acc != _deposit.end() ) {
-        return acc->deposit_free;
+        deposit += acc->deposit_free;
     } 
-    asset zero{0, CORE_SYMBOL};
-    return zero;
+
+    depositpool2_table _deposit2(_self, user);    
+    auto acc2 = _deposit2.find( user );    
+    if ( acc2 != _deposit2.end() ) {
+        deposit += acc2->deposit_free;
+    } 
+
+    return deposit;
 }
 
 

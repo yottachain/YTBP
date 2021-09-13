@@ -558,6 +558,92 @@
             ]
         },
         {
+            "name": "miner",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                },                                
+                {
+                    "name": "space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "internal_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "round",
+                    "type": "uint64"
+                },
+                {
+                    "name": "times",
+                    "type": "uint64"
+                },
+                {
+                    "name": "reserve1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "level",
+                    "type": "uint32"
+                },
+                {
+                    "name": "status",
+                    "type": "uint16"
+                }
+            ]
+        },
+        {
+            "name": "miner2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "internal_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "next_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "miner2ex",
+            "base": "",
+            "fields": [
+                {
+                    "name": "next_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "max_count",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "sellhdd",
             "base": "",
             "fields": [
