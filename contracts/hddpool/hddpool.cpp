@@ -506,6 +506,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
 
+   eosio_assert((space & 65535) == 0, "invalid space");
+
    //eosio_assert(owner.value != N(hddpool12345), "owner can not addmprofit now.");  
 
    maccount_index _maccount(_self, owner.value);
@@ -551,6 +553,8 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
    eosio_assert(is_account(owner), "owner invalidate");
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
+
+   eosio_assert((space & 65535) == 0, "invalid space");
 
    maccount_index _maccount(_self, owner.value);
    auto it = _maccount.find(minerid);
@@ -623,6 +627,8 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
 
 void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 {
+   eosio_assert(false, "function paused");
+
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
 
@@ -733,11 +739,15 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
 
 void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount)
 {
+   eosio_assert(false, "function paused");
+
    require_auth(dep_acc);
 
    eosio_assert(is_account(adminacc), "adminacc invalidate");
    eosio_assert(is_account(dep_acc), "dep_acc invalidate");
    eosio_assert( dep_amount.amount > 0, "must use positive dep_amount" );
+   eosio_assert( minerid > 0, "minerid must greater than zero" );
+
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
@@ -823,6 +833,8 @@ void hddpool::chgpoolspace(name pool_id, bool is_increase, uint64_t delta_space)
 
 void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space) 
 {
+   eosio_assert(false, "function paused");
+
    eosio_assert(is_account(minerowner), "minerowner invalidate");
 
    storepool_index _storepool(_self, _self);
@@ -838,6 +850,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    require_auth(itminerinfo->admin);
    
    eosio_assert(itminerinfo->pool_id.value == 0, "miner already join to a pool(@@err:alreadyinpool@@)\n");  
+   eosio_assert((max_space & 65535) == 0, "invalid max_space");
    eosio_assert(max_space <= max_miner_space, "miner max_space overflow\n");  
    eosio_assert(max_space >= min_miner_space, "miner max_space underflow\n");  
    eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left >= max_space),"pool space not enough");
@@ -926,6 +939,7 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
+   eosio_assert((max_space & 65535) == 0, "invalid max_space");
    eosio_assert(max_space <= max_miner_space, "miner max_space overflow\n");  
    eosio_assert(max_space >= min_miner_space, "miner max_space underflow\n");  
 
@@ -1347,6 +1361,67 @@ void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
    
 }
 
+uint64_t hddpool::insert_miner2(uint64_t minerid){
+   
+   gminer2ex_singleton _gminer2ex(_self, _self);
+   miner2ex  _gstate;
+   if(_gminer2ex.exists()) {
+      _gstate = _gminer2ex.get();
+   } else {
+      _gstate = miner2ex{};
+   }
+
+   uint64_t next_id = _gstate.next_id;
+   if(next_id == _gstate.max_count + 1) {
+      _gstate.max_count += 1;
+      _gstate.next_id += 1;
+
+      miner2_table _miner2( _self , _self );
+      account_name payer = _self;
+      _miner2.emplace(payer, [&](auto &row) {      
+         row.internal_id  = next_id;
+         row.minerid      = minerid;
+         row.next_id      = 0;
+      });       
+   } else {
+      miner2_table _miner2( _self , _self );
+      auto itminer2 = _miner2.find(next_id);
+      eosio_assert(itminer2 != _miner2.end(), "can not find next_id");  
+      _gstate.next_id = itminer2->next_id;
+      _miner2.modify(itminer2, _self, [&](auto &row) {
+         row.minerid      = minerid;
+         row.next_id      = 0;
+      });  
+   }
+
+   _gminer2ex.set(_gstate,_self);
+
+   return next_id;
+}
+
+void hddpool::del_miner2(uint64_t internal_id){
+   
+   if(internal_id == 0)
+      return;
+
+   gminer2ex_singleton _gminer2ex(_self, _self);
+   miner2ex  _gstate;
+   eosio_assert(_gminer2ex.exists(), "miner2 table is empty");     
+   _gstate = _gminer2ex.get();
+
+   miner2_table _miner2( _self , _self );
+   auto itminer2 = _miner2.find(internal_id);
+   eosio_assert(itminer2 != _miner2.end(), "can not find next_id"); 
+   uint64_t next_id =  _gstate.next_id;
+   _gstate.next_id = internal_id;
+   _miner2.modify(itminer2, _self, [&](auto &row) {
+      row.minerid      = 0;
+      row.next_id      = next_id;
+   });  
+
+   _gminer2ex.set(_gstate,_self);
+
+}
 
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)

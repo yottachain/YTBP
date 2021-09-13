@@ -65,6 +65,7 @@ public:
   void setusdprice(uint64_t price, uint8_t acc_type);
 
   void fixownspace(name owner, uint64_t space);
+
  
 private:
   struct userhdd
@@ -126,7 +127,50 @@ private:
                       indexed_by<N(owner),  const_mem_fun<minerinfo, uint64_t, &minerinfo::by_owner> >,
                       indexed_by<N(admin),  const_mem_fun<minerinfo, uint64_t, &minerinfo::by_admin> >,
                       indexed_by<N(poolid), const_mem_fun<minerinfo, uint64_t, &minerinfo::by_poolid> >
-                     > minerinfo_table;   
+                     > minerinfo_table;
+
+
+  //新模型的矿机表
+  struct miner
+  {
+    uint64_t  minerid;
+    name      owner;              //收益账号
+    name      admin;              //管理员账号
+    name      pool_id;            //矿池id  
+    uint64_t  max_space;          //最大可采购空间
+    uint64_t  space;              //当前已采购空间
+    uint64_t  internal_id = 0;    //内部id
+    uint64_t  round = 0;          //轮次
+    uint64_t  times = 0;          //本轮次被选中的次数(用作本轮次的算力衰减)
+    uint64_t  reserve1;           //保留字段  
+    uint32_t  level = 66438;      //矿机评级 log2(100)*10000取整为66438,要注意存储算力计算溢出的问题
+    uint16_t  status;             //当前状态 0-正常收益, 其他-封禁收益
+
+    uint64_t  primary_key() const { return minerid; }
+  };
+
+  typedef multi_index<N(miner), miner> miner_table;
+
+  //新模型的矿机内部id表(紧凑数组)
+  struct miner2
+  {
+    uint64_t  internal_id;      //内部id
+    uint64_t  minerid;          //矿机id
+    uint64_t  next_id;          //下一个内部id，如果minerid不为0，则该字段为0
+    
+    uint64_t  primary_key() const { return internal_id; }
+  };
+
+  typedef multi_index<N(miner2), miner2> miner2_table;
+
+  //内部紧凑表元数据
+  struct miner2ex
+  {
+    uint64_t  next_id = 1;      //下一个内部id
+    uint64_t  max_count = 0;    //内部表总条目数
+  };
+  typedef eosio::singleton<N(miner2ex), miner2ex> gminer2ex_singleton;
+
 
   struct hdd_global_param
   {
@@ -216,6 +260,9 @@ private:
 
   //计算抵押系数
   void calc_deposit_rate();  
+
+  uint64_t insert_miner2(uint64_t minerid);
+  void del_miner2(uint64_t internal_id);
 
 public:  
 
