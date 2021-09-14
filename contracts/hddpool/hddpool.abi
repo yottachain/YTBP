@@ -1095,6 +1095,27 @@
             "key_types": []
         },
         {
+            "name": "minera",
+            "type": "miner",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "minera2",
+            "type": "miner2",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "minera2ex",
+            "type": "miner2ex",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "maccount",
             "type": "maccount",
             "index_type": "i64",
