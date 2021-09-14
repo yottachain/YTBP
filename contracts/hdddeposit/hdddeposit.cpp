@@ -158,7 +158,7 @@ void hdddeposit::paydeppool2(account_name user, asset quant) {
 }
 
 void hdddeposit::unpaydeppool2(account_name user, asset quant) {
-    require_auth(N(hddpooladml1));
+    require_auth(user);
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant");
@@ -185,7 +185,9 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
             permission_level{user, active_permission},
             system_account, N(changevotes),
             std::make_tuple(user)).send();
-    }    
+    }
+
+    //这里需要转账到绿色通道    
 }
 
 
