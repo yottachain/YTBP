@@ -32,6 +32,32 @@
             ]
         },
         {
+            "name": "depositpool2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account_name",
+                    "type": "name"
+                },                
+                {
+                    "name": "pool_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "deposit_total",
+                    "type": "asset"
+                },
+                {
+                    "name": "deposit_free",
+                    "type": "asset"
+                },
+                {
+                    "name": "deposit_his",
+                    "type": "asset"
+                }                
+            ]
+        },
+        {
             "name": "miner2dep",
             "base": "",
             "fields": [
@@ -95,6 +121,34 @@
                 }
             ]
         },
+        {
+            "name": "paydeppool2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "unpaydeppool2",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },        
         {
             "name": "paydeposit",
             "base": "",
@@ -222,6 +276,16 @@
             "ricardian_contract": ""
         },
         {
+            "name": "paydeppool2",
+            "type": "paydeppool2",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "unpaydeppool2",
+            "type": "unpaydeppool2",
+            "ricardian_contract": ""
+        },
+        {
             "name": "paydeposit",
             "type": "paydeposit",
             "ricardian_contract": ""
@@ -261,6 +325,13 @@
         {
             "name": "depositpool",
             "type": "depositpool",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "depositpool2",
+            "type": "depositpool2",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

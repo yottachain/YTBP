@@ -286,10 +286,33 @@ void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset
         const auto& acc2 = _deposit2.get( user.value, "no deposit pool2 record for this user.");
 
         //释放depositpool的矿机抵押
+        _deposit.modify( acc, 0, [&]( auto& a ) {
+            a.deposit_free += miner.deposit;
+            if(a.deposit_free >= a.deposit_total)
+                a.deposit_free = a.deposit_total;
+        });
 
+        asset quantreal =  quant;   
 
+        if(!is_increase) {
+            eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
+            _mdeposit.modify( miner, 0, [&]( auto& a ) {
+                quantreal = a.deposit - quant;
+                a.deposit -= quant;
+                a.dep_total = a.deposit;
+            });
+        } else {
+            _mdeposit.modify( miner, 0, [&]( auto& a ) {
+                quantreal = a.deposit + quant;
+                a.deposit += quant;
+                a.dep_total = a.deposit; 
+            }); 
+            eosio_assert( acc2.deposit_free.amount >= quantreal.amount, "free deposit not enough." );
+        }
 
-
+        _deposit2.modify( acc2, 0, [&]( auto& a ) {
+            a.deposit_free -= quantreal;
+        });
     }
 
     //--- check miner deposit and max_space
@@ -323,7 +346,6 @@ void hdddeposit::mforfeit(name user, uint64_t minerid, asset quant, std::string 
     eosio_assert( quant.amount > 0, "must use positive quant" );
 
     minerdeposit_table _mdeposit(_self, _self);
-    depositpool_table   _deposit(_self, user.value);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
 
     asset quatreal = quant;
@@ -332,16 +354,26 @@ void hdddeposit::mforfeit(name user, uint64_t minerid, asset quant, std::string 
 
     //eosio_assert( miner.deposit.amount >= quant.amount, "overdrawn deposit." );
     eosio_assert(miner.account_name == user, "must use same account to pay forfeit.");
-    const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
-    eosio_assert( acc.deposit_total.amount - acc.deposit_free.amount >= quatreal.amount, "overdrawn deposit." );
-
     _mdeposit.modify( miner, 0, [&]( auto& a ) {
         a.deposit.amount -= quatreal.amount;
     });
 
-    _deposit.modify( acc, 0, [&]( auto& a ) {
-        a.deposit_total -= quatreal;
-    });  
+    if(miner.miner_type == 0) {
+        depositpool_table   _deposit(_self, user.value);
+        const auto& acc = _deposit.get( user.value, "no deposit pool record for this user.");
+        eosio_assert( acc.deposit_total.amount - acc.deposit_free.amount >= quatreal.amount, "overdrawn deposit." );
+        _deposit.modify( acc, 0, [&]( auto& a ) {
+            a.deposit_total -= quatreal;
+        });  
+    } else {
+        depositpool2_table   _deposit2(_self, user.value);
+        const auto& acc2 = _deposit2.get( user.value, "no deposit pool2 record for this user.");
+        eosio_assert( acc2.deposit_total.amount - acc2.deposit_free.amount >= quatreal.amount, "overdrawn deposit." );
+        _deposit2.modify( acc2, 0, [&]( auto& a ) {
+            a.deposit_total -= quatreal;
+        });  
+
+    }
 
     action(
        permission_level{user, active_permission},
@@ -358,15 +390,28 @@ void hdddeposit::delminer(uint64_t minerid) {
     auto miner = _mdeposit.find(minerid);
     if(miner == _mdeposit.end())
         return;
-    depositpool_table   _deposit(_self, miner->account_name.value );
-    auto acc = _deposit.find(miner->account_name.value);
-    if(acc != _deposit.end()) {
-        _deposit.modify( acc, 0, [&]( auto& a ) {
-            a.deposit_free += miner->deposit;
-            if(a.deposit_free >= a.deposit_total)
-                a.deposit_free = a.deposit_total;
-        });    
-    }
+
+    if(miner->miner_type == 0) {
+        depositpool_table   _deposit(_self, miner->account_name.value );
+        auto acc = _deposit.find(miner->account_name.value);
+        if(acc != _deposit.end()) {
+            _deposit.modify( acc, 0, [&]( auto& a ) {
+                a.deposit_free += miner->deposit;
+                if(a.deposit_free >= a.deposit_total)
+                    a.deposit_free = a.deposit_total;
+            });    
+        }
+    } else {
+        depositpool2_table   _deposit2(_self, miner->account_name.value );
+        auto acc2 = _deposit2.find(miner->account_name.value);
+        if(acc2 != _deposit2.end()) {
+            _deposit2.modify( acc2, 0, [&]( auto& a ) {
+                a.deposit_free += miner->deposit;
+                if(a.deposit_free >= a.deposit_total)
+                    a.deposit_free = a.deposit_total;
+            });    
+        }
+    }        
 
     if( eosiosystem::isActiveVoter(miner->account_name) ) {
         action(
@@ -376,7 +421,6 @@ void hdddeposit::delminer(uint64_t minerid) {
     }      
 
     _mdeposit.erase( miner );
-  
 }
 
 void hdddeposit::setrate(int64_t rate) {
