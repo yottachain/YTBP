@@ -38,6 +38,7 @@ class hdddeposit : public eosio::contract {
         inline asset get_depositfree( account_name user )const;
         inline asset get_miner_deposit( uint64_t minerid )const;
         inline bool is_deposit_enough( asset deposit, uint64_t max_space ) const;
+        inline asset calc_deposit( uint64_t space )const;
 
 
     private:
@@ -161,4 +162,25 @@ bool hdddeposit::is_deposit_enough( asset deposit, uint64_t max_space ) const
     return false;
 }
 
+asset hdddeposit::calc_deposit( uint64_t space )const
+{
+    grate_singleton grate(_self, _self);
+    deposit_rate    rate_state;
+    int64_t rate;
+
+    if (!grate.exists()) {
+        rate = 100;
+    } else {
+        rate = grate.get().rate;
+    }
+
+    double drate = ((double)rate)/100;
+    uint32_t one_gb = 64 * 1024; //1GB, 以16k一个分片大小为单位
+
+    int64_t am = (int64_t)((((double)space)/one_gb) * drate * 10000);
+    asset dep{am,CORE_SYMBOL};
+
+    return dep;
+
+}
 

@@ -6,6 +6,7 @@
 #include <eosiolib/print.hpp>
 #include <eosiolib/serialize.hpp>
 #include <eosiolib/multi_index.hpp>
+#include <eosiolib/transaction.hpp>
 #include <eosio.token/eosio.token.hpp>
 #include <eosio.system/eosio.system.hpp>
 #include <hdddeposit/hdddeposit.hpp>
@@ -651,7 +652,7 @@ void hddpool::calcmbalance(name owner, uint64_t minerid)
 
 void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 {
-   eosio_assert(false, "function paused");
+   //eosio_assert(false, "function paused");
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
@@ -710,6 +711,9 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
    miner_table _miner( _self , _self );
    auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
    if(itminer != _miner.end()){
+      if(itminer->internal_id != 0) {
+         del_miner2(itminer->internal_id);
+      }
       _miner.erase( itminer );
    }
    //-------------------- sync end ------------------
@@ -794,7 +798,7 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
 
 void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount)
 {
-   eosio_assert(false, "function paused");
+   //eosio_assert(false, "function paused");
 
    require_auth(dep_acc);
 
@@ -822,16 +826,19 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
    eosio_assert(itminer == _miner.end(), "already sync"); 
 
    _miner.emplace(payer, [&](auto &row) {      
-      row.minerid       = minerid;
-      row.admin         = adminacc;
-      row.max_space     = 0;
-      row.space         = 0;
-      row.round         = 0;
-      row.times         = 0;
-      row.reserve1      = 0;
-      row.level         = defaul_miner_level;
-      row.status        = 1;
-      row.internal_id   = 0;
+      row.minerid          = minerid;
+      row.admin            = adminacc;
+      row.max_space        = 0;
+      row.space            = 0;
+      row.last_modify_time = 0;
+      row.internal_id      = 0;
+      row.internal_id2     = 0;      
+      row.round1           = 0;
+      row.times1           = 0;
+      row.round2           = 0;
+      row.times2           = 0;
+      row.level            = defaul_miner_level;
+      row.status           = 1;
    });             
    //-------------------- sync end ------------------
 
@@ -907,7 +914,7 @@ void hddpool::chgpoolspace(name pool_id, bool is_increase, uint64_t delta_space)
 
 void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space) 
 {
-   eosio_assert(false, "function paused");
+   //eosio_assert(false, "function paused");
 
    eosio_assert(is_account(minerowner), "minerowner invalidate");
 
@@ -977,17 +984,117 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
    if(itminer != _miner.end()){
       _miner.modify(itminer, _self, [&](auto &row) {
-         row.pool_id       = pool_id;
-         row.owner         = minerowner;
-         row.max_space     = max_space;
-         row.space         = 0;
-         row.status        = 0;
-         row.internal_id   = insert_miner2(minerid);
+         row.pool_id          = pool_id;
+         row.owner            = minerowner;
+         row.max_space        = max_space;
+         row.space            = 0;
+         row.status           = 0;
+         row.internal_id      = insert_miner2(minerid);
+         row.last_modify_time = current_time();
       });  
    }
    //-------------------- sync end ------------------
 
 }
+
+void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space)
+{
+
+   eosio_assert(is_account(adminacc), "adminacc invalidate");
+   eosio_assert(is_account(dep_acc), "dep_acc invalidate");
+   eosio_assert(is_account(minerowner), "minerowner invalidate");   
+   eosio_assert( minerid > 0, "minerid must greater than zero" );
+
+   require_auth(dep_acc);
+
+   storepool_index _storepool(_self, _self);
+   auto itstorepool = _storepool.find(pool_id.value);
+   eosio_assert(itstorepool != _storepool.end(), "storepool not registered");
+
+   require_auth(itstorepool->pool_owner);
+
+
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   eosio_assert(itminerinfo == _minerinfo.end(), "miner already registered \n");  
+
+   eosio_assert((max_space & 65535) == 0, "invalid max_space");
+   eosio_assert(max_space <= max_miner_space, "miner max_space overflow\n");  
+   eosio_assert(max_space >= min_miner_space, "miner max_space underflow\n");  
+   eosio_assert((itstorepool->space_left > 0 && itstorepool->space_left >= max_space),"pool space not enough");
+
+   _storepool.modify(itstorepool, _self, [&](auto &row) {
+      row.space_left -= max_space;
+   });
+
+   maccount_index _maccount(_self, minerowner.value);
+   if (_maccount.begin() == _maccount.end()){
+      _gstatem.hdd_macc_user += 1;
+   }
+
+   auto itmaccount = _maccount.find(minerid);
+   eosio_assert(itmaccount == _maccount.end(), "miner already bind to a owner");
+
+   account_name payer = _self;
+   _maccount.emplace(payer, [&](auto &row) {
+      row.minerid = minerid;
+      row.owner = minerowner;
+      row.space = 0;
+      row.hdd_per_cycle_profit = 0;
+      row.hdd_balance = 0;
+      row.last_hdd_time = current_time();
+   });
+
+   userhdd_index _userhdd(_self, minerowner.value);
+   auto userhdd_itr = _userhdd.find(minerowner.value);
+   if (userhdd_itr == _userhdd.end())
+   {
+      new_user_hdd(_userhdd, minerowner, 0, _self);
+   }
+
+   _minerinfo.emplace(payer, [&](auto &row) {      
+      row.minerid    = minerid;
+      row.owner      = minerowner;
+      row.admin      = adminacc;
+      row.pool_id    = pool_id;
+      row.max_space  = max_space;
+      row.space_left = max_space;
+   });    
+   
+   //-------------------- sync start ------------------
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid);
+   eosio_assert(itminer == _miner.end(), "already sync"); 
+
+   _miner.emplace(payer, [&](auto &row) {      
+      row.minerid          = minerid;
+      row.owner            = minerowner;
+      row.admin            = adminacc;
+      row.pool_id          = pool_id;
+      row.max_space        = max_space;
+      row.space            = 0;
+      row.last_modify_time = current_time();;
+      row.internal_id      = insert_miner2(minerid);
+      row.internal_id2     = 0;      
+      row.round1           = 0;
+      row.times1           = 0;
+      row.round2           = 0;
+      row.times2           = 0;
+      row.level            = defaul_miner_level;
+      row.status           = 0;
+   });             
+   //-------------------- sync end ------------------
+
+   asset dep_amount = hdddeposit(hdd_deposit).calc_deposit(max_space);
+
+   action(
+       permission_level{dep_acc, active_permission},
+       hdd_deposit, N(paydeposit),
+       std::make_tuple(dep_acc, minerid, dep_amount))
+       .send(); 
+
+}
+
 
 void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
 {
@@ -1209,6 +1316,8 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+   require_auth(bpacc);
+   return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     //print("bpname ----", name{bpacc}, "\n");
@@ -1496,7 +1605,7 @@ void hddpool::addhddcnt(int64_t count, uint8_t acc_type) {
    
 }
 
-uint64_t hddpool::insert_miner2(uint64_t minerid){
+uint32_t hddpool::insert_miner2(uint64_t minerid){
    
    gminer2ex_singleton _gminer2ex(_self, _self);
    miner2ex  _gstate;
@@ -1505,10 +1614,10 @@ uint64_t hddpool::insert_miner2(uint64_t minerid){
    } else {
       _gstate = miner2ex{};
    }
-
+   _gstate.max_miner_count += 1;
    uint64_t next_id = _gstate.next_id;
-   if(next_id == _gstate.max_count + 1) {
-      _gstate.max_count += 1;
+   if(next_id == _gstate.max_table_count + 1) {
+      _gstate.max_table_count += 1;
       _gstate.next_id += 1;
 
       miner2_table _miner2( _self , _self );
@@ -1531,7 +1640,7 @@ uint64_t hddpool::insert_miner2(uint64_t minerid){
 
    _gminer2ex.set(_gstate,_self);
 
-   return next_id;
+   return (uint32_t)next_id;
 }
 
 void hddpool::del_miner2(uint64_t internal_id){
@@ -1543,6 +1652,8 @@ void hddpool::del_miner2(uint64_t internal_id){
    miner2ex  _gstate;
    eosio_assert(_gminer2ex.exists(), "miner2 table is empty");     
    _gstate = _gminer2ex.get();
+
+   _gstate.max_miner_count -= 1;
 
    miner2_table _miner2( _self , _self );
    auto itminer2 = _miner2.find(internal_id);
@@ -1575,13 +1686,20 @@ void hddpool::oldsync(uint64_t minerid){
       row.admin         = itminerinfo->admin;
       row.pool_id       = itminerinfo->pool_id;
       row.max_space     = itminerinfo->max_space;
-      row.space         = itminerinfo->max_space - itminerinfo->space_left;
-      row.round         = 0;
-      row.times         = 0;
-      row.reserve1      = 0;
-      row.level         = defaul_miner_level;
-      row.status        = 0;
-      row.internal_id   = 0;
+      if(itminerinfo->max_space >= itminerinfo->space_left){
+         row.space         = itminerinfo->max_space - itminerinfo->space_left;
+      } else {
+         row.space         = 0;         
+      }    
+      row.last_modify_time = 0;
+      row.round1           = 0;
+      row.times1           = 0;
+      row.round2           = 0;
+      row.times2           = 0;
+      row.level            = defaul_miner_level;
+      row.status           = 0;
+      row.internal_id      = 0;
+      row.internal_id2     = 0;
       if(itminerinfo->max_space > 0) {
          maccount_index _maccount(_self, itminerinfo->owner.value);
          auto itmaccount = _maccount.find(minerid);
@@ -1592,12 +1710,50 @@ void hddpool::oldsync(uint64_t minerid){
             }
          }
          row.internal_id   = insert_miner2(minerid);
+         row.last_modify_time = current_time();
+      } else {
+         row.status  = 1;
       }
-   });       
+   });      
+}
+
+void hddpool::onreward(uint32_t slot) {
+   require_auth( _self );
+
+   asset quant{23000,CORE_SYMBOL};
+   uint64_t round = 12;
+   
+   
+   eosio::transaction out;
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardsel), std::make_tuple(round, quant) );
+   out.delay_sec = 1;
+   out.send( (uint128_t(_self) << 64) | slot, _self, false );
+
+   //uint64_t ramdom = tapos_block_prefix()*tapos_block_num();
+     
+   /*
+   action(
+      permission_level{_self, N(active)},
+      _self, N(rewardsel),
+      std::make_tuple(round, quant) ).send(); 
+   */   
+}
+
+void hddpool::rewardsel(uint64_t round, asset quant) {
+   require_auth( _self );
+
+   action(
+      permission_level{_self, N(active)},
+      _self, N(rewardlog),
+      std::make_tuple(N(mynameuser),std::string("reward")) ).send();
+}
+
+void hddpool::rewardlog(name user, std::string memo) {
+   require_auth( _self );
 }
 
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
-                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
+                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onreward)(rewardsel)(rewardlog)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

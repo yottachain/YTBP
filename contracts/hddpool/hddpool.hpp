@@ -45,6 +45,9 @@ public:
   void addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space);
   //store pool related actions -- end
 
+  //miner registration itterface
+  void regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space);
+
   void mdeactive(name owner, uint64_t minerid, name caller);
   void mactive(name owner, uint64_t minerid, name caller);
 
@@ -68,6 +71,9 @@ public:
 
   void oldsync(uint64_t minerid);
 
+  void onreward(uint32_t slot);
+  void rewardsel(uint64_t round, asset quant);
+  void rewardlog(name user, std::string memo);
  
 private:
   struct userhdd
@@ -141,17 +147,20 @@ private:
     name      pool_id;            //矿池id  
     uint64_t  max_space;          //最大可采购空间
     uint64_t  space;              //当前已采购空间
-    uint64_t  internal_id = 0;    //内部id
-    uint64_t  round = 0;          //轮次
-    uint64_t  times = 0;          //本轮次被选中的次数(用作本轮次的算力衰减)
-    uint64_t  reserve1;           //保留字段  
+    uint64_t  last_modify_time;   //内部使用,用来记录该矿机某些数据的最后修改时间
+    uint32_t  internal_id = 0;    //内部id
+    uint32_t  internal_id2 = 0;   //内部id2,用来进行紧凑表数据维护
+    uint32_t  round1 = 0;         //最后被选中的容量算力轮次
+    uint32_t  times1 = 0;         //最后被选中的容量算力轮次中被选中的次数(用作本轮次的算力衰减)
+    uint32_t  round2 = 0;         //最后被选中的数据存储算力轮次
+    uint32_t  times2 = 0;         //最后被选中的数据存储算力轮次中被选中的次数(用作本轮次的算力衰减)
     uint32_t  level = 66438;      //矿机评级 log2(100)*10000取整为66438,要注意存储算力计算溢出的问题
     uint16_t  status;             //当前状态 0-正常收益, 其他-封禁收益
 
     uint64_t  primary_key() const { return minerid; }
   };
 
-  typedef multi_index<N(minera), miner> miner_table;
+  typedef multi_index<N(minerb), miner> miner_table;
 
   //新模型的矿机内部id表(紧凑数组)
   struct miner2
@@ -163,15 +172,17 @@ private:
     uint64_t  primary_key() const { return internal_id; }
   };
 
-  typedef multi_index<N(minera2), miner2> miner2_table;
+  typedef multi_index<N(minerb2), miner2> miner2_table;
 
   //内部紧凑表元数据
   struct miner2ex
   {
-    uint64_t  next_id = 1;      //下一个内部id
-    uint64_t  max_count = 0;    //内部表总条目数
+    uint64_t  next_id = 1;            //下一个内部id
+    uint64_t  max_table_count = 0;    //内部表总条目数
+    uint64_t  max_miner_count = 0;     //有效矿机数量
+
   };
-  typedef eosio::singleton<N(minera2ex), miner2ex> gminer2ex_singleton;
+  typedef eosio::singleton<N(minerb2ex), miner2ex> gminer2ex_singleton;
 
 
   struct hdd_global_param
@@ -263,7 +274,7 @@ private:
   //计算抵押系数
   void calc_deposit_rate();  
 
-  uint64_t insert_miner2(uint64_t minerid);
+  uint32_t insert_miner2(uint64_t minerid);
   void del_miner2(uint64_t internal_id);
 
 public:  

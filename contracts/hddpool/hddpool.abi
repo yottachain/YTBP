@@ -227,6 +227,36 @@
             ]
         },
         {
+            "name": "regminer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "adminacc",
+                    "type": "name"
+                },
+                {
+                    "name": "dep_acc",
+                    "type": "name"
+                },
+                {
+                    "name": "pool_id",
+                    "type": "name"
+                },
+                {
+                    "name": "minerowner",
+                    "type": "name"
+                },
+                {
+                    "name": "max_space",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "getbalance",
             "base": "",
             "fields": [
@@ -303,6 +333,44 @@
                 {
                     "name": "minerid",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "onreward",
+            "base": "",
+            "fields": [
+                {
+                    "name": "slot",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "rewardsel",
+            "base": "",
+            "fields": [
+                {
+                    "name": "round",
+                    "type": "uint64"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "rewardlog",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         },
@@ -586,20 +654,32 @@
                     "type": "uint64"
                 },
                 {
+                    "name": "last_modify_time",
+                    "type": "uint64"
+                },
+                {
                     "name": "internal_id",
-                    "type": "uint64"
+                    "type": "uint32"
                 },
                 {
-                    "name": "round",
-                    "type": "uint64"
+                    "name": "internal_id2",
+                    "type": "uint32"
+                },                              
+                {
+                    "name": "round1",
+                    "type": "uint32"
                 },
                 {
-                    "name": "times",
-                    "type": "uint64"
+                    "name": "times1",
+                    "type": "uint32"
                 },
                 {
-                    "name": "reserve1",
-                    "type": "uint64"
+                    "name": "round2",
+                    "type": "uint32"
+                },
+                {
+                    "name": "times2",
+                    "type": "uint32"
                 },
                 {
                     "name": "level",
@@ -638,9 +718,13 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "max_count",
+                    "name": "max_table_count",
                     "type": "uint64"
-                }
+                },
+                {
+                    "name": "max_miner_count",
+                    "type": "uint64"
+                }                
             ]
         },
         {
@@ -977,6 +1061,11 @@
             "ricardian_contract": ""
         },
         {
+            "name": "regminer",
+            "type": "regminer",
+            "ricardian_contract": ""
+        },        
+        {
             "name": "mchgspace",
             "type": "mchgspace",
             "ricardian_contract": ""
@@ -989,6 +1078,21 @@
         {
             "name": "oldsync",
             "type": "oldsync",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "onreward",
+            "type": "onreward",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "rewardsel",
+            "type": "rewardsel",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "rewardlog",
+            "type": "rewardlog",
             "ricardian_contract": ""
         },
         {
@@ -1095,21 +1199,21 @@
             "key_types": []
         },
         {
-            "name": "minera",
+            "name": "minerb",
             "type": "miner",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "minera2",
+            "name": "minerb2",
             "type": "miner2",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "minera2ex",
+            "name": "minerb2ex",
             "type": "miner2ex",
             "index_type": "i64",
             "key_names": [],
