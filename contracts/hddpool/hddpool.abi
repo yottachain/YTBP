@@ -253,7 +253,15 @@
                 {
                     "name": "max_space",
                     "type": "uint64"
-                }
+                },
+                {
+                    "name": "dep_amount",
+                    "type": "asset"
+                },
+                {
+                    "name": "is_calc",
+                    "type": "bool"
+                }                                
             ]
         },
         {

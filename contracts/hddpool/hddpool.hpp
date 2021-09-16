@@ -46,7 +46,7 @@ public:
   //store pool related actions -- end
 
   //miner registration itterface
-  void regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space);
+  void regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space, asset dep_amount, bool is_calc);
 
   void mdeactive(name owner, uint64_t minerid, name caller);
   void mactive(name owner, uint64_t minerid, name caller);

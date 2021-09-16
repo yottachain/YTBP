@@ -556,6 +556,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    if(itminer != _miner.end()){
       _miner.modify(itminer, _self, [&](auto &row) {
          row.space  += space;
+         if(row.status == 2)
+            row.status = 0;
       });  
    }
    //-------------------- sync end ------------------
@@ -988,7 +990,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
          row.owner            = minerowner;
          row.max_space        = max_space;
          row.space            = 0;
-         row.status           = 0;
+         row.status           = 2;
          row.internal_id      = insert_miner2(minerid);
          row.last_modify_time = current_time();
       });  
@@ -997,7 +999,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
 
 }
 
-void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space)
+void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space, asset dep_amount, bool is_calc)
 {
 
    eosio_assert(is_account(adminacc), "adminacc invalidate");
@@ -1081,16 +1083,20 @@ void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id
       row.round2           = 0;
       row.times2           = 0;
       row.level            = defaul_miner_level;
-      row.status           = 0;
+      row.status           = 2;
    });             
    //-------------------- sync end ------------------
-
-   asset dep_amount = hdddeposit(hdd_deposit).calc_deposit(max_space);
+   asset quant = dep_amount;
+   if(is_calc) {
+      quant = hdddeposit(hdd_deposit).calc_deposit(max_space);
+   } else {
+         eosio_assert(hdddeposit(hdd_deposit).is_deposit_enough(dep_amount, max_space),"deposit not enough for miner's max_space -- regminer");
+   }
 
    action(
        permission_level{dep_acc, active_permission},
        hdd_deposit, N(paydeposit),
-       std::make_tuple(dep_acc, minerid, dep_amount))
+       std::make_tuple(dep_acc, minerid, quant))
        .send(); 
 
 }
