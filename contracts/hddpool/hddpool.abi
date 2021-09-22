@@ -1207,21 +1207,21 @@
             "key_types": []
         },
         {
-            "name": "minerb",
+            "name": "miner",
             "type": "miner",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "minerb2",
+            "name": "miner2",
             "type": "miner2",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "minerb2ex",
+            "name": "miner2ex",
             "type": "miner2ex",
             "index_type": "i64",
             "key_names": [],

@@ -160,7 +160,7 @@ private:
     uint64_t  primary_key() const { return minerid; }
   };
 
-  typedef multi_index<N(minerb), miner> miner_table;
+  typedef multi_index<N(miner), miner> miner_table;
 
   //新模型的矿机内部id表(紧凑数组)
   struct miner2
@@ -172,7 +172,7 @@ private:
     uint64_t  primary_key() const { return internal_id; }
   };
 
-  typedef multi_index<N(minerb2), miner2> miner2_table;
+  typedef multi_index<N(miner2), miner2> miner2_table;
 
   //内部紧凑表元数据
   struct miner2ex
@@ -182,7 +182,7 @@ private:
     uint64_t  max_miner_count = 0;     //有效矿机数量
 
   };
-  typedef eosio::singleton<N(minerb2ex), miner2ex> gminer2ex_singleton;
+  typedef eosio::singleton<N(miner2ex), miner2ex> gminer2ex_singleton;
 
 
   struct hdd_global_param
