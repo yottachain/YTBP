@@ -1001,6 +1001,7 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
 
 void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id, name minerowner, uint64_t max_space, asset dep_amount, bool is_calc)
 {
+   //eosio_assert(false, "function paused");
 
    eosio_assert(is_account(adminacc), "adminacc invalidate");
    eosio_assert(is_account(dep_acc), "dep_acc invalidate");
@@ -1721,6 +1722,21 @@ void hddpool::oldsync(uint64_t minerid){
    });      
 }
 
+void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
+
+   check_bp_account(caller.value, minerid, true);
+
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); 
+   eosio_assert(itminer != _miner.end(), "minerid not found");
+   eosio_assert(itminer->level != level, "same level as before");
+
+   _miner.modify(itminer, _self, [&](auto &row) {
+      row.level = level;
+   });  
+   
+}
+
 void hddpool::onreward(uint32_t slot) {
    require_auth( _self );
 
@@ -1758,6 +1774,6 @@ void hddpool::rewardlog(name user, std::string memo) {
 
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
-                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)
+                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)
                   (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onreward)(rewardsel)(rewardlog)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

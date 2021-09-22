@@ -67,6 +67,10 @@ public:
   //update usd price
   void setusdprice(uint64_t price, uint8_t acc_type);
 
+  //update miner's level
+  void mlevel(uint64_t minerid, uint32_t level, name caller);
+
+
   void fixownspace(name owner, uint64_t space);
 
   void oldsync(uint64_t minerid);
