@@ -1732,6 +1732,7 @@ void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
    auto itminer = _miner.find(minerid); 
    eosio_assert(itminer != _miner.end(), "minerid not found");
    eosio_assert(itminer->level != level, "same level as before");
+   eosio_assert(level >= 0 && level <= 89657, "level invalidate");
 
    _miner.modify(itminer, _self, [&](auto &row) {
       row.level = level;
