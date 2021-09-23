@@ -345,7 +345,7 @@
             ]
         },
         {
-            "name": "onreward",
+            "name": "onrewardt",
             "base": "",
             "fields": [
                 {
@@ -355,27 +355,23 @@
             ]
         },
         {
-            "name": "rewardsel",
+            "name": "rewardselt",
             "base": "",
             "fields": [
                 {
-                    "name": "round",
+                    "name": "random1",
                     "type": "uint64"
                 },
                 {
-                    "name": "quant",
-                    "type": "asset"
-                }
+                    "name": "random2",
+                    "type": "uint64"
+                }             
             ]
         },
         {
-            "name": "rewardlog",
+            "name": "rewardlogt",
             "base": "",
             "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
-                },
                 {
                     "name": "memo",
                     "type": "string"
@@ -1112,18 +1108,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "onreward",
-            "type": "onreward",
+            "name": "onrewardt",
+            "type": "onrewardt",
             "ricardian_contract": ""
         },
         {
-            "name": "rewardsel",
-            "type": "rewardsel",
+            "name": "rewardselt",
+            "type": "rewardselt",
             "ricardian_contract": ""
         },
         {
-            "name": "rewardlog",
-            "type": "rewardlog",
+            "name": "rewardlogt",
+            "type": "rewardlogt",
             "ricardian_contract": ""
         },
         {

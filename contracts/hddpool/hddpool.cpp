@@ -1724,6 +1724,8 @@ void hddpool::oldsync(uint64_t minerid){
 
 void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
 
+   //eosio_assert(false, "not support now!");
+   
    check_bp_account(caller.value, minerid, true);
 
    miner_table _miner( _self , _self );
@@ -1737,43 +1739,119 @@ void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
    
 }
 
-void hddpool::onreward(uint32_t slot) {
+void hddpool::onrewardt(uint32_t slot) {
    require_auth( _self );
 
-   asset quant{23000,CORE_SYMBOL};
-   uint64_t round = 12;
-   
-   
-   eosio::transaction out;
-   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardsel), std::make_tuple(round, quant) );
-   out.delay_sec = 1;
-   out.send( (uint128_t(_self) << 64) | slot, _self, false );
+   uint64_t random1 = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
+   uint64_t random2 = ((uint32_t)tapos_block_prefix())+((uint16_t)tapos_block_num());
 
-   //uint64_t ramdom = tapos_block_prefix()*tapos_block_num();
+      //action(
+      //   permission_level{_self, N(active)},
+      //   _self, N(rewardselt),
+      //   std::make_tuple(random1, random2) ).send(); 
+
+   
+      eosio::transaction out;
+      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardselt), std::make_tuple(random1, random2) );
+      out.delay_sec = 1;
+      out.send( (uint128_t(_self) << 64) | slot, _self, false );
+
      
-   /*
-   action(
-      permission_level{_self, N(active)},
-      _self, N(rewardsel),
-      std::make_tuple(round, quant) ).send(); 
-   */   
 }
 
-void hddpool::rewardsel(uint64_t round, asset quant) {
+void hddpool::rewardselt(uint64_t random1, uint64_t random2) {
+
    require_auth( _self );
 
-   action(
-      permission_level{_self, N(active)},
-      _self, N(rewardlog),
-      std::make_tuple(N(mynameuser),std::string("reward")) ).send();
+   uint64_t selcount = 20; //每次随机选出最多20台矿机
+
+   gminer2ex_singleton _gminer2ex(_self, _self);
+   if(!_gminer2ex.exists())
+      return;           
+   miner2ex  _gstate;   
+   _gstate = _gminer2ex.get();
+
+   if(_gstate.max_miner_count <= selcount)
+      return;
+   
+   uint64_t sel_id = (random1 % _gstate.max_table_count) + 1; //随机选中的矿机
+   uint64_t max_step_len = _gstate.max_table_count / selcount; //最大随机选择步长
+   uint64_t step_len = (random2 % max_step_len) + 1;
+
+   uint64_t final_sel_id = 0;
+   uint64_t max_weight = 0;
+   name final_owner;
+   bool bSet = false;
+   for(uint32_t i = 0; i < selcount; i++) 
+   {
+      sel_id = sel_id + i*step_len;
+      if(sel_id > _gstate.max_table_count)
+         sel_id = sel_id - _gstate.max_table_count;
+
+      miner2_table _miner2( _self , _self );
+      auto itminer2 = _miner2.find(sel_id);
+      if(itminer2 != _miner2.end()) 
+      {
+         if(itminer2->minerid != 0) 
+         {
+            miner_table _miner( _self , _self );
+            auto itminer = _miner.find(itminer2->minerid);
+            if(itminer != _miner.end())
+            {
+               if(itminer->status == 0)
+               {
+                  //开始比较和设置
+                  if(!bSet) 
+                  {
+                     final_sel_id = itminer->minerid;
+                     max_weight = itminer->max_space;
+                     final_owner = itminer->owner;
+                     bSet = true;
+                  } 
+                  else 
+                  {
+                     if(itminer->max_space > max_weight)
+                     {
+                        final_sel_id = itminer->minerid;
+                        max_weight = itminer->max_space;    
+                        final_owner = itminer->owner;                    
+                     }
+                  }
+
+               } 
+            } 
+         }
+      }       
+   }
+
+   if(bSet)
+   {
+      
+      asset quant{23000,CORE_SYMBOL};
+      uint64_t round = 12;
+      std::string memo;
+      memo = std::to_string(final_sel_id) + ":" + final_owner.to_string() + ":" + std::to_string(quant.amount) + ":" + std::to_string(step_len);
+   
+      //eosio::transaction out;
+      //out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardsel), std::make_tuple(round, quant) );
+      //out.delay_sec = 1;
+      //out.send( (uint128_t(_self) << 64) | slot, _self, false );
+
+      action(
+         permission_level{_self, N(active)},
+         _self, N(rewardlogt),
+         std::make_tuple(memo) ).send(); 
+
+   }
+
 }
 
-void hddpool::rewardlog(name user, std::string memo) {
+void hddpool::rewardlogt(std::string memo) {
    require_auth( _self );
 }
 
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onreward)(rewardsel)(rewardlog)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onrewardt)(rewardselt)(rewardlogt)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

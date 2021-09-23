@@ -75,9 +75,9 @@ public:
 
   void oldsync(uint64_t minerid);
 
-  void onreward(uint32_t slot);
-  void rewardsel(uint64_t round, asset quant);
-  void rewardlog(name user, std::string memo);
+  void onrewardt(uint32_t slot);
+  void rewardselt(uint64_t random1, uint64_t random2);
+  void rewardlogt(std::string memo);
  
 private:
   struct userhdd
