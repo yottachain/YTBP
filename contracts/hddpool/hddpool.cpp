@@ -1323,6 +1323,8 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+   require_auth(bpacc);
+   return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     //print("bpname ----", name{bpacc}, "\n");
@@ -1746,24 +1748,29 @@ void hddpool::onrewardt(uint32_t slot) {
    uint64_t random1 = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
    uint64_t random2 = ((uint32_t)tapos_block_prefix())+((uint16_t)tapos_block_num());
 
-      //action(
-      //   permission_level{_self, N(active)},
-      //   _self, N(rewardselt),
-      //   std::make_tuple(random1, random2) ).send(); 
+   //直接调用
+   //rewardproc(random1, random2);
 
+   //内联action调用
+   //action(
+   //   permission_level{_self, N(active)},
+   //   _self, N(rewardselt),
+   //   std::make_tuple(random1, random2) ).send(); 
    
-      eosio::transaction out;
-      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardselt), std::make_tuple(random1, random2) );
-      out.delay_sec = 1;
-      out.send( (uint128_t(_self) << 64) | slot, _self, false );
+   //延迟事务调用
+   eosio::transaction out;
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardselt), std::make_tuple(random1, random2) );
+   out.delay_sec = 1;
+   out.send( (uint128_t(_self) << 64) | slot, _self, false );
 
-     
 }
 
 void hddpool::rewardselt(uint64_t random1, uint64_t random2) {
-
    require_auth( _self );
+   rewardproc(random1, random2);
+}
 
+void hddpool::rewardproc(uint64_t random1, uint64_t random2) {
    uint64_t selcount = 20; //每次随机选出最多20台矿机
 
    gminer2ex_singleton _gminer2ex(_self, _self);
@@ -1842,9 +1849,7 @@ void hddpool::rewardselt(uint64_t random1, uint64_t random2) {
          permission_level{_self, N(active)},
          _self, N(rewardlogt),
          std::make_tuple(memo) ).send(); 
-
    }
-
 }
 
 void hddpool::rewardlogt(std::string memo) {

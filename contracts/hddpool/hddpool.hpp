@@ -280,6 +280,7 @@ private:
 
   uint32_t insert_miner2(uint64_t minerid);
   void del_miner2(uint64_t internal_id);
+  void rewardproc(uint64_t random1, uint64_t random2);
 
 public:  
 
