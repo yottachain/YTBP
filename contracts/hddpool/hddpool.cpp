@@ -26,6 +26,7 @@ const uint64_t milliseconds_in_one_year = milliseconds_in_one_day * 365;
 
 const uint64_t fee_cycle = milliseconds_in_one_day; //计费周期毫秒为单位)
 
+const uint64_t new_model_latest_start_time = 1639152000000000ll; //新模型的最晚启动时间(2021-12-11 00:00:00)
 //const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
 //以下空间量按照16k一个分片大小为单位
@@ -110,7 +111,8 @@ void hddpool::calcprofit(name user)
    _userhdd.modify(it, _self, [&](auto &row) {
       uint64_t tmp_t = current_time();
       int64_t tmp_last_balance = it->hdd_minerhdd;
-      int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hddprofit_time, tmp_t);
+      uint64_t deadline_time = 0;
+      int64_t new_balance = calculate_profit_balance(tmp_last_balance, it->hdd_per_cycle_profit, it->last_hddprofit_time, tmp_t, deadline_time);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of user hdd_minerhdd must be less than 2^62");      
       row.hdd_minerhdd = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       eco_inc_balance = new_balance - row.hdd_minerhdd;
@@ -132,7 +134,7 @@ void hddpool::calcprofit(name user)
    }
 }
 
-void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct)
+void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct, uint64_t deadline_time)
 {
    if(minerowner.value == ecologyfound_acc.value) 
       return;
@@ -144,7 +146,8 @@ void hddpool::chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t 
       if(is_calc) 
       {
          int64_t tmp_last_balance = userhdd_itr->hdd_minerhdd;
-         int64_t new_balance = calculate_balance(tmp_last_balance, 0, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, ct);
+         uint64_t dt = deadline_time;
+         int64_t new_balance = calculate_profit_balance(tmp_last_balance, userhdd_itr->hdd_per_cycle_profit, userhdd_itr->last_hddprofit_time, ct, dt);
          eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of user hdd_minerhdd must be less than 2^62");      
          row.hdd_minerhdd = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
          eco_inc_balance = new_balance - row.hdd_minerhdd;
@@ -210,7 +213,7 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
       _userhdd.modify(it, _self, [&](auto &row) {
          uint64_t tmp_t = current_time();
          int64_t tmp_last_balance = it->hdd_storehhdd;
-         int64_t new_balance = calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, 0, it->last_hddstore_time, tmp_t);
+         int64_t new_balance = calculate_fee_balance(tmp_last_balance, it->hdd_per_cycle_fee, it->last_hddstore_time, tmp_t);
          row.hdd_storehhdd = new_balance;
          eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");      
          row.last_hddstore_time = tmp_t;
@@ -220,19 +223,45 @@ void hddpool::getbalance(name user, uint8_t acc_type, name caller)
    }
 }
 
-int64_t hddpool::calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time)
+int64_t hddpool::calculate_fee_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, uint64_t last_hdd_time, uint64_t current_time)
 {
+   if(current_time <= last_hdd_time)
+      return oldbalance;
 
    uint64_t slot_t = (current_time - last_hdd_time) / 1000ll; //convert to milliseconds
    int64_t new_balance = 0;
 
    double tick = (double)((double)slot_t / fee_cycle);
    new_balance = oldbalance;
-   int64_t delta = (int64_t)(tick * (hdd_per_cycle_profit - hdd_per_cycle_fee));
+   int64_t delta = (int64_t)(tick * (0 - hdd_per_cycle_fee));
    new_balance += delta;
 
    return new_balance;
 }
+
+int64_t hddpool::calculate_profit_balance(int64_t oldbalance, int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time, uint64_t &deadline_time)
+{
+
+   if(deadline_time ==0)
+      deadline_time = get_newmodel_start_time();
+
+   if(current_time > deadline_time)
+      current_time = deadline_time;
+
+   if(current_time <= last_hdd_time)
+      return oldbalance;
+   
+   uint64_t slot_t = (current_time - last_hdd_time) / 1000ll; //convert to milliseconds
+   int64_t new_balance = 0;
+
+   double tick = (double)((double)slot_t / fee_cycle);
+   new_balance = oldbalance;
+   int64_t delta = (int64_t)(tick * hdd_per_cycle_profit);
+   new_balance += delta;
+
+   return new_balance;
+}
+
 
 void hddpool::buyhdd(name from, name receiver, int64_t amount, std::string memo)
 {
@@ -407,7 +436,7 @@ void hddpool::sethfee(name user, int64_t fee, name caller)
       //设置每周期费用之前可能需要将以前的余额做一次计算，然后更改last_hdd_time
       uint64_t tmp_t = current_time();
       int64_t tmp_last_balance = it->hdd_storehhdd;
-      int64_t new_balance = calculate_balance(tmp_last_balance, it->hdd_per_cycle_fee, 0, it->last_hddstore_time, tmp_t);
+      int64_t new_balance = calculate_fee_balance(tmp_last_balance, it->hdd_per_cycle_fee, it->last_hddstore_time, tmp_t);
       row.hdd_storehhdd = new_balance;
       eosio_assert(is_hdd_amount_within_range(row.hdd_storehhdd), "magnitude of user hdd_storehhdd must be less than 2^62");            
       row.last_hddstore_time = tmp_t;
@@ -533,10 +562,10 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    //check space left -- (is it enough)  -- end   ----------
 
    uint64_t tmp_t = current_time();
-
+   uint64_t deadline_time = 0;
    _maccount.modify(it, _self, [&](auto &row) {
       int64_t tmp_last_balance = it->hdd_balance;
-      int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
+      int64_t new_balance = calculate_profit_balance(tmp_last_balance, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, deadline_time);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
       row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       //print(new_balance, " -- ", row.hdd_balance, " -- ", (int64_t)(profit_percent * (new_balance - tmp_last_balance)), "--", new_balance - row.hdd_balance);
@@ -548,7 +577,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
+   chg_owner_space(_userhdd, owner, space, true, true, tmp_t, deadline_time);
 
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
@@ -597,10 +626,11 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
    //check space left -- (is it enough)  -- end   ----------
 
    uint64_t tmp_t = current_time();
+   uint64_t deadline_time = 0;
 
    _maccount.modify(it, _self, [&](auto &row) {
       int64_t tmp_last_balance = it->hdd_balance;
-      int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
+      int64_t new_balance = calculate_profit_balance(tmp_last_balance, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, deadline_time);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
       row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       //print(new_balance, " -- ", row.hdd_balance, " -- ", (int64_t)(profit_percent * (new_balance - tmp_last_balance)), "--", new_balance - row.hdd_balance);
@@ -616,7 +646,7 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
 
    if(mactive) {
       userhdd_index _userhdd(_self, owner.value);
-      chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t);
+      chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t, deadline_time);
    }
 
    //-------------------- sync start ------------------
@@ -635,21 +665,9 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
 void hddpool::calcmbalance(name owner, uint64_t minerid)
 {
    eosio_assert(false, "not support now!");
+   ((void)owner);
+   ((void)minerid);
 
-   require_auth(owner);
-
-   maccount_index _maccount(_self, owner.value);
-   auto it = _maccount.find(minerid);
-   eosio_assert(it != _maccount.end(), "minerid not register \n");
-
-   _maccount.modify(it, _self, [&](auto &row) {
-      uint64_t tmp_t = current_time();
-      int64_t tmp_last_balance = it->hdd_balance;
-      int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
-      eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
-      row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
-      row.last_hdd_time = tmp_t;
-   });
 }
 
 void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
@@ -688,7 +706,7 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 
          userhdd_index _userhdd(_self, itminerinfo->owner.value);
          if(itmaccount->hdd_per_cycle_profit > 0)
-            chg_owner_space(_userhdd, itminerinfo->owner, itmaccount->space, false, false, current_time());
+            chg_owner_space(_userhdd, itminerinfo->owner, itmaccount->space, false, false, current_time(), 0);
 
          _maccount.erase(itmaccount);    
       }
@@ -736,10 +754,11 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
 
    uint64_t space = it->space;
    eosio_assert(it->hdd_per_cycle_profit > 0, "miner has no cycle profit");  
-   uint64_t tmp_t = current_time();   
+   uint64_t tmp_t = current_time();  
+   uint64_t deadline_time = 0;
    _maccount.modify(it, _self, [&](auto &row) {
       int64_t tmp_last_balance = it->hdd_balance;
-      int64_t new_balance = calculate_balance(tmp_last_balance, 0, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t);
+      int64_t new_balance = calculate_profit_balance(tmp_last_balance, it->hdd_per_cycle_profit, it->last_hdd_time, tmp_t, deadline_time);
       eosio_assert(is_hdd_amount_within_range(new_balance), "magnitude of miner hddbalance must be less than 2^62");
       row.hdd_balance = (int64_t)(profit_percent * (new_balance - tmp_last_balance))  +  tmp_last_balance;
       row.last_hdd_time = tmp_t;
@@ -747,7 +766,7 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, false, true, tmp_t);
+   chg_owner_space(_userhdd, owner, space, false, true, tmp_t, deadline_time);
 
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
@@ -784,7 +803,7 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
    });
 
    userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, true, true, tmp_t);
+   chg_owner_space(_userhdd, owner, space, true, true, tmp_t, 0);
 
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
@@ -1260,7 +1279,7 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
 
    //结算旧owner账户当前的收益
    userhdd_index _userhdd_old(_self, itminerinfo->owner.value);
-   chg_owner_space(_userhdd_old, itminerinfo->owner, space, false, true, tmp_t);
+   chg_owner_space(_userhdd_old, itminerinfo->owner, space, false, true, tmp_t, 0);
 
    //结算新owner账户当前的收益
    userhdd_index _userhdd_new(_self, new_owneracc.value);
@@ -1270,7 +1289,7 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
       new_user_hdd(_userhdd_new, new_owneracc, 0, _self);
       userhdd_new_itr = _userhdd_new.find(new_owneracc.value);
    }
-   chg_owner_space(_userhdd_new, new_owneracc, space, true, true, tmp_t);
+   chg_owner_space(_userhdd_new, new_owneracc, space, true, true, tmp_t, 0);
 
    maccount_index _maccount_new(_self, new_owneracc.value);
    auto itmaccount_new = _maccount_new.find(minerid);
@@ -1734,12 +1753,23 @@ void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
    auto itminer = _miner.find(minerid); 
    eosio_assert(itminer != _miner.end(), "minerid not found");
    eosio_assert(itminer->level != level, "same level as before");
-   eosio_assert(level >= 0 && level <= 89657, "level invalidate");
+   eosio_assert(level <= 89657, "level invalidate");
 
    _miner.modify(itminer, _self, [&](auto &row) {
       row.level = level;
    });  
    
+}
+
+uint64_t hddpool::get_newmodel_start_time() {
+    gnewmparam_singleton _gnewmparam( N(hddpool12345), N(hddpool12345));
+    newmparam  _gstate;
+    if(_gnewmparam.exists()){
+      _gstate = _gnewmparam.get();
+      if(_gstate.start_time > 0)
+         return _gstate.start_time;
+    }
+    return new_model_latest_start_time;
 }
 
 void hddpool::onrewardt(uint32_t slot) {

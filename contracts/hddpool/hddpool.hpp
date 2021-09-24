@@ -188,6 +188,39 @@ private:
   };
   typedef eosio::singleton<N(miner2ex), miner2ex> gminer2ex_singleton;
 
+  //新模型的全局参数
+  struct newmparam
+  {
+    uint64_t  start_time = 0;                 //新经济模型的预定的开启时间(微秒单位)
+    uint64_t  next_day_time = 0;              //下一个激励日开始的时间戳(微秒单位)
+    uint64_t  task_space = 0;                 //当前需要满足的存储空间(以G为单位)
+    uint64_t  last_inc_space = 0;             //上一次的空间增长量(以G为单位)
+    int64_t   total_issue = 0;                //当前总增发的激励token  
+    int64_t   total_destory = 0;              //当前总销毁的激励token
+    int64_t   total_remain = 0;               //当前总剩余未发出的激励token
+    int64_t   cur_issue = 0;                  //当次增发的激励token
+    int64_t   cur_destory = 0;                //当次销毁的激励token  
+    int64_t   cur_reward1 = 0;                //当次每一笔容量激励token
+    int64_t   cur_reward2 = 0;                //当次每一笔存储激励token  
+    uint64_t  next_round_time = 0;            //下一轮激励周期开始的时间戳(微秒单位)
+    uint64_t  round_interval = 0;             //下一个周期的时间间隔
+    uint32_t  reward_day = 0;                 //新经济开启的天数(从0开始计数)
+    uint32_t  reward_round = 0;               //当前的激励周期
+    uint32_t  last_reward_slot = 0;           //最后一次发激励的区块时间槽
+    uint32_t  span_slot = 12;                 //每隔多少个区块进行一次激励
+    uint8_t   reward_type = 0;                 //激励类型 0-容量激励 1-存储激励
+    bool      is_started = false;             //新经济模型是否已经开启
+  };
+  typedef eosio::singleton<N(newmparam1), newmparam> gnewmparam_singleton;
+
+  struct couterstate
+  {
+    uint64_t  total_space = 0;      //当前全网注册总空间
+    uint64_t  reserved1 = 0;
+    uint64_t  reserved2 = 0;
+    uint64_t  reserved3 = 0;
+  };
+  typedef eosio::singleton<N(couterstate1), couterstate> gcouterstate_singleton;
 
   struct hdd_global_param
   {
@@ -268,12 +301,14 @@ private:
   //bool is_bp_account(uint64_t uservalue);
   void check_bp_account(account_name bpacc, uint64_t id, bool isCheckId);
 
-  int64_t calculate_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, int64_t hdd_per_cycle_profit,
-                          uint64_t last_hdd_time, uint64_t current_time);
+  int64_t calculate_fee_balance(int64_t oldbalance, int64_t hdd_per_cycle_fee, uint64_t last_hdd_time, uint64_t current_time);
+
+  int64_t calculate_profit_balance(int64_t oldbalance, int64_t hdd_per_cycle_profit, uint64_t last_hdd_time, uint64_t current_time, uint64_t &deadline_time);
+
 
   void new_user_hdd(userhdd_index& userhdd, name user, int64_t balance, account_name payer);
 
-  void chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct);
+  void chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct, uint64_t deadline_time);
 
   //计算抵押系数
   void calc_deposit_rate();  
@@ -281,6 +316,8 @@ private:
   uint32_t insert_miner2(uint64_t minerid);
   void del_miner2(uint64_t internal_id);
   void rewardproc(uint64_t random1, uint64_t random2);
+
+  uint64_t get_newmodel_start_time();
 
 public:  
 
@@ -328,6 +365,17 @@ public:
 
     }
     return pool_owner;  
+  }
+
+  static uint32_t get_next_reward_slot()
+  {
+    gnewmparam_singleton _gnewmparam( N(hddpool12345), N(hddpool12345));
+    newmparam  _gstate;
+    if(_gnewmparam.exists()){
+      _gstate = _gnewmparam.get();
+      return _gstate.last_reward_slot + _gstate.span_slot;
+    }
+    return 0xffffffff;
   }
 
 };
