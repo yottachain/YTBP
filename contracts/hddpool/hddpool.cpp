@@ -26,7 +26,10 @@ const uint64_t milliseconds_in_one_year = milliseconds_in_one_day * 365;
 
 const uint64_t fee_cycle = milliseconds_in_one_day; //计费周期毫秒为单位)
 
-const uint64_t new_model_latest_start_time = 1639152000000000ll; //新模型的最晚启动时间(2021-12-11 00:00:00)
+const uint64_t microseconds_in_one_day = minutes_in_one_day * 60 * 1000000;
+const uint64_t hddm_latest_stop_time = 1640793600000000ll; //hddm最晚停止时间(2021-12-30 00:00:00)
+const uint32_t blocks_per_day        = 2 * 24 * 3600;
+
 //const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
 
 //以下空间量按照16k一个分片大小为单位
@@ -1762,18 +1765,126 @@ void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
 }
 
 uint64_t hddpool::get_newmodel_start_time() {
-    gnewmparam_singleton _gnewmparam( N(hddpool12345), N(hddpool12345));
-    newmparam  _gstate;
-    if(_gnewmparam.exists()){
+   gnewmparam_singleton _gnewmparam( N(hddpool12345), N(hddpool12345));
+   newmparam  _gstate;
+   if(_gnewmparam.exists()){
       _gstate = _gnewmparam.get();
       if(_gstate.start_time > 0)
          return _gstate.start_time;
-    }
-    return new_model_latest_start_time;
+   }
+   return hddm_latest_stop_time;
+}
+
+//void hddpool::startnewm(uint64_t start_time, uint64_t startenv, ) {
+
+//}
+
+bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type) {
+   gnewmparam_singleton _gnewmparam( _self, _self);
+
+   if(!_gnewmparam.exists())
+      return false;
+
+   newmparam  _gstate;   
+   _gstate = _gnewmparam.get();
+
+   if(!_gstate.is_started)
+      return false;
+
+   gcouterstate_singleton _gcounter(_self, _self);
+   if(!_gcounter.exists())
+      return false;
+
+   couterstate _gcounterstate;
+   _gcounterstate = _gcounter.get();    
+
+   _gstate.last_reward_slot = slot;
+
+   uint64_t ct = current_time();   
+
+   if(ct >= _gstate.next_round_time) {
+      _gstate.reward_round += 1;
+      if((_gstate.next_round_time + _gstate.round_interval) <= ct)
+         _gstate.next_round_time = ct + _gstate.round_interval;
+      else
+         _gstate.next_round_time += _gstate.round_interval;    
+   }
+
+   bool bret = true;
+
+   if(ct >= _gstate.next_day_time) {
+      uint32_t reward_day = _gstate.reward_day + 1;
+      _gstate.reward_day = reward_day;
+
+      //判断当天容量新增是否满足目标 ??????????
+      bool is_destory = true;
+      if(_gcounterstate.total_space >= _gstate.task_space)
+         is_destory = false;
+
+      int64_t reward_issue = (int64_t) (((double)1.0 - std::pow(2,(double)(-1.0)*((double)reward_day/2880))) * 20000000000000);
+      int64_t cur_issue = reward_issue - _gstate.total_issue;
+      if(reward_issue > _gstate.total_issue && cur_issue <= 481294288) { // _gstate.cur_issue 判断 _gstate.cur_issue > 0  并且小于第一天的增发量
+         // issue _gstate.cur_issue amount token
+         _gstate.cur_issue = cur_issue;
+         _gstate.total_issue = reward_issue;
+         _gstate.cur_destory = 0;
+         if(is_destory){
+            _gstate.cur_destory = (int64_t)(cur_issue * 0.7);
+            // ---- transfer to eosio.null for destory
+         }
+         int64_t real_rewardtotal = cur_issue - _gstate.cur_destory;
+         int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / _gstate.span_slot) + 0.5);         
+         int64_t real_reward1 = (int64_t)(real_reward * 0.8);
+         int64_t real_reward2 = real_rewardtotal - real_reward1;
+         _gstate.cur_reward1 = real_reward1;
+         _gstate.cur_reward1 = real_reward2;
+         _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);
+         _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
+         uint64_t last_inc_space = (uint64_t)((double)_gstate.last_inc_space/2 + std::log2(_gstate.last_inc_space) + 0.5);
+         _gstate.last_inc_space = last_inc_space;
+
+      } else {
+         _gstate.cur_issue = 0;
+         _gstate.cur_destory = 0;
+         _gstate.cur_reward1 = 0;
+         _gstate.cur_reward2 = 0;
+         _gstate.cur_reward1gas = 0;
+         _gstate.cur_reward2gas = 0;
+         bret = false;
+      }
+
+      if((_gstate.next_day_time + microseconds_in_one_day) <= ct) 
+         _gstate.next_day_time = ct + microseconds_in_one_day;
+      else 
+         _gstate.next_day_time += microseconds_in_one_day;   
+   }
+
+   if(_gstate.reward_type == 0) {
+      _gstate.reward_type = 1;
+      reward = _gstate.cur_reward1;
+      reward_gas = _gstate.cur_reward1gas;
+      reward_type = 0;
+
+   } else {
+      _gstate.reward_type = 0;
+      reward = _gstate.cur_reward2;
+      reward_gas = _gstate.cur_reward2gas;
+      reward_type = 1;
+
+   }
+
+   _gnewmparam.set(_gstate,_self);
+   return true;
 }
 
 void hddpool::onrewardt(uint32_t slot) {
    require_auth( _self );
+
+   int64_t reward = 0;
+   int64_t reward_gas = 0;
+   uint8_t reward_type = 0;
+   if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
+      return;
 
    uint64_t random1 = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
    uint64_t random2 = ((uint32_t)tapos_block_prefix())+((uint16_t)tapos_block_num());

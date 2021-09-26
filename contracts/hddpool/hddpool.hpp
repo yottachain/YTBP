@@ -193,17 +193,19 @@ private:
   {
     uint64_t  start_time = 0;                 //新经济模型的预定的开启时间(微秒单位)
     uint64_t  next_day_time = 0;              //下一个激励日开始的时间戳(微秒单位)
+    uint64_t  start_space = 0;                //新模型开始时刻的存储空间(以G为单位)
     uint64_t  task_space = 0;                 //当前需要满足的存储空间(以G为单位)
     uint64_t  last_inc_space = 0;             //上一次的空间增长量(以G为单位)
     int64_t   total_issue = 0;                //当前总增发的激励token  
     int64_t   total_destory = 0;              //当前总销毁的激励token
-    int64_t   total_remain = 0;               //当前总剩余未发出的激励token
     int64_t   cur_issue = 0;                  //当次增发的激励token
     int64_t   cur_destory = 0;                //当次销毁的激励token  
     int64_t   cur_reward1 = 0;                //当次每一笔容量激励token
     int64_t   cur_reward2 = 0;                //当次每一笔存储激励token  
+    int64_t   cur_reward1gas = 0;             //当次每一笔容量激励发放的gas消耗
+    int64_t   cur_reward2gas = 0;             //当次每一笔存储激励发放的gas消耗  
     uint64_t  next_round_time = 0;            //下一轮激励周期开始的时间戳(微秒单位)
-    uint64_t  round_interval = 0;             //下一个周期的时间间隔
+    uint64_t  round_interval = 0;             //一个激励周期的时间间隔(微秒单位)
     uint32_t  reward_day = 0;                 //新经济开启的天数(从0开始计数)
     uint32_t  reward_round = 0;               //当前的激励周期
     uint32_t  last_reward_slot = 0;           //最后一次发激励的区块时间槽
@@ -215,7 +217,7 @@ private:
 
   struct couterstate
   {
-    uint64_t  total_space = 0;      //当前全网注册总空间
+    uint64_t  total_space = 0;      //当前全网注册总空间(以G为单位)
     uint64_t  reserved1 = 0;
     uint64_t  reserved2 = 0;
     uint64_t  reserved3 = 0;
@@ -318,6 +320,7 @@ private:
   void rewardproc(uint64_t random1, uint64_t random2);
 
   uint64_t get_newmodel_start_time();
+  bool  update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type);
 
 public:  
 
