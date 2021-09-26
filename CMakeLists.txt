@@ -70,7 +70,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 set(BUILD_DOXYGEN FALSE CACHE BOOL "Build doxygen documentation on every make")
 set(BUILD_MONGO_DB_PLUGIN FALSE CACHE BOOL "Build mongo database plugin")
-
+set(BUILD_KAFKA_PLUGIN FALSE CACHE BOOL "Build mongo database plugin")
 #set (USE_PCH 1)
 
 if (USE_PCH)

@@ -71,6 +71,10 @@ if(BUILD_MONGO_DB_PLUGIN)
   target_link_libraries( ${NODE_EXECUTABLE_NAME} PRIVATE -Wl,${whole_archive_flag} mongo_db_plugin -Wl,${no_whole_archive_flag} )
 endif()
 
+if(BUILD_KAFKA_PLUGIN)
+  target_link_libraries( ${NODE_EXECUTABLE_NAME} PRIVATE -Wl,${whole_archive_flag} kafka_plugin -Wl,${no_whole_archive_flag} )
+endif()
+
 include(additionalPlugins)
 
 copy_bin( ${NODE_EXECUTABLE_NAME} )

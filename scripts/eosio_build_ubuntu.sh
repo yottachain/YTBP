@@ -504,6 +504,75 @@ mongodconf
 		printf "\\tWASM found at %s/opt/wasm/bin.\\n" "${HOME}"
 	fi
 
+	printf "\\n\\tChecking for kafka lib support .\\n"
+	if [ ! -e "/usr/local/lib/librdkafka.a" ]; then
+		printf "\\tInstalling kafka lib . \\n"
+		if ! cd "${TEMP_DIR}"
+		then
+			printf "\\n\\tUnable to cd into directory %s.\\n" "${TEMP_DIR}"
+			printf "\\n\\tExiting now.\\n"
+			exit 1;
+		fi
+
+		if ! git clone --depth 1 --single-branch --branch v1.0.0 https://github.com/edenhill/librdkafka.git
+		then
+			printf "\\tUnable to clone llvm repo @ https://github.com/edenhill/librdkafka.git.\\n"
+			printf "\\n\\tExiting now.\\n"
+			rm -rf "${TEMP_DIR}/librdkafka"
+			exit 1;
+		fi
+
+		if ! cd "./librdkafka"
+		then
+			printf "\\n\\tUnable to enter directory %s/librdkafka.\\n" "${TEMP_DIR}"
+			printf "\\n\\tExiting now.\\n"
+			rm -rf "${TEMP_DIR}/librdkafka"
+			exit 1;
+		fi
+
+		if ! ./configure
+		then
+			printf "\\n\\tInstallation of kafka libraries configure failed. 0\\n"
+			printf "\\n\\tExiting now.\\n\\n"
+			rm -rf "${TEMP_DIR}/librdkafka"
+			exit 1
+		fi
+
+		if ! make
+		then
+			printf "\\n\\tInstallation of kafka libraries make failed. 0\\n"
+			printf "\\n\\tExiting now.\\n\\n"
+			rm -rf "${TEMP_DIR}/librdkafka"
+			exit 1
+		fi
+
+		if ! sudo make install
+		then
+			printf "\\n\\tInstallation of kafka libraries install failed. 0\\n"
+			printf "\\n\\tExiting now.\\n\\n"
+			rm -rf "${TEMP_DIR}/librdkafka"
+			exit 1
+		fi
+
+        if ! cd "${TEMP_DIR}"
+		then
+			printf "\\tUnable to enter directory %s.\\n" "${TEMP_DIR}"
+			printf "\\tExiting now.\\n\\n"
+			exit 1;
+		fi
+
+		if ! rm -rf "${TEMP_DIR}/librdkafka"
+		then
+			printf "\\tUnable to remove directory %s/librdkafka.\\n" "${TEMP_DIR}"
+			printf "\\n\\tExiting now.\\n"
+			exit 1;
+		fi
+
+		printf "\\n\\librdkafka successffully installed.\\n"
+	else
+		printf "\\n\\tlibrdkafka found.\\n"
+	fi
+
 	function print_instructions()
 	{
 		printf '\n\texport PATH=${HOME}/opt/mongodb/bin:$PATH\n'
