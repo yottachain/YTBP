@@ -1,6 +1,7 @@
 #include "eosio.system.hpp"
 #include <eosiolib/print.hpp>
 #include <eosio.token/eosio.token.hpp>
+#include <hddpool/hddpool.hpp>
 
 namespace eosiosystem {
 
@@ -11,8 +12,8 @@ namespace eosiosystem {
    //const int64_t  min_activated_stake   = 5'000'0000;
    const int64_t  min_activated_stake   = 0;
    //##YTA-Change  end:
-   const uint32_t blocks_per_year       = 52*7*24*2*3600;   // half seconds per year
-   const uint32_t seconds_per_year      = 52*7*24*3600;
+   const uint32_t blocks_per_year       = 360*24*2*3600;   // half seconds per year
+   const uint32_t seconds_per_year      = 360*24*3600;
    const uint32_t blocks_per_day        = 2 * 24 * 3600;
    const uint32_t blocks_per_hour       = 2 * 3600;
    const uint64_t useconds_per_day      = 24 * 3600 * uint64_t(1000000);
@@ -23,22 +24,10 @@ namespace eosiosystem {
    //yta seo total= yta_seo_year[i] * YTA_SEO_BASE
    const uint32_t YTA_SEO_BASE = 10'0000;
    const double YTA_PRECISION =10000.0000;
-   const uint32_t yta_seo_year[62] = {
-            1000, 900, 800, 700,
-            600, 600, 500, 500,
-            400, 400, 300, 300,
-            200, 200, 200,
-            100, 100, 100,
-            90, 90, 90,
-            80, 80, 80,
-            70, 70, 70, 70,
-            60, 60, 60, 60,
-            50, 50, 50, 50, 50,
-            40, 40, 40, 40, 40,
-            30, 30, 30, 30, 30,
-            20, 20, 20, 20, 20,
-            10, 10, 10, 10, 10,
-            9, 9, 9, 9, 9
+   const uint32_t yta_seo_year[12] = {
+            300, 300, 300, 300,
+            300, 300, 300, 300,
+            300, 300, 300, 300
     };
 
    void system_contract::onblock( block_timestamp timestamp, account_name producer ) {
@@ -46,28 +35,7 @@ namespace eosiosystem {
 
       require_auth(N(eosio));
 
-      /** until activated stake crosses this threshold no new rewards are paid */
-      //if( _gstate.total_activated_stake < min_activated_stake )
-      //   return;
-
-      //if( _gstate.last_pervote_bucket_fill == 0 )  /// start the presses
-      //   _gstate.last_pervote_bucket_fill = current_time();
-
-
-      /**
-       * At startup the initial producer may not be one that is registered / elected
-       * and therefore there may be no producer object for them.
-       */
       ((void)producer);
-      /*
-      auto prod = _producers.find(producer);
-      if ( prod != _producers.end() ) {
-         _gstate.total_unpaid_blocks++;
-         _producers.modify( prod, 0, [&](auto& p ) {
-               p.unpaid_blocks++;
-         });
-      }
-      */
 
       //##YTA-Change  start:         
       /// only update block producers once every minute, block_timestamp is in half seconds
@@ -94,6 +62,13 @@ namespace eosiosystem {
                          b.high_bid = -b.high_bid;
                });
             }
+         }
+      } else {
+         if( timestamp.slot >= hddpool::get_next_reward_slot() ) {
+            action(
+               permission_level{N(hddpool12345), N(active)},
+               N(hddpool12345), N(onrewardt),
+               std::make_tuple(timestamp.slot )).send();
          }
       }
    }
