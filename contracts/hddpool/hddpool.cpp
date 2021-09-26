@@ -1887,6 +1887,9 @@ void hddpool::onrewardt(uint32_t slot) {
    if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
       return;
 
+   if(reward == 0)
+      return;
+
    uint64_t random1 = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
    uint64_t random2 = ((uint32_t)tapos_block_prefix())+((uint16_t)tapos_block_num());
 
