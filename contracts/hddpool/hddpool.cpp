@@ -1842,6 +1842,7 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
          _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
          uint64_t last_inc_space = (uint64_t)((double)_gstate.last_inc_space/2 + std::log2(_gstate.last_inc_space) + 0.5);
          _gstate.last_inc_space = last_inc_space;
+         _gstate.task_space += last_inc_space;
 
       } else {
          _gstate.cur_issue = 0;
