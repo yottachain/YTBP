@@ -1765,7 +1765,7 @@ void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
 }
 
 uint64_t hddpool::get_newmodel_start_time() {
-   gnewmparam_singleton _gnewmparam( N(hddpool12345), N(hddpool12345));
+   gnewmparam_singleton _gnewmparam( _self, _self);
    newmparam  _gstate;
    if(_gnewmparam.exists()){
       _gstate = _gnewmparam.get();
@@ -1775,9 +1775,59 @@ uint64_t hddpool::get_newmodel_start_time() {
    return hddm_latest_stop_time;
 }
 
-//void hddpool::startnewm(uint64_t start_time, uint64_t startenv, ) {
+void hddpool::startnewm() {
+   require_auth( N(hddpooladmin) );
 
-//}
+   gcouterstate_singleton _gcounter(_self, _self);
+   eosio_assert(_gcounter.exists(),"can not start new model");
+
+   couterstate _gcounterstate;
+   _gcounterstate = _gcounter.get();    
+
+
+   newmparam  _gstate;
+   gnewmparam_singleton _gnewmparam( _self, _self);
+
+   if(_gnewmparam.exists())
+      _gstate = _gnewmparam.get();
+   else 
+      _gstate = newmparam{};
+   
+   eosio_assert(_gstate.is_started == false, "new model already started");
+
+   uint64_t ct = current_time();   
+
+   _gstate.start_time = ct;
+   _gstate.round_interval = 15 * microseconds_in_one_day; //15天一轮
+   _gstate.span_slot = 12;
+   _gstate.new_span_slot = 12;   
+   _gstate.reward_type = 0;
+
+   _gstate.reward_round = 1;
+   _gstate.next_round_time = ct + _gstate.round_interval;
+
+   _gstate.reward_day = 1;
+   _gstate.reward_month = 1;
+   _gstate.next_day_time = ct + microseconds_in_one_day;
+   _gstate.total_destory = 0;
+   _gstate.cur_destory = 0;
+   int64_t reward_issue = (int64_t) (((double)1.0 - std::pow(2,(double)(-1.0)*((double)1/2880))) * 20000000000000);
+   _gstate.total_issue = reward_issue;
+   _gstate.cur_issue = reward_issue;
+   //此处需要增发相应数量的token
+   int64_t real_reward = reward_issue / (int64_t)(((double)blocks_per_day / _gstate.span_slot) + 0.5);         
+   int64_t real_reward1 = (int64_t)(real_reward * 0.8);
+   int64_t real_reward2 = real_reward - real_reward1;
+   _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);
+   _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
+
+   _gstate.start_space = _gcounterstate.total_space;
+   _gstate.last_inc_space = 0;
+   _gstate.task_space = _gstate.start_space + _gstate.last_inc_space;
+
+   _gstate.is_started = true;
+   _gnewmparam.set(_gstate,_self);
+}
 
 bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type) {
    gnewmparam_singleton _gnewmparam( _self, _self);
@@ -1833,9 +1883,10 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
             // ---- transfer to eosio.null for destory
          }
          int64_t real_rewardtotal = cur_issue - _gstate.cur_destory;
+         _gstate.span_slot = _gstate.new_span_slot;
          int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / _gstate.span_slot) + 0.5);         
          int64_t real_reward1 = (int64_t)(real_reward * 0.8);
-         int64_t real_reward2 = real_rewardtotal - real_reward1;
+         int64_t real_reward2 = real_reward - real_reward1;
          _gstate.cur_reward1 = real_reward1;
          _gstate.cur_reward1 = real_reward2;
          _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);

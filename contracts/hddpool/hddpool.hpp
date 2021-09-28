@@ -75,6 +75,8 @@ public:
 
   void oldsync(uint64_t minerid);
 
+  void startnewm();
+
   void onrewardt(uint32_t slot);
   void rewardselt(uint64_t random1, uint64_t random2);
   void rewardlogt(std::string memo);
@@ -206,10 +208,12 @@ private:
     int64_t   cur_reward2gas = 0;             //当次每一笔存储激励发放的gas消耗  
     uint64_t  next_round_time = 0;            //下一轮激励周期开始的时间戳(微秒单位)
     uint64_t  round_interval = 0;             //一个激励周期的时间间隔(微秒单位)
-    uint32_t  reward_day = 0;                 //新经济开启的天数(从0开始计数)
+    uint32_t  reward_day = 0;                 //新经济开启的天数
+    uint32_t  reward_month = 0;               //新经济开启的月数
     uint32_t  reward_round = 0;               //当前的激励周期
     uint32_t  last_reward_slot = 0;           //最后一次发激励的区块时间槽
     uint32_t  span_slot = 12;                 //每隔多少个区块进行一次激励
+    uint32_t  new_span_slot = 12;                 //每隔多少个区块进行一次激励
     uint8_t   reward_type = 0;                 //激励类型 0-容量激励 1-存储激励
     bool      is_started = false;             //新经济模型是否已经开启
   };
