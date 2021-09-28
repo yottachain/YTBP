@@ -727,9 +727,12 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
       }
    }
 
+   uint64_t max_space = itminerinfo->max_space;
+
    //删除该矿机信息
    _minerinfo.erase( itminerinfo );
 
+   chg_total_space(max_space, false);
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
    auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
@@ -1001,7 +1004,8 @@ void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_
    {
       new_user_hdd(_userhdd, minerowner, 0, _self);
    }
-
+   
+   chg_total_space(max_space, true);
    //-------------------- sync start ------------------
    //如果正式切换到该结构的时候需要处理重复加入矿池的问题
    miner_table _miner( _self , _self );
@@ -1085,6 +1089,8 @@ void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id
       row.max_space  = max_space;
       row.space_left = max_space;
    });    
+
+   chg_total_space(max_space, true);
    
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
@@ -1192,7 +1198,8 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    eosio_assert(hdddeposit(hdd_deposit).is_deposit_enough(deposit, max_space),"deposit not enough for miner's max_space -- addm2pool");
    //--- check miner deposit and max_space
 
-
+   uint64_t space_delta = 0;
+   bool is_increase = true;
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       maccount_index _maccount(_self, itminerinfo->owner.value);
       auto itmaccount = _maccount.find(minerid);
@@ -1206,8 +1213,12 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
          if(max_space  > row.max_space) {
             eosio_assert(rowpool.space_left >= (max_space - row.max_space), "exceed storepool's max space");      
             rowpool.space_left -= (max_space - row.max_space);
+            space_delta = (max_space - row.max_space);
+            is_increase = true;
          } else {
             rowpool.space_left += (row.max_space - max_space);
+            space_delta = (row.max_space - max_space);
+            is_increase = false;
          }
       });  
 
@@ -1217,6 +1228,7 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
       row.space_left = max_space - space_used;
    });
 
+   chg_total_space(space_delta, is_increase);
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
    auto itminer = _miner.find(minerid); //如果正式切换到该结构的时候,找不到该矿机id需要报错
@@ -1773,6 +1785,25 @@ uint64_t hddpool::get_newmodel_start_time() {
          return _gstate.start_time;
    }
    return hddm_latest_stop_time;
+}
+
+void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
+   gcouterstate_singleton _gcounter(_self, _self);
+   if(!_gcounter.exists())
+      return;
+
+   couterstate _gcounterstate;
+   _gcounterstate = _gcounter.get();
+   uint64_t delta_gb = space_delta >> 16;
+   if(is_increase) {
+      _gcounterstate.total_space += delta_gb;
+   } else {
+      if(_gcounterstate.total_space > delta_gb) {
+         _gcounterstate.total_space -= delta_gb;
+      } else {
+         _gcounterstate.total_space = 0;
+      }
+   }    
 }
 
 void hddpool::startnewm() {

@@ -316,6 +316,8 @@ private:
 
   void chg_owner_space(userhdd_index& userhdd, name minerowner, uint64_t space_delta, bool is_increase, bool is_calc, uint64_t ct, uint64_t deadline_time);
 
+  void chg_total_space(uint64_t space_delta, bool is_increase);
+
   //计算抵押系数
   void calc_deposit_rate();  
 
