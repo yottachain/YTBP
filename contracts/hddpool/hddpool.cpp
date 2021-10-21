@@ -2144,6 +2144,8 @@ void hddpool::onrewardt(uint32_t slot) {
    */   
 
    uint64_t random = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
+   //print(random);
+   //random = 3093635920;
 
    if(reward_type == 0)
       rewardproc1(random, slot);
@@ -2168,6 +2170,7 @@ void hddpool::onrewardt(uint32_t slot) {
 
 //容量激励
 void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
+
    gmscore2ex_singleton _gmscore2ex(_self, _self);
    if(!_gmscore2ex.exists())
       return;
@@ -2202,11 +2205,13 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
       uint64_t mid = (low+high)/2;
       times++;
       auto it = _mscore1.find(mid);
-      if(it== _mscore1.end())
+      if(it== _mscore1.end()) {
          return;
-      if(it->range == sel_range)
+      }
+      if(it->range == sel_range) {
          sel_minerid = it->minerid;
-      else if( sel_range > it->range ) {
+         break;
+      } else if( sel_range > it->range ) {
          low = mid + 1;
       } else {
          high = mid -1;
@@ -2215,14 +2220,16 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
          return;   
    }
 
+   //print(low , "---" , high, "---", sel_minerid, "---", sel_range);
+
    if(sel_minerid == 0) {
-      auto it = _mscore1.find(low);
+      auto it = _mscore1.find(high);
       if(it == _mscore1.end())
          return;
-      if(it->range < sel_range)
+      if(it->range >= sel_range)
          sel_minerid = it->minerid;
       else {
-         auto it2 = _mscore1.find(high);
+         auto it2 = _mscore1.find(low);
          if(it2 == _mscore1.end())
             return;
          sel_minerid = it2->minerid;
@@ -2258,7 +2265,7 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
    } else {
       tablescope = N(scopeb);
       max_count = _gmscore2ex_state.mscore2_s1_count;
-   }  
+   }
       
    mscore2_table _mscore2(_self, tablescope);
 
@@ -2277,33 +2284,39 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
       uint64_t mid = (low+high)/2;
       times++;
       auto it = _mscore2.find(mid);
-      if(it== _mscore2.end())
+      if(it== _mscore2.end()) {
          return;
-      if(it->range == sel_range)
+      }
+      if(it->range == sel_range) {
          sel_minerid = it->minerid;
-      else if( sel_range > it->range ) {
+         break;
+      } else if( sel_range > it->range ) {
          low = mid + 1;
       } else {
          high = mid -1;
       }
-      if(times >= 20)
-         return;   
+      if(times >= 20) {
+         return;
+      }
+            
    }
 
+   //print(low , "---" , high, "---", sel_minerid, "---", sel_range);
+
    if(sel_minerid == 0) {
-      auto it = _mscore2.find(low);
+      auto it = _mscore2.find(high);
       if(it == _mscore2.end())
          return;
-      if(it->range < sel_range)
+      if(it->range >= sel_range)
          sel_minerid = it->minerid;
       else {
-         auto it2 = _mscore2.find(high);
+         auto it2 = _mscore2.find(low);
          if(it2 == _mscore2.end())
             return;
          sel_minerid = it2->minerid;
       }   
    }
-
+   
    if(sel_minerid != 0) 
    {
       std::string memo;
