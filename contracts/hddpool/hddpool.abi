@@ -345,7 +345,23 @@
             ]
         },
         {
+            "name": "startnewm",
+            "base": "",
+            "fields": [
+            ]
+        },
+        {
             "name": "onrewardt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "slot",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "onbuild",
             "base": "",
             "fields": [
                 {
@@ -670,20 +686,12 @@
                     "type": "uint32"
                 },                              
                 {
-                    "name": "round1",
-                    "type": "uint32"
+                    "name": "real_space",
+                    "type": "uint64"
                 },
                 {
-                    "name": "times1",
-                    "type": "uint32"
-                },
-                {
-                    "name": "round2",
-                    "type": "uint32"
-                },
-                {
-                    "name": "times2",
-                    "type": "uint32"
+                    "name": "reserved1",
+                    "type": "uint64"
                 },
                 {
                     "name": "level",
@@ -814,6 +822,24 @@
                 {
                     "name": "level",
                     "type": "uint32"
+                },
+                {
+                    "name": "caller",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "mrspace",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "real_space",
+                    "type": "uint64"
                 },
                 {
                     "name": "caller",
@@ -1083,6 +1109,11 @@
             "ricardian_contract": ""
         },         
         {
+            "name": "mrspace",
+            "type": "mrspace",
+            "ricardian_contract": ""
+        },         
+        {
             "name": "addm2pool",
             "type": "addm2pool",
             "ricardian_contract": ""
@@ -1108,8 +1139,18 @@
             "ricardian_contract": ""
         },
         {
+            "name": "startnewm",
+            "type": "startnewm",
+            "ricardian_contract": ""
+        },
+        {
             "name": "onrewardt",
             "type": "onrewardt",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "onbuild",
+            "type": "onbuild",
             "ricardian_contract": ""
         },
         {

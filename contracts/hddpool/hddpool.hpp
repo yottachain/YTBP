@@ -69,6 +69,8 @@ public:
 
   //update miner's level
   void mlevel(uint64_t minerid, uint32_t level, name caller);
+  //set the miner's real_space
+  void mrspace(uint64_t minerid, uint64_t real_space, name caller);
 
 
   void fixownspace(name owner, uint64_t space);
@@ -76,6 +78,8 @@ public:
   void oldsync(uint64_t minerid);
 
   void startnewm();
+
+  void onbuild(uint32_t slot);
 
   void onrewardt(uint32_t slot);
   void rewardselt(uint64_t random1, uint64_t random2);
@@ -156,10 +160,8 @@ private:
     uint64_t  last_modify_time;   //内部使用,用来记录该矿机某些数据的最后修改时间
     uint32_t  internal_id = 0;    //内部id
     uint32_t  internal_id2 = 0;   //内部id2,用来进行紧凑表数据维护
-    uint32_t  round1 = 0;         //最后被选中的容量算力轮次
-    uint32_t  times1 = 0;         //最后被选中的容量算力轮次中被选中的次数(用作本轮次的算力衰减)
-    uint32_t  round2 = 0;         //最后被选中的数据存储算力轮次
-    uint32_t  times2 = 0;         //最后被选中的数据存储算力轮次中被选中的次数(用作本轮次的算力衰减)
+    uint64_t  real_space = 0;     //检测得到的真实矿机容量
+    uint64_t  reserved1 = 0;      //保留字段
     uint32_t  level = 66438;      //矿机评级 log2(100)*10000取整为66438,要注意存储算力计算溢出的问题
     uint16_t  status;             //当前状态 0-正常收益, 其他-封禁收益
 
@@ -190,6 +192,30 @@ private:
   };
   typedef eosio::singleton<N(miner2ex), miner2ex> gminer2ex_singleton;
 
+  //内部矿机概率空间表  
+  struct mscore
+  {
+    uint64_t  mid;        //内部id
+    uint64_t  minerid;    //矿机id
+    uint64_t  range;      //概率区间
+
+    uint64_t  primary_key() const { return mid; }
+  };
+  typedef multi_index<N(mscore1), mscore> mscore1_table;
+  typedef multi_index<N(mscore2), mscore> mscore2_table;
+  
+  //内部空间概率空间表元数据
+  struct mscore2ex
+  {
+    uint64_t  mscore1_s1_count = 0;    
+    uint64_t  mscore1_s2_count = 0;    
+    uint64_t  mscore2_s1_count = 0;     
+    uint64_t  mscore2_s2_count = 0;     
+    uint64_t  build_proc_id = 1;
+    uint8_t   current_s = 0;
+  };
+  typedef eosio::singleton<N(mscore2ex), mscore2ex> gmscore2ex_singleton;
+
   //新模型的全局参数
   struct newmparam
   {
@@ -206,15 +232,14 @@ private:
     int64_t   cur_reward2 = 0;                //当次每一笔存储激励token  
     int64_t   cur_reward1gas = 0;             //当次每一笔容量激励发放的gas消耗
     int64_t   cur_reward2gas = 0;             //当次每一笔存储激励发放的gas消耗  
-    uint64_t  next_round_time = 0;            //下一轮激励周期开始的时间戳(微秒单位)
-    uint64_t  round_interval = 0;             //一个激励周期的时间间隔(微秒单位)
     uint32_t  reward_day = 0;                 //新经济开启的天数
     uint32_t  reward_month = 0;               //新经济开启的月数
-    uint32_t  reward_round = 0;               //当前的激励周期
     uint32_t  last_reward_slot = 0;           //最后一次发激励的区块时间槽
-    uint32_t  span_slot = 12;                 //每隔多少个区块进行一次激励
-    uint32_t  new_span_slot = 12;                 //每隔多少个区块进行一次激励
-    uint8_t   reward_type = 0;                 //激励类型 0-容量激励 1-存储激励
+    uint32_t  span_reward_slot = 12;          //每隔多少个区块进行一次激励
+    uint32_t  new_span_reward_slot = 12;             //每隔多少个区块进行一次激励
+    uint32_t  last_build_slot = 0;            //最后一次激励数据构建的区块时间槽
+    uint32_t  span_build_slot = 2;            //每隔多少个区块进行一次激励数据构建
+    uint8_t   reward_type = 0;                //激励类型 0-容量激励 1-存储激励
     bool      is_started = false;             //新经济模型是否已经开启
   };
   typedef eosio::singleton<N(newmparam1), newmparam> gnewmparam_singleton;
@@ -382,10 +407,22 @@ public:
     newmparam  _gstate;
     if(_gnewmparam.exists()){
       _gstate = _gnewmparam.get();
-      return _gstate.last_reward_slot + _gstate.span_slot;
+      return _gstate.last_reward_slot + _gstate.span_reward_slot;
     }
     return 0xffffffff;
   }
+
+  static uint32_t get_next_build_slot()
+  {
+    gnewmparam_singleton _gnewmparam( N(hddpool12345), N(hddpool12345));
+    newmparam  _gstate;
+    if(_gnewmparam.exists()){
+      _gstate = _gnewmparam.get();
+      return _gstate.last_build_slot + _gstate.span_build_slot;
+    }
+    return 0xffffffff;
+  }
+
 
 };
 

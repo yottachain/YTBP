@@ -860,10 +860,8 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
       row.last_modify_time = 0;
       row.internal_id      = 0;
       row.internal_id2     = 0;      
-      row.round1           = 0;
-      row.times1           = 0;
-      row.round2           = 0;
-      row.times2           = 0;
+      row.real_space       = 0;
+      row.reserved1        = 0;
       row.level            = defaul_miner_level;
       row.status           = 1;
    });             
@@ -1107,10 +1105,8 @@ void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id
       row.last_modify_time = current_time();;
       row.internal_id      = insert_miner2(minerid);
       row.internal_id2     = 0;      
-      row.round1           = 0;
-      row.times1           = 0;
-      row.round2           = 0;
-      row.times2           = 0;
+      row.real_space       = 0;
+      row.reserved1        = 0;
       row.level            = defaul_miner_level;
       row.status           = 2;
    });             
@@ -1180,6 +1176,8 @@ void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
 
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
 {
+   eosio_assert(false, "not support now!");
+
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
    eosio_assert(itminerinfo != _minerinfo.end(), "miner not registered \n");  
@@ -1238,7 +1236,7 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
       });  
    }
    //-------------------- sync end ------------------
-   
+
 }
 
 void hddpool::mchgadminacc(uint64_t minerid, name new_adminacc)
@@ -1733,10 +1731,8 @@ void hddpool::oldsync(uint64_t minerid){
          row.space         = 0;         
       }    
       row.last_modify_time = 0;
-      row.round1           = 0;
-      row.times1           = 0;
-      row.round2           = 0;
-      row.times2           = 0;
+      row.real_space       = 0;
+      row.reserved1        = 0;
       row.level            = defaul_miner_level;
       row.status           = 0;
       row.internal_id      = 0;
@@ -1772,6 +1768,26 @@ void hddpool::mlevel(uint64_t minerid, uint32_t level, name caller) {
 
    _miner.modify(itminer, _self, [&](auto &row) {
       row.level = level;
+   });  
+   
+}
+
+void hddpool::mrspace(uint64_t minerid, uint64_t real_space, name caller) {
+
+   //eosio_assert(false, "not support now!");
+   
+   check_bp_account(caller.value, minerid, true);
+
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); 
+   eosio_assert(itminer != _miner.end(), "minerid not found");
+   eosio_assert(itminer->max_space > real_space, "real space must less then max_space");
+   eosio_assert((real_space & 65535) == 0, "invalid read_space");
+   eosio_assert(real_space > 0, "invalid read_space");   
+   eosio_assert(real_space != itminer->real_space, "same real space");   
+
+   _miner.modify(itminer, _self, [&](auto &row) {
+      row.real_space = real_space;
    });  
    
 }
@@ -1829,13 +1845,9 @@ void hddpool::startnewm() {
    uint64_t ct = current_time();   
 
    _gstate.start_time = ct;
-   _gstate.round_interval = 15 * microseconds_in_one_day; //15天一轮
-   _gstate.span_slot = 12;
-   _gstate.new_span_slot = 12;   
+   _gstate.span_reward_slot = 12;
+   _gstate.new_span_reward_slot = 12;   
    _gstate.reward_type = 0;
-
-   _gstate.reward_round = 1;
-   _gstate.next_round_time = ct + _gstate.round_interval;
 
    _gstate.reward_day = 1;
    _gstate.reward_month = 1;
@@ -1846,7 +1858,7 @@ void hddpool::startnewm() {
    _gstate.total_issue = reward_issue;
    _gstate.cur_issue = reward_issue;
    //此处需要增发相应数量的token
-   int64_t real_reward = reward_issue / (int64_t)(((double)blocks_per_day / _gstate.span_slot) + 0.5);         
+   int64_t real_reward = reward_issue / (int64_t)(((double)blocks_per_day / _gstate.span_reward_slot) + 0.5);         
    int64_t real_reward1 = (int64_t)(real_reward * 0.8);
    int64_t real_reward2 = real_reward - real_reward1;
    _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);
@@ -1883,14 +1895,6 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
 
    uint64_t ct = current_time();   
 
-   if(ct >= _gstate.next_round_time) {
-      _gstate.reward_round += 1;
-      if((_gstate.next_round_time + _gstate.round_interval) <= ct)
-         _gstate.next_round_time = ct + _gstate.round_interval;
-      else
-         _gstate.next_round_time += _gstate.round_interval;    
-   }
-
    bool bret = true;
 
    if(ct >= _gstate.next_day_time) {
@@ -1914,8 +1918,8 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
             // ---- transfer to eosio.null for destory
          }
          int64_t real_rewardtotal = cur_issue - _gstate.cur_destory;
-         _gstate.span_slot = _gstate.new_span_slot;
-         int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / _gstate.span_slot) + 0.5);         
+         _gstate.span_reward_slot = _gstate.new_span_reward_slot;
+         int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / _gstate.span_reward_slot) + 0.5);         
          int64_t real_reward1 = (int64_t)(real_reward * 0.8);
          int64_t real_reward2 = real_reward - real_reward1;
          _gstate.cur_reward1 = real_reward1;
@@ -1958,6 +1962,22 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
 
    _gnewmparam.set(_gstate,_self);
    return true;
+}
+
+void hddpool::onbuild(uint32_t slot) {
+   require_auth( _self );
+
+   gnewmparam_singleton _gnewmparam( _self, _self);
+   if(!_gnewmparam.exists())
+      return;
+
+   newmparam  _gstate;   
+   _gstate = _gnewmparam.get();
+
+   _gstate.last_build_slot = slot;
+   _gstate.span_build_slot = 2;
+
+   _gnewmparam.set(_gstate,_self);
 }
 
 void hddpool::onrewardt(uint32_t slot) {
@@ -2085,6 +2105,6 @@ void hddpool::rewardlogt(std::string memo) {
 
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
-                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onrewardt)(rewardselt)(rewardlogt)
+                  (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardselt)(rewardlogt)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
