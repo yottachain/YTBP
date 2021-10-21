@@ -82,7 +82,6 @@ public:
   void onbuild(uint32_t slot);
 
   void onrewardt(uint32_t slot);
-  void rewardselt(uint64_t random1, uint64_t random2);
   void rewardlogt(std::string memo);
  
 private:
@@ -352,7 +351,8 @@ private:
 
   uint32_t insert_miner2(uint64_t minerid);
   void del_miner2(uint64_t internal_id);
-  void rewardproc(uint64_t random1, uint64_t random2);
+  void rewardproc1(uint64_t random, uint32_t slot);
+  void rewardproc2(uint64_t random, uint32_t slot);
 
   uint64_t get_newmodel_start_time();
   bool  update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type);

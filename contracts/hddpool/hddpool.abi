@@ -371,20 +371,6 @@
             ]
         },
         {
-            "name": "rewardselt",
-            "base": "",
-            "fields": [
-                {
-                    "name": "random1",
-                    "type": "uint64"
-                },
-                {
-                    "name": "random2",
-                    "type": "uint64"
-                }             
-            ]
-        },
-        {
             "name": "rewardlogt",
             "base": "",
             "fields": [
@@ -737,6 +723,70 @@
                     "name": "max_miner_count",
                     "type": "uint64"
                 }                
+            ]
+        },
+        {
+            "name": "mscore",
+            "base": "",
+            "fields": [
+                {
+                    "name": "mid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "range",
+                    "type": "uint64"
+                }                
+            ]
+        },
+        {
+            "name": "mscore2ex",
+            "base": "",
+            "fields": [
+                {
+                    "name": "mscore1_s0_count",
+                    "type": "uint64"
+                },
+                {
+                    "name": "mscore1_s1_count",
+                    "type": "uint64"
+                },
+                {
+                    "name": "mscore2_s0_count",
+                    "type": "uint64"
+                },
+                {
+                    "name": "mscore2_s1_count",
+                    "type": "uint64"
+                },
+                {
+                    "name": "build_proc_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "prev_build_range1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "prev_build_range2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "build_count1",
+                    "type": "uint64"
+                },
+                {
+                    "name": "build_count2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "current_s",
+                    "type": "uint8"
+                }               
             ]
         },
         {
@@ -1154,11 +1204,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "rewardselt",
-            "type": "rewardselt",
-            "ricardian_contract": ""
-        },
-        {
             "name": "rewardlogt",
             "type": "rewardlogt",
             "ricardian_contract": ""
@@ -1283,6 +1328,27 @@
         {
             "name": "miner2ex",
             "type": "miner2ex",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "mscore1",
+            "type": "mscore",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "mscore2",
+            "type": "mscore",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "mscore2ex",
+            "type": "mscore2ex",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -2014,9 +2014,9 @@ void hddpool::onbuild(uint32_t slot) {
    
    uint64_t tablescope;
    if(_gmscore2ex_state.current_s == 0) 
-      tablescope = N(scope1);
+      tablescope = N(scopeb);
    else  
-      tablescope = N(scope0);
+      tablescope = N(scopea);
 
    mscore1_table _mscore1(_self, tablescope);
    mscore2_table _mscore2(_self, tablescope);
@@ -2024,7 +2024,7 @@ void hddpool::onbuild(uint32_t slot) {
    miner2_table _miner2(_self, _self);
    miner_table _miner(_self, _self);
 
-   for(int i = 0; i<4; i++) {
+   for(int i = 0; i<2; i++) {
       auto itminer2 = _miner2.find(_gmscore2ex_state.build_proc_id);
        if(itminer2 != _miner2.end()) {
           if(itminer2->minerid != 0) {
@@ -2113,6 +2113,26 @@ void hddpool::onbuild(uint32_t slot) {
 void hddpool::onrewardt(uint32_t slot) {
    require_auth( _self );
 
+   //-------------   ------------
+   uint8_t reward_type = 0;   
+   gnewmparam_singleton _gnewmparam( _self, _self);
+   if(!_gnewmparam.exists())
+      return;
+
+   newmparam  _gstate;   
+   _gstate = _gnewmparam.get();
+
+   _gstate.last_reward_slot = slot;
+   reward_type = _gstate.reward_type;
+   if(_gstate.reward_type == 0)
+      _gstate.reward_type = 1;
+   else
+      _gstate.reward_type = 0;    
+   
+   _gnewmparam.set(_gstate,_self);
+   //-------------   ------------
+
+   /*
    int64_t reward = 0;
    int64_t reward_gas = 0;
    uint8_t reward_type = 0;
@@ -2121,12 +2141,14 @@ void hddpool::onrewardt(uint32_t slot) {
 
    if(reward == 0)
       return;
+   */   
 
-   uint64_t random1 = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
-   uint64_t random2 = ((uint32_t)tapos_block_prefix())+((uint16_t)tapos_block_num());
+   uint64_t random = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
 
-   //直接调用
-   //rewardproc(random1, random2);
+   if(reward_type == 0)
+      rewardproc1(random, slot);
+   else   
+      rewardproc2(random, slot);
 
    //内联action调用
    //action(
@@ -2135,99 +2157,167 @@ void hddpool::onrewardt(uint32_t slot) {
    //   std::make_tuple(random1, random2) ).send(); 
    
    //延迟事务调用
+   /*
    eosio::transaction out;
    out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardselt), std::make_tuple(random1, random2) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );
+   */
 
 }
 
-void hddpool::rewardselt(uint64_t random1, uint64_t random2) {
-   require_auth( _self );
-   rewardproc(random1, random2);
-}
-
-void hddpool::rewardproc(uint64_t random1, uint64_t random2) {
-   uint64_t selcount = 20; //每次随机选出最多20台矿机
-
-   gminer2ex_singleton _gminer2ex(_self, _self);
-   if(!_gminer2ex.exists())
-      return;           
-   miner2ex  _gstate;   
-   _gstate = _gminer2ex.get();
-
-   if(_gstate.max_miner_count <= selcount)
+//容量激励
+void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
+   gmscore2ex_singleton _gmscore2ex(_self, _self);
+   if(!_gmscore2ex.exists())
       return;
-   
-   uint64_t sel_id = (random1 % _gstate.max_table_count) + 1; //随机选中的矿机
-   uint64_t max_step_len = _gstate.max_table_count / selcount; //最大随机选择步长
-   uint64_t step_len = (random2 % max_step_len) + 1;
 
-   uint64_t final_sel_id = 0;
-   uint64_t max_weight = 0;
-   name final_owner;
-   bool bSet = false;
-   for(uint32_t i = 0; i < selcount; i++) 
-   {
-      sel_id = sel_id + i*step_len;
-      if(sel_id > _gstate.max_table_count)
-         sel_id = sel_id - _gstate.max_table_count;
+   mscore2ex _gmscore2ex_state;
+   _gmscore2ex_state = _gmscore2ex.get();
+  
+   uint64_t tablescope;
+   uint64_t max_count = 0;
+   if(_gmscore2ex_state.current_s == 0) {
+      tablescope = N(scopea);
+      max_count = _gmscore2ex_state.mscore1_s0_count;
+   } else {
+      tablescope = N(scopeb);
+      max_count = _gmscore2ex_state.mscore1_s1_count;
+   }  
+      
+   mscore1_table _mscore1(_self, tablescope);
 
-      miner2_table _miner2( _self , _self );
-      auto itminer2 = _miner2.find(sel_id);
-      if(itminer2 != _miner2.end()) 
-      {
-         if(itminer2->minerid != 0) 
-         {
-            miner_table _miner( _self , _self );
-            auto itminer = _miner.find(itminer2->minerid);
-            if(itminer != _miner.end())
-            {
-               if(itminer->status == 0)
-               {
-                  //开始比较和设置
-                  if(!bSet) 
-                  {
-                     final_sel_id = itminer->minerid;
-                     max_weight = itminer->max_space;
-                     final_owner = itminer->owner;
-                     bSet = true;
-                  } 
-                  else 
-                  {
-                     if(itminer->max_space > max_weight)
-                     {
-                        final_sel_id = itminer->minerid;
-                        max_weight = itminer->max_space;    
-                        final_owner = itminer->owner;                    
-                     }
-                  }
+   uint64_t max_range = 0;
+   auto itmax = _mscore1.find(max_count);
+   if(itmax == _mscore1.end())
+      return;
+   max_range = itmax->range;
 
-               } 
-            } 
-         }
-      }       
+   uint64_t sel_range = random % max_range;
+   uint64_t low = 1;
+   uint64_t high = max_count;
+   uint64_t sel_minerid = 0;
+   uint64_t times = 0;
+   while(low <= high) {
+      uint64_t mid = (low+high)/2;
+      times++;
+      auto it = _mscore1.find(mid);
+      if(it== _mscore1.end())
+         return;
+      if(it->range == sel_range)
+         sel_minerid = it->minerid;
+      else if( sel_range > it->range ) {
+         low = mid + 1;
+      } else {
+         high = mid -1;
+      }
+      if(times >= 20)
+         return;   
    }
 
-   if(bSet)
-   {
-      
-      asset quant{23000,CORE_SYMBOL};
-      uint64_t round = 12;
-      std::string memo;
-      memo = std::to_string(final_sel_id) + ":" + final_owner.to_string() + ":" + std::to_string(quant.amount) + ":" + std::to_string(step_len);
-   
-      //eosio::transaction out;
-      //out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardsel), std::make_tuple(round, quant) );
-      //out.delay_sec = 1;
-      //out.send( (uint128_t(_self) << 64) | slot, _self, false );
+   if(sel_minerid == 0) {
+      auto it = _mscore1.find(low);
+      if(it == _mscore1.end())
+         return;
+      if(it->range < sel_range)
+         sel_minerid = it->minerid;
+      else {
+         auto it2 = _mscore1.find(high);
+         if(it2 == _mscore1.end())
+            return;
+         sel_minerid = it2->minerid;
+      }   
+   }
 
-      action(
-         permission_level{_self, N(active)},
-         _self, N(rewardlogt),
-         std::make_tuple(memo) ).send(); 
+   if(sel_minerid != 0) 
+   {
+      std::string memo;
+      memo = std::to_string(sel_minerid) + ":1";
+      eosio::transaction out;
+      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(memo) );
+      out.delay_sec = 1;
+      out.send( (uint128_t(_self) << 64) | slot, _self, false );      
+
    }
 }
+
+//存储激励
+void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
+   gmscore2ex_singleton _gmscore2ex(_self, _self);
+   if(!_gmscore2ex.exists())
+      return;
+
+   mscore2ex _gmscore2ex_state;
+   _gmscore2ex_state = _gmscore2ex.get();
+  
+   uint64_t tablescope;
+   uint64_t max_count = 0;
+   if(_gmscore2ex_state.current_s == 0) {
+      tablescope = N(scopea);
+      max_count = _gmscore2ex_state.mscore2_s0_count;
+   } else {
+      tablescope = N(scopeb);
+      max_count = _gmscore2ex_state.mscore2_s1_count;
+   }  
+      
+   mscore2_table _mscore2(_self, tablescope);
+
+   uint64_t max_range = 0;
+   auto itmax = _mscore2.find(max_count);
+   if(itmax == _mscore2.end())
+      return;
+   max_range = itmax->range;
+
+   uint64_t sel_range = random % max_range;
+   uint64_t low = 1;
+   uint64_t high = max_count;
+   uint64_t sel_minerid = 0;
+   uint64_t times = 0;
+   while(low <= high) {
+      uint64_t mid = (low+high)/2;
+      times++;
+      auto it = _mscore2.find(mid);
+      if(it== _mscore2.end())
+         return;
+      if(it->range == sel_range)
+         sel_minerid = it->minerid;
+      else if( sel_range > it->range ) {
+         low = mid + 1;
+      } else {
+         high = mid -1;
+      }
+      if(times >= 20)
+         return;   
+   }
+
+   if(sel_minerid == 0) {
+      auto it = _mscore2.find(low);
+      if(it == _mscore2.end())
+         return;
+      if(it->range < sel_range)
+         sel_minerid = it->minerid;
+      else {
+         auto it2 = _mscore2.find(high);
+         if(it2 == _mscore2.end())
+            return;
+         sel_minerid = it2->minerid;
+      }   
+   }
+
+   if(sel_minerid != 0) 
+   {
+      std::string memo;
+      memo = std::to_string(sel_minerid) + ":2";
+      eosio::transaction out;
+      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(memo) );
+      out.delay_sec = 1;
+      out.send( (uint128_t(_self) << 64) | slot, _self, false );      
+
+   }
+
+
+}
+
 
 void hddpool::rewardlogt(std::string memo) {
    require_auth( _self );
@@ -2236,5 +2326,5 @@ void hddpool::rewardlogt(std::string memo) {
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardselt)(rewardlogt)
+                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardlogt)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
