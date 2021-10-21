@@ -1978,6 +1978,136 @@ void hddpool::onbuild(uint32_t slot) {
    _gstate.span_build_slot = 2;
 
    _gnewmparam.set(_gstate,_self);
+
+   gminer2ex_singleton _gminer2ex(_self, _self);
+   if(!_gminer2ex.exists())
+      return;           
+   miner2ex  _gminer2ex_state;   
+   _gminer2ex_state = _gminer2ex.get();
+
+   gmscore2ex_singleton _gmscore2ex(_self, _self);
+   mscore2ex _gmscore2ex_state;
+   if(_gmscore2ex.exists())
+      _gmscore2ex_state = _gmscore2ex.get();
+   else    
+      _gmscore2ex_state = mscore2ex{};
+
+   if(_gmscore2ex_state.build_proc_id > _gminer2ex_state.max_table_count) {
+      if(_gmscore2ex_state.current_s == 0) {
+         _gmscore2ex_state.current_s  = 1;
+         _gmscore2ex_state.mscore1_s1_count = _gmscore2ex_state.build_count1;
+         _gmscore2ex_state.mscore2_s1_count = _gmscore2ex_state.build_count2;
+
+      } else {
+         _gmscore2ex_state.current_s = 0;
+         _gmscore2ex_state.mscore1_s0_count = _gmscore2ex_state.build_count1;
+         _gmscore2ex_state.mscore2_s0_count = _gmscore2ex_state.build_count2;
+      }
+      _gmscore2ex_state.build_proc_id = 1;
+      _gmscore2ex_state.prev_build_range1 = 0;
+      _gmscore2ex_state.prev_build_range2 = 0;
+      _gmscore2ex_state.build_count1 = 0;
+      _gmscore2ex_state.build_count2 = 0;      
+      _gmscore2ex.set(_gmscore2ex_state,_self);
+      return;
+   }
+   
+   uint64_t tablescope;
+   if(_gmscore2ex_state.current_s == 0) 
+      tablescope = N(scope1);
+   else  
+      tablescope = N(scope0);
+
+   mscore1_table _mscore1(_self, tablescope);
+   mscore2_table _mscore2(_self, tablescope);
+
+   miner2_table _miner2(_self, _self);
+   miner_table _miner(_self, _self);
+
+   for(int i = 0; i<4; i++) {
+      auto itminer2 = _miner2.find(_gmscore2ex_state.build_proc_id);
+       if(itminer2 != _miner2.end()) {
+          if(itminer2->minerid != 0) {
+             auto itminer = _miner.find(itminer2->minerid);
+             if(itminer != _miner.end()) {
+                if(itminer->status == 0) { //没有被封禁的矿机才能参与
+
+                     //--------更新容量概率空间表---------
+                     uint64_t realspace = itminer->max_space;
+                     if(itminer->real_space > 0)
+                        realspace = itminer->real_space;
+                     uint64_t realspace_gb = realspace >> 16;
+                     if(realspace_gb > 0) {
+                        double ranged = (double)(realspace_gb * itminer->level) / (double)100;
+                        uint64_t range = (uint64_t)ranged;
+                        if(range > 0) {
+                           _gmscore2ex_state.prev_build_range1 += range;
+                           auto itmscore1 = _mscore1.find(_gmscore2ex_state.build_count1 + 1);
+                           if(itmscore1 != _mscore1.end()) {
+                              _mscore1.modify(itmscore1, _self, [&](auto &row) {
+                                 row.minerid  = itminer2->minerid;
+                                 row.range    = _gmscore2ex_state.prev_build_range1;
+                              });  
+                           } else {
+                              _mscore1.emplace(_self, [&](auto &row) {      
+                                 row.mid      =  _gmscore2ex_state.build_count1 + 1;
+                                 row.minerid  =  itminer2->minerid;
+                                 row.range    = _gmscore2ex_state.prev_build_range1;
+                              });       
+                           }
+                           _gmscore2ex_state.build_count1 += 1;
+                        }
+                     }
+
+                     //--------更新存储概率空间表---------
+                     uint64_t space = itminer->space;
+                     uint64_t space_gb = space >> 16;
+                     if(space_gb > 0){
+                         _gmscore2ex_state.prev_build_range2 += space_gb;
+                        auto itmscore2 = _mscore2.find(_gmscore2ex_state.build_count2 + 1);
+                        if(itmscore2 != _mscore2.end()) {
+                           _mscore2.modify(itmscore2, _self, [&](auto &row) {
+                              row.minerid  = itminer2->minerid;
+                              row.range    = _gmscore2ex_state.prev_build_range2;
+                           });  
+                        } else {
+                           _mscore2.emplace(_self, [&](auto &row) {      
+                              row.mid      =  _gmscore2ex_state.build_count2 + 1;
+                              row.minerid  =  itminer2->minerid;
+                              row.range    = _gmscore2ex_state.prev_build_range2;
+                           });       
+                        }
+                        _gmscore2ex_state.build_count2 += 1;
+                     }
+
+                } // end of if(itminer->status == 0)
+             }
+          }
+       }
+
+      _gmscore2ex_state.build_proc_id++;
+      if(_gmscore2ex_state.build_proc_id > _gminer2ex_state.max_table_count) {
+         if(_gmscore2ex_state.current_s == 0) {
+            _gmscore2ex_state.current_s  = 1;
+            _gmscore2ex_state.mscore1_s1_count = _gmscore2ex_state.build_count1;
+            _gmscore2ex_state.mscore2_s1_count = _gmscore2ex_state.build_count2;
+
+         } else {
+            _gmscore2ex_state.current_s = 0;
+            _gmscore2ex_state.mscore1_s0_count = _gmscore2ex_state.build_count1;
+            _gmscore2ex_state.mscore2_s0_count = _gmscore2ex_state.build_count2;
+         }
+         _gmscore2ex_state.build_proc_id = 1;
+         _gmscore2ex_state.prev_build_range1 = 0;
+         _gmscore2ex_state.prev_build_range2 = 0;
+         _gmscore2ex_state.build_count1 = 0;
+         _gmscore2ex_state.build_count2 = 0;      
+         _gmscore2ex.set(_gmscore2ex_state,_self);
+         return;
+      }
+
+   }
+   _gmscore2ex.set(_gmscore2ex_state,_self);  
 }
 
 void hddpool::onrewardt(uint32_t slot) {

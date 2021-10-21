@@ -207,11 +207,15 @@ private:
   //内部空间概率空间表元数据
   struct mscore2ex
   {
+    uint64_t  mscore1_s0_count = 0;    
     uint64_t  mscore1_s1_count = 0;    
-    uint64_t  mscore1_s2_count = 0;    
+    uint64_t  mscore2_s0_count = 0;     
     uint64_t  mscore2_s1_count = 0;     
-    uint64_t  mscore2_s2_count = 0;     
     uint64_t  build_proc_id = 1;
+    uint64_t  prev_build_range1 = 0;
+    uint64_t  prev_build_range2 = 0;
+    uint64_t  build_count1 = 0;
+    uint64_t  build_count2 = 0;
     uint8_t   current_s = 0;
   };
   typedef eosio::singleton<N(mscore2ex), mscore2ex> gmscore2ex_singleton;
