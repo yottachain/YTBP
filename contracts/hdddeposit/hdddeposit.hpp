@@ -22,8 +22,11 @@ class hdddeposit : public eosio::contract {
         void paydeppool2(account_name user, asset quant);
         void unpaydeppool2(account_name user, asset quant);
 
+        void depstore(account_name user, asset quant);
+        void undepstore(account_name user, asset quant);
 
         void paydeposit(account_name user, uint64_t minerid, asset quant);
+        void incdeposit(uint64_t minerid, asset quant);
         void chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant);
         void mforfeit(name user, uint64_t minerid, asset quant, std::string memo, uint8_t acc_type, name caller);
         void delminer(uint64_t minerid);
@@ -37,6 +40,8 @@ class hdddeposit : public eosio::contract {
         inline asset get_deposit( account_name user )const;
         inline asset get_depositfree( account_name user )const;
         inline asset get_miner_deposit( uint64_t minerid )const;
+        inline asset get_miner_forfeit( uint64_t minerid )const;
+        inline name  get_miner_depacc(uint64_t minerid)const;
         inline bool is_deposit_enough( asset deposit, uint64_t max_space ) const;
         inline asset calc_deposit( uint64_t space )const;
 
@@ -67,6 +72,13 @@ class hdddeposit : public eosio::contract {
         };        
         typedef multi_index<N(depositpool2), depositpool2> depositpool2_table; 
 
+        struct storedeposit {
+            name        account_name;
+            asset       deposit_total;
+            uint64_t    last_deposit_time;
+            uint64_t    primary_key()const { return account_name.value; }
+        };       
+        typedef multi_index<N(storedeposit), storedeposit> storedeposit_table; 
 
         //记录哪个账户为哪个矿机抵押了多少钱
         struct miner2dep {
@@ -141,6 +153,32 @@ asset hdddeposit::get_miner_deposit( uint64_t minerid ) const
     return zero;
 }
 
+asset hdddeposit::get_miner_forfeit( uint64_t minerid ) const 
+{
+    minerdeposit_table _mdeposit(_self, _self);
+    auto miner = _mdeposit.find( minerid );
+    if(miner != _mdeposit.end()) {
+        if(miner->dep_total.amount > miner->deposit.amount)
+           return (miner->dep_total - miner->deposit);
+    }
+        
+    asset zero{0, CORE_SYMBOL};
+    return zero;
+}
+
+name hdddeposit::get_miner_depacc( uint64_t minerid ) const 
+{
+    minerdeposit_table _mdeposit(_self, _self);
+    name depacc = {0};
+    auto miner = _mdeposit.find( minerid );
+    if(miner != _mdeposit.end()) {
+        depacc = miner->account_name;
+    }
+        
+    return depacc;
+}
+
+
 bool hdddeposit::is_deposit_enough( asset deposit, uint64_t max_space ) const 
 {
     grate_singleton grate(_self, _self);
@@ -181,6 +219,5 @@ asset hdddeposit::calc_deposit( uint64_t space )const
     asset dep{am,CORE_SYMBOL};
 
     return dep;
-
 }
 

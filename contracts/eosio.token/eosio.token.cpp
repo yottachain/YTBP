@@ -113,7 +113,7 @@ void token::transfer( account_name from,
     eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
     //##YTA-Change  start:  
-    if( quantity.symbol != CORE_SYMBOL || from == N(hddbasefound))  // no need to consider hdd_deposit and hdd_lock issue  
+    if( quantity.symbol != CORE_SYMBOL || from == N(hddbasefound) || from == N(fund.sys))  // no need to consider hdd_deposit and hdd_lock issue  
       sub_balance( from, quantity );
     else
       sub_balance_yta( from, quantity, to );

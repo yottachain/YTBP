@@ -58,6 +58,24 @@
             ]
         },
         {
+            "name": "storedeposit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account_name",
+                    "type": "name"
+                },                
+                {
+                    "name": "deposit_total",
+                    "type": "asset"
+                },
+                {
+                    "name": "last_deposit_time",
+                    "type": "uint64"
+                }                
+            ]
+        },
+        {
             "name": "miner2dep",
             "base": "",
             "fields": [
@@ -150,6 +168,34 @@
             ]
         },        
         {
+            "name": "depstore",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "undepstore",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },        
+        {
             "name": "paydeposit",
             "base": "",
             "fields": [
@@ -157,6 +203,20 @@
                     "name": "user",
                     "type": "account_name"
                 },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "incdeposit",
+            "base": "",
+            "fields": [
                 {
                     "name": "minerid",
                     "type": "uint64"
@@ -286,8 +346,23 @@
             "ricardian_contract": ""
         },
         {
+            "name": "depstore",
+            "type": "depstore",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "undepstore",
+            "type": "undepstore",
+            "ricardian_contract": ""
+        },
+        {
             "name": "paydeposit",
             "type": "paydeposit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "incdeposit",
+            "type": "incdeposit",
             "ricardian_contract": ""
         },
         {
@@ -332,6 +407,13 @@
         {
             "name": "depositpool2",
             "type": "depositpool2",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "storedeposit",
+            "type": "storedeposit",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

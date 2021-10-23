@@ -307,6 +307,28 @@
             ]
         },
         {
+            "name": "mincdeposit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "space",
+                    "type": "uint64"
+                },
+                {
+                    "name": "dep_amount",
+                    "type": "asset"
+                },
+                {
+                    "name": "is_calc",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
             "name": "mchgspace",
             "base": "",
             "fields": [
@@ -1173,6 +1195,11 @@
             "type": "regminer",
             "ricardian_contract": ""
         },        
+        {
+            "name": "mincdeposit",
+            "type": "mincdeposit",
+            "ricardian_contract": ""
+        },
         {
             "name": "mchgspace",
             "type": "mchgspace",

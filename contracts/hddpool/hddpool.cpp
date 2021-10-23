@@ -898,8 +898,8 @@ void hddpool::regstrpool(name pool_id, name pool_owner)
    _storepool.emplace(payer, [&](auto &row) {
       row.pool_id    = pool_id;
       row.pool_owner = pool_owner;
-      row.max_space  = 0;
-      row.space_left = 0;
+      row.max_space  = max_pool_space;
+      row.space_left = max_pool_space;
    });
 
    asset quant{100000, CORE_SYMBOL};
@@ -1174,9 +1174,66 @@ void hddpool::mchgstrpool(uint64_t minerid, name new_poolid)
    
 }
 
+void hddpool::mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bool is_calc) {
+
+   miner_table _miner( _self , _self );
+   auto itminer = _miner.find(minerid); 
+   eosio_assert(itminer != _miner.end(), "miner not registered!");  
+   eosio_assert((space & 65535) == 0, "invalid max_space!");
+   eosio_assert((space + itminer->max_space) <= max_miner_space, "miner max_space overflow!");  
+   eosio_assert((space + itminer->max_space) >= min_miner_space, "miner max_space underflow!"); 
+
+   require_auth(hdddeposit(hdd_deposit).get_miner_depacc(minerid));
+
+   name pool_owner = get_miner_pool_owner(minerid);
+   require_auth(pool_owner);
+
+   storepool_index _storepool( _self , _self );
+   auto itmstorepool = _storepool.find(itminer->pool_id.value);
+   eosio_assert(itmstorepool != _storepool.end(), "storepool not exist");  
+   _storepool.modify(itmstorepool, _self, [&](auto &rowpool) {
+      eosio_assert(rowpool.space_left >= space, "exceed storepool's max space");  
+      rowpool.space_left -= space;
+   });  
+
+   _miner.modify(itminer, _self, [&](auto &row) {
+      row.max_space += space;
+      if(row.real_space > 0) 
+         row.real_space += space;
+   });  
+
+   chg_total_space(space, true);
+
+   asset need_amount = hdddeposit(hdd_deposit).get_miner_forfeit(minerid);
+   need_amount += hdddeposit(hdd_deposit).calc_deposit(space);
+   if(!is_calc) {
+      eosio_assert(dep_amount.amount >= need_amount.amount, "deposit not enough");  
+      need_amount = dep_amount;
+   }
+
+   action(
+       permission_level{N(hddpooladmin), active_permission},
+       hdd_deposit, N(incdeposit),
+       std::make_tuple(minerid, need_amount))
+       .send(); 
+
+   //-------------------- sync to old table start------------------
+   minerinfo_table _minerinfo( _self , _self );
+   auto itminerinfo = _minerinfo.find(minerid);
+   if(itminerinfo != _minerinfo.end()){
+      _minerinfo.modify(itminerinfo, _self, [&](auto &rowm) {
+         rowm.max_space  += space;
+         rowm.space_left += space;
+      });  
+
+   }
+   //-------------------- sync to old table end------------------
+
+}
+
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
 {
-   eosio_assert(false, "not support now!");
+   //eosio_assert(false, "not support now!");
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
@@ -1793,13 +1850,14 @@ void hddpool::mrspace(uint64_t minerid, uint64_t real_space, name caller) {
 }
 
 uint64_t hddpool::get_newmodel_start_time() {
+   /*
    gnewmparam_singleton _gnewmparam( _self, _self);
    newmparam  _gstate;
    if(_gnewmparam.exists()){
       _gstate = _gnewmparam.get();
       if(_gstate.start_time > 0)
          return _gstate.start_time;
-   }
+   }*/
    return hddm_latest_stop_time;
 }
 
@@ -2339,5 +2397,5 @@ void hddpool::rewardlogt(std::string memo) {
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
-                  (mchgspace)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardlogt)
+                  (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardlogt)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
