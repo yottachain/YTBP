@@ -1290,6 +1290,17 @@ void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
    if(itminer != _miner.end()){
       _miner.modify(itminer, _self, [&](auto &rowm) {
          rowm.max_space = max_space;
+         if(rowm.real_space > 0) {
+            if(is_increase)
+               rowm.real_space += space_delta;
+            else {
+               if(rowm.real_space > space_delta){
+                  rowm.real_space -= space_delta;
+               } else {
+                  rowm.real_space = 1;
+               }
+            }
+         }
       });  
    }
    //-------------------- sync end ------------------
