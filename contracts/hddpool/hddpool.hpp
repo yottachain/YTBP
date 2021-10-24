@@ -240,7 +240,7 @@ private:
     uint32_t  reward_month = 0;               //新经济开启的月数
     uint32_t  last_reward_slot = 0;           //最后一次发激励的区块时间槽
     uint32_t  span_reward_slot = 12;          //每隔多少个区块进行一次激励
-    uint32_t  new_span_reward_slot = 12;             //每隔多少个区块进行一次激励
+    uint32_t  new_span_reward_slot = 12;      //每隔多少个区块进行一次激励(new)
     uint32_t  last_build_slot = 0;            //最后一次激励数据构建的区块时间槽
     uint32_t  span_build_slot = 2;            //每隔多少个区块进行一次激励数据构建
     uint8_t   reward_type = 0;                //激励类型 0-容量激励 1-存储激励

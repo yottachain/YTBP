@@ -1970,10 +1970,19 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
       uint32_t reward_day = _gstate.reward_day + 1;
       _gstate.reward_day = reward_day;
 
-      //判断当天容量新增是否满足目标 ??????????
-      bool is_destory = true;
-      if(_gcounterstate.total_space >= _gstate.task_space)
-         is_destory = false;
+      //判断当天容量新增是否满足目标
+      bool is_destory = false;
+      if(_gcounterstate.total_space < _gstate.task_space)
+         is_destory = true;
+
+      uint32_t reward_month = reward_day/30;
+      if(_gstate.reward_month < reward_month){
+         _gstate.reward_month = reward_month;
+         //每当到一个新的月份的时候，需要计算每天的容量增长量
+         //uint64_t last_inc_space = (uint64_t)((double)_gstate.last_inc_space/2 + std::log2(_gstate.last_inc_space) + 0.5);
+         //_gstate.last_inc_space = last_inc_space;
+      }
+      _gstate.task_space += _gstate.last_inc_space;
 
       int64_t reward_issue = (int64_t) (((double)1.0 - std::pow(2,(double)(-1.0)*((double)reward_day/2880))) * 20000000000000);
       int64_t cur_issue = reward_issue - _gstate.total_issue;
@@ -1995,9 +2004,6 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
          _gstate.cur_reward1 = real_reward2;
          _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);
          _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
-         uint64_t last_inc_space = (uint64_t)((double)_gstate.last_inc_space/2 + std::log2(_gstate.last_inc_space) + 0.5);
-         _gstate.last_inc_space = last_inc_space;
-         _gstate.task_space += last_inc_space;
 
       } else {
          _gstate.cur_issue = 0;
@@ -2213,28 +2219,12 @@ void hddpool::onrewardt(uint32_t slot) {
    */   
 
    uint64_t random = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
-   //print(random);
-   //random = 3093635920;
 
    if(reward_type == 0)
       rewardproc1(random, slot);
    else   
       rewardproc2(random, slot);
-
-   //内联action调用
-   //action(
-   //   permission_level{_self, N(active)},
-   //   _self, N(rewardselt),
-   //   std::make_tuple(random1, random2) ).send(); 
    
-   //延迟事务调用
-   /*
-   eosio::transaction out;
-   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardselt), std::make_tuple(random1, random2) );
-   out.delay_sec = 1;
-   out.send( (uint128_t(_self) << 64) | slot, _self, false );
-   */
-
 }
 
 //容量激励
@@ -2289,8 +2279,6 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
          return;   
    }
 
-   //print(low , "---" , high, "---", sel_minerid, "---", sel_range);
-
    if(sel_minerid == 0) {
       auto it = _mscore1.find(high);
       if(it == _mscore1.end())
@@ -2312,8 +2300,13 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
       eosio::transaction out;
       out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(memo) );
       out.delay_sec = 1;
-      out.send( (uint128_t(_self) << 64) | slot, _self, false );      
+      out.send( (uint128_t(_self) << 64) | slot, _self, false );   
 
+      //内联action调用
+      //action(
+      //   permission_level{_self, N(active)},
+      //   _self, N(rewardselt),
+      //   std::make_tuple(random1, random2) ).send(); 
    }
 }
 
@@ -2370,8 +2363,6 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
             
    }
 
-   //print(low , "---" , high, "---", sel_minerid, "---", sel_range);
-
    if(sel_minerid == 0) {
       auto it = _mscore2.find(high);
       if(it == _mscore2.end())
@@ -2396,7 +2387,6 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
       out.send( (uint128_t(_self) << 64) | slot, _self, false );      
 
    }
-
 
 }
 
