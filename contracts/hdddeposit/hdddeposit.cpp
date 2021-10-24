@@ -204,7 +204,7 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
        .send();
 
     action(
-       permission_level{N(hdddeposit12), active_permission},
+       permission_level{N(store.sys), active_permission},
        token_account, N(transfer),
        std::make_tuple(N(store.sys), N(channel.sys), quant, std::string("unpaydeppool2")))
        .send(); //需要注意这里memo的格式
@@ -243,7 +243,7 @@ void hdddeposit::depstore(account_name user, asset quant) {
 
 
 void hdddeposit::undepstore(account_name user, asset quant) {
-    require_auth(user);
+    require_auth(N(hddpooladml1));
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant" );
