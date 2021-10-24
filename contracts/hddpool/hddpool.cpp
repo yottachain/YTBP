@@ -1212,7 +1212,7 @@ void hddpool::mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bo
    }
 
    action(
-       permission_level{N(hddpooladmin), active_permission},
+       permission_level{hdddeposit(hdd_deposit).get_miner_depacc(minerid), active_permission},
        hdd_deposit, N(incdeposit),
        std::make_tuple(minerid, need_amount))
        .send(); 
