@@ -33,6 +33,7 @@ add_subdirectory(integration_test)
 add_subdirectory(hddpool)
 add_subdirectory(hdddeposit)
 add_subdirectory(hddlock)
+add_subdirectory(channel.sys)
 
 
 file(GLOB SKELETONS RELATIVE ${CMAKE_SOURCE_DIR}/contracts "skeleton/*")
