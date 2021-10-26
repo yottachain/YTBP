@@ -5,10 +5,58 @@
       "type": "name"
    }],
   "structs": [
+      {
+         "name": "cbalance",
+         "base": "",
+         "fields": [
+            {
+               "name": "type",
+               "type": "uint8"
+            },
+            {
+               "name": "balance",
+               "type": "asset"
+            }
+         ]
+      },
+      {
+         "name": "map",
+         "base": "",
+         "fields": [
+            {
+               "name": "user",
+               "type": "name"
+            },
+            {
+               "name": "quant",
+               "type": "asset"
+            },
+            {
+               "name": "gas",
+               "type": "asset"
+            },
+            {
+               "name": "bscaddr",
+               "type": "string"
+            }
+         ]
+      }
   ],
   "actions": [
+      {
+         "name": "map",
+         "type": "map",
+         "ricardian_contract": ""
+      }    
   ],
   "tables": [
+      {
+         "name": "cbalances",
+         "type": "cbalance",
+         "index_type": "i64",
+         "key_names": [],
+         "key_types": []
+      }
   ],
   "ricardian_clauses": [],
   "abi_extensions": []

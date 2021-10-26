@@ -105,7 +105,7 @@ void hdddeposit::unpaydeppool(account_name user, asset quant) {
 }
 
 void hdddeposit::paydeppool2(account_name user, asset quant) {
-    require_auth(N(hddpooladml1));
+    require_auth(N(channel.sys));
 
     action(
        permission_level{N(channel.sys), active_permission},
@@ -202,11 +202,13 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
        token_account, N(transfer),
        std::make_tuple(user, N(store.sys), quant, std::string("unpaydeppool2")))
        .send();
-
+    
+    std::string memo;
+    memo = "2:" + (name{user}).to_string() + ":0";
     action(
        permission_level{N(store.sys), active_permission},
        token_account, N(transfer),
-       std::make_tuple(N(store.sys), N(channel.sys), quant, std::string("unpaydeppool2")))
+       std::make_tuple(N(store.sys), N(channel.sys), quant, memo))
        .send(); //需要注意这里memo的格式
 
 }

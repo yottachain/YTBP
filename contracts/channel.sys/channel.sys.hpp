@@ -25,9 +25,18 @@ class mchannel : public eosio::contract {
                      account_name to,
                      asset        quantity,
                      string       memo );      
-
+      
+      void map(account_name user, asset  quant, asset gas, string bscaddr);
 
    private:
+        //记录某个账户的存储押金池信息
+        struct cbalance {
+            uint8_t     type;     //token分类  
+            asset       balance;  //token余额
+            uint64_t    primary_key()const { return type; }
+        };        
+        typedef multi_index<N(cbalances), cbalance> cbalances; 
+
 };
 
 
