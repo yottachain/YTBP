@@ -8,15 +8,13 @@ void mchannel::transfercore( account_name from,
                       asset        quantity,
                       string       memo )
 {
+   if(from == _self) 
+      return;
+
+   ((void)to);
+
    eosio_assert(quantity.symbol == CORE_SYMBOL, "invalid symbol");
-   /*
-   bool is_from_ok = false;
-   if( from == N(fund.sys) || from == N(store.sys) || from == N(ytapro.map)) {
-      is_from_ok = true;
-   }
-   eosio_assert(is_from_ok, "invalid from user");
-   */
-   eosio_assert(to == _self, "invalid to user");
+
    auto pos1 = memo.find_first_of(':');
    eosio_assert(pos1 != std::string::npos, "invalid memo");
    auto trans_typestr = memo.substr(0,pos1);
@@ -25,6 +23,7 @@ void mchannel::transfercore( account_name from,
    eosio_assert(pos2 != std::string::npos, "invalid memo");
    auto namestr = memo.substr(pos1+1,pos2);
    account_name user = eosio::string_to_name(namestr.c_str());
+
    if(trans_type == 1) {
       eosio_assert(from == N(fund.sys), "invalid from user");
       cbalances bans(_self, user);
@@ -55,15 +54,22 @@ void mchannel::transfercore( account_name from,
       }
    } else if(trans_type == 3) {
       eosio_assert(from == N(ytapro.map), "invalid from user");
-      
+      /*
       action(
           permission_level{N(channel.sys), N(active)},
           N(hdddeposit12), N(paydeppool2),
          std::make_tuple(user, quantity))
-         .send();
+         .send();*/
+      
+    action(
+       permission_level{N(channel.sys), N(active)},
+       N(eosio.token), N(transfer),
+       std::make_tuple(N(channel.sys), user, quantity, std::string("paydeppool2")))
+       .send();
+
 
    } else {
-      eosio_assert(false, "invalid memo type");
+      //eosio_assert(false, "invalid memo type");
    }
 }
 
@@ -86,24 +92,24 @@ void mchannel::map(account_name user, asset  quant, asset gas, string bscaddr)
    });
 
    std::string memo;
-   memo = "bsc:" + bscaddr;
+   memo = "BSC" + bscaddr;
    action(
       permission_level{N(channel.sys), N(active)},
       N(eosio.token), N(transfer),
-      std::make_tuple(N(channel.sys), N(yottaproc.map), quant, memo))
+      std::make_tuple(N(channel.sys), N(ytapro.map), quant, memo))
       .send(); 
 
    action(
       permission_level{N(channel.sys), N(active)},
       N(eosio.token), N(transfer),
-      std::make_tuple(N(channel.sys), N(yottaproc.map), gas, std::string("fee")))
+      std::make_tuple(N(channel.sys), N(ytapro.map), gas, std::string("fee")))
       .send(); 
 }
 
 extern "C" { 
    void apply( uint64_t receiver, uint64_t code, uint64_t action ) { 
       auto self = receiver; 
-      if(action == N(onerror)) {
+      if(action == N(transfer)) {
          if(code == N(eosio.token)) {
             mchannel thiscontract( self ); 
             execute_action( &thiscontract, &mchannel::transfercore );

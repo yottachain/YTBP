@@ -56,7 +56,7 @@ public:
   void mchgowneracc(uint64_t minerid, name new_owneracc);
   void mchgstrpool(uint64_t minerid, name new_poolid);
   void mchgspace(uint64_t minerid, uint64_t max_space);
-  void mincdeposit(uint64_t minerid, uint64_t max_space, asset dep_amount, bool is_calc);
+  void mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bool is_calc);
 
   //update hddpool params
   void sethddprice(uint64_t price);
