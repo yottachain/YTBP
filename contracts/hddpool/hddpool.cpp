@@ -2308,11 +2308,10 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_
 
    if(sel_minerid != 0) 
    {
-      //内联action调用
-      action(
-         permission_level{_self, N(active)},
-         _self, N(rewardlogt),
-         std::make_tuple(sel_minerid, (uint8_t)1, reward, reward_gas, slot) ).send(); 
+      eosio::transaction out;
+      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(sel_minerid, (uint8_t)1, reward, reward_gas, slot) );
+      out.delay_sec = 1;
+      out.send( (uint128_t(_self) << 64) | slot, _self, false );     
    }
 }
 
@@ -2385,11 +2384,10 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_
    
    if(sel_minerid != 0) 
    {
-      //内联action调用
-      action(
-         permission_level{_self, N(active)},
-         _self, N(rewardlogt),
-         std::make_tuple(sel_minerid, (uint8_t)2, reward, reward_gas, slot) ).send(); 
+      eosio::transaction out;
+      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(sel_minerid, (uint8_t)2, reward, reward_gas, slot) );
+      out.delay_sec = 1;
+      out.send( (uint128_t(_self) << 64) | slot, _self, false );     
    }
 
 }
@@ -2400,13 +2398,16 @@ void hddpool::rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, 
    asset reward_t{reward,CORE_SYMBOL};
    asset reward_gas_t{reward_gas,CORE_SYMBOL};
 
+   
    eosio::transaction out;
-   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(channellogt), std::make_tuple(reward_type, reward_t, reward_gas_t, minerid, slot) );
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(channellogt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
+   
+
 }
 
-void hddpool::channellogt(uint8_t type, asset quant, asset gas, uint64_t minerid) {
+void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas) {
    require_auth( _self );
    miner_table _miner(_self, _self);
    auto it = _miner.find(minerid); 
@@ -2419,5 +2420,5 @@ void hddpool::channellogt(uint8_t type, asset quant, asset gas, uint64_t minerid
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
-                  (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardlogt)
+                  (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardlogt)(channellogt)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

@@ -431,13 +431,13 @@
                     "type": "asset"
                 },
                 {
-                    "name": "gas",
-                    "type": "asset"
-                },
-                {
                     "name": "minerid",
                     "type": "uint64"
-                }
+                },                
+                {
+                    "name": "gas",
+                    "type": "asset"
+                }             
             ]
         },
         {
