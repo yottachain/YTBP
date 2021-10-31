@@ -204,7 +204,7 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
        .send();
     
     std::string memo;
-    memo = "2:" + (name{user}).to_string() + ":0";
+    memo = "3:" + (name{user}).to_string() + ":0";
     action(
        permission_level{N(store.sys), active_permission},
        token_account, N(transfer),

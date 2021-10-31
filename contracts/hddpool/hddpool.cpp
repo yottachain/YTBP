@@ -1893,7 +1893,20 @@ void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
 
 void hddpool::startnewm() {
    require_auth( N(hddpooladmin) );
+   /*
+   newmparam  _gstate;
+   gnewmparam_singleton _gnewmparam( _self, _self);
 
+   if(_gnewmparam.exists())
+      _gstate = _gnewmparam.get();
+   else 
+      _gstate = newmparam{};
+
+   _gnewmparam.set(_gstate,_self);
+
+   return;
+   */
+   
    gcouterstate_singleton _gcounter(_self, _self);
    eosio_assert(_gcounter.exists(),"can not start new model");
 
@@ -1934,11 +1947,12 @@ void hddpool::startnewm() {
    _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
 
    _gstate.start_space = _gcounterstate.total_space;
-   _gstate.last_inc_space = 0;
-   _gstate.task_space = _gstate.start_space + _gstate.last_inc_space;
+   _gstate.last_day_inc_space = 0;
+   _gstate.task_space = _gstate.start_space + _gstate.last_day_inc_space;
 
    _gstate.is_started = true;
    _gnewmparam.set(_gstate,_self);
+   
 }
 
 bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type) {
@@ -1979,10 +1993,8 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
       if(_gstate.reward_month < reward_month){
          _gstate.reward_month = reward_month;
          //每当到一个新的月份的时候，需要计算每天的容量增长量
-         //uint64_t last_inc_space = (uint64_t)((double)_gstate.last_inc_space/2 + std::log2(_gstate.last_inc_space) + 0.5);
-         //_gstate.last_inc_space = last_inc_space;
       }
-      _gstate.task_space += _gstate.last_inc_space;
+      _gstate.task_space += _gstate.last_day_inc_space;
 
       int64_t reward_issue = (int64_t) (((double)1.0 - std::pow(2,(double)(-1.0)*((double)reward_day/2880))) * 20000000000000);
       int64_t cur_issue = reward_issue - _gstate.total_issue;
@@ -2099,7 +2111,7 @@ void hddpool::onbuild(uint32_t slot) {
    miner2_table _miner2(_self, _self);
    miner_table _miner(_self, _self);
 
-   for(int i = 0; i<2; i++) {
+   for(int i = 0; i<3; i++) {
       auto itminer2 = _miner2.find(_gmscore2ex_state.build_proc_id);
        if(itminer2 != _miner2.end()) {
           if(itminer2->minerid != 0) {
@@ -2138,7 +2150,7 @@ void hddpool::onbuild(uint32_t slot) {
                      uint64_t space = itminer->space;
                      uint64_t space_gb = space >> 16;
                      if(space_gb > 0){
-                         _gmscore2ex_state.prev_build_range2 += space_gb;
+                         _gmscore2ex_state.prev_build_range2 += space_gb*3;
                         auto itmscore2 = _mscore2.find(_gmscore2ex_state.build_count2 + 1);
                         if(itmscore2 != _mscore2.end()) {
                            _mscore2.modify(itmscore2, _self, [&](auto &row) {
@@ -2207,9 +2219,10 @@ void hddpool::onrewardt(uint32_t slot) {
    _gnewmparam.set(_gstate,_self);
    //-------------   ------------
 
+   
+   int64_t reward = 20000;
+   int64_t reward_gas = 10000;
    /*
-   int64_t reward = 0;
-   int64_t reward_gas = 0;
    uint8_t reward_type = 0;
    if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
       return;
@@ -2221,14 +2234,14 @@ void hddpool::onrewardt(uint32_t slot) {
    uint64_t random = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
 
    if(reward_type == 0)
-      rewardproc1(random, slot);
+      rewardproc1(random, slot, reward, reward_gas);
    else   
-      rewardproc2(random, slot);
+      rewardproc2(random, slot, reward, reward_gas);
    
 }
 
 //容量激励
-void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
+void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas) {
 
    gmscore2ex_singleton _gmscore2ex(_self, _self);
    if(!_gmscore2ex.exists())
@@ -2295,23 +2308,16 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot) {
 
    if(sel_minerid != 0) 
    {
-      std::string memo;
-      memo = std::to_string(sel_minerid) + ":1";
-      eosio::transaction out;
-      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(memo) );
-      out.delay_sec = 1;
-      out.send( (uint128_t(_self) << 64) | slot, _self, false );   
-
       //内联action调用
-      //action(
-      //   permission_level{_self, N(active)},
-      //   _self, N(rewardselt),
-      //   std::make_tuple(random1, random2) ).send(); 
+      action(
+         permission_level{_self, N(active)},
+         _self, N(rewardlogt),
+         std::make_tuple(sel_minerid, (uint8_t)1, reward, reward_gas, slot) ).send(); 
    }
 }
 
 //存储激励
-void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
+void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas) {
    gmscore2ex_singleton _gmscore2ex(_self, _self);
    if(!_gmscore2ex.exists())
       return;
@@ -2379,22 +2385,37 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot) {
    
    if(sel_minerid != 0) 
    {
-      std::string memo;
-      memo = std::to_string(sel_minerid) + ":2";
-      eosio::transaction out;
-      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(memo) );
-      out.delay_sec = 1;
-      out.send( (uint128_t(_self) << 64) | slot, _self, false );      
-
+      //内联action调用
+      action(
+         permission_level{_self, N(active)},
+         _self, N(rewardlogt),
+         std::make_tuple(sel_minerid, (uint8_t)2, reward, reward_gas, slot) ).send(); 
    }
 
 }
 
 
-void hddpool::rewardlogt(std::string memo) {
+void hddpool::rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot) {
    require_auth( _self );
+   asset reward_t{reward,CORE_SYMBOL};
+   asset reward_gas_t{reward_gas,CORE_SYMBOL};
+
+   eosio::transaction out;
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(channellogt), std::make_tuple(reward_type, reward_t, reward_gas_t, minerid, slot) );
+   out.delay_sec = 1;
+   out.send( (uint128_t(_self) << 64) | slot, _self, false );   
 }
 
+void hddpool::channellogt(uint8_t type, asset quant, asset gas, uint64_t minerid) {
+   require_auth( _self );
+   miner_table _miner(_self, _self);
+   auto it = _miner.find(minerid); 
+   eosio_assert(it != _miner.end(), "invalid mimerid");
+   
+   name owner = it->owner;
+   require_recipient(owner);
+
+}
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)

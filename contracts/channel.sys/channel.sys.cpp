@@ -24,7 +24,7 @@ void mchannel::transfercore( account_name from,
    auto namestr = memo.substr(pos1+1,pos2);
    account_name user = eosio::string_to_name(namestr.c_str());
 
-   if(trans_type == 1) {
+   if(trans_type == 1 || trans_type == 2) {
       eosio_assert(from == N(fund.sys), "invalid from user");
       cbalances bans(_self, user);
       auto it = bans.find(1);
@@ -38,7 +38,7 @@ void mchannel::transfercore( account_name from,
             a.type = 1;
          });
       }
-   } else if(trans_type == 2) {
+   } else if(trans_type == 3) {
       eosio_assert(from == N(store.sys), "invalid from user");
       cbalances bans(_self, user);
       auto it = bans.find(1);
@@ -52,7 +52,7 @@ void mchannel::transfercore( account_name from,
             a.type = 1;
          });
       }
-   } else if(trans_type == 3) {
+   } else if(trans_type == 4) {
       eosio_assert(from == N(ytapro.map), "invalid from user");
       /*
       action(

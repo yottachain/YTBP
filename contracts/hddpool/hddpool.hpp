@@ -83,7 +83,8 @@ public:
   void onbuild(uint32_t slot);
 
   void onrewardt(uint32_t slot);
-  void rewardlogt(std::string memo);
+  void rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot);
+  void channellogt(uint8_t type, asset quant, asset gas, uint64_t minerid);
  
 private:
   struct userhdd
@@ -227,7 +228,9 @@ private:
     uint64_t  next_day_time = 0;              //下一个激励日开始的时间戳(微秒单位)
     uint64_t  start_space = 0;                //新模型开始时刻的存储空间(以G为单位)
     uint64_t  task_space = 0;                 //当前需要满足的存储空间(以G为单位)
-    uint64_t  last_inc_space = 0;             //上一次的空间增长量(以G为单位)
+    uint64_t  last_day_inc_space = 0;         //上一次的空间增长量(以G为单位)
+    uint64_t  last_month_inc_space = 0;       //上一次的空间增长量(以G为单位)
+    uint64_t  random_seed_ext;                //扩展的随机数种子
     int64_t   total_issue = 0;                //当前总增发的激励token  
     int64_t   total_destory = 0;              //当前总销毁的激励token
     int64_t   cur_issue = 0;                  //当次增发的激励token
@@ -352,8 +355,8 @@ private:
 
   uint32_t insert_miner2(uint64_t minerid);
   void del_miner2(uint64_t internal_id);
-  void rewardproc1(uint64_t random, uint32_t slot);
-  void rewardproc2(uint64_t random, uint32_t slot);
+  void rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas);
+  void rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas);
 
   uint64_t get_newmodel_start_time();
   bool  update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type);

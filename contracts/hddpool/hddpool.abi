@@ -397,8 +397,46 @@
             "base": "",
             "fields": [
                 {
-                    "name": "memo",
-                    "type": "string"
+                    "name": "minerid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "reward_type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "reward",
+                    "type": "int64"
+                },
+                {
+                    "name": "reward_gas",
+                    "type": "int64"
+                },
+                {
+                    "name": "slot",
+                    "type": "uint32"
+                },
+            ]
+        },
+        {
+            "name": "channellogt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "gas",
+                    "type": "asset"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
                 }
             ]
         },
@@ -1233,6 +1271,11 @@
         {
             "name": "rewardlogt",
             "type": "rewardlogt",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "channellogt",
+            "type": "channellogt",
             "ricardian_contract": ""
         },
         {
