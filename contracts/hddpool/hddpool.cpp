@@ -2308,10 +2308,11 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_
 
    if(sel_minerid != 0) 
    {
-      eosio::transaction out;
-      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(sel_minerid, (uint8_t)1, reward, reward_gas, slot) );
-      out.delay_sec = 1;
-      out.send( (uint128_t(_self) << 64) | slot, _self, false );     
+      //内联action调用
+      action(
+         permission_level{_self, N(active)},
+         _self, N(rewardlogt),
+         std::make_tuple(sel_minerid, (uint8_t)1, reward, reward_gas, slot) ).send(); 
    }
 }
 
@@ -2384,10 +2385,11 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_
    
    if(sel_minerid != 0) 
    {
-      eosio::transaction out;
-      out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(rewardlogt), std::make_tuple(sel_minerid, (uint8_t)2, reward, reward_gas, slot) );
-      out.delay_sec = 1;
-      out.send( (uint128_t(_self) << 64) | slot, _self, false );     
+      //内联action调用
+      action(
+         permission_level{_self, N(active)},
+         _self, N(rewardlogt),
+         std::make_tuple(sel_minerid, (uint8_t)2, reward, reward_gas, slot) ).send(); 
    }
 
 }
