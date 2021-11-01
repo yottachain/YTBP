@@ -322,7 +322,25 @@
                     "type": "name"
                 }
             ]
-        }              
+        },
+        {
+            "name": "channellogt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "user",
+                    "type": "account_name"
+                }             
+            ]
+        }
     ],
     "actions": [
         {
@@ -393,6 +411,11 @@
         {
             "name": "mchgdepacc",
             "type": "mchgdepacc",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "channellogt",
+            "type": "channellogt",
             "ricardian_contract": ""
         }
     ],

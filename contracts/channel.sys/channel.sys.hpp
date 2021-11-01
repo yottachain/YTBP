@@ -28,6 +28,8 @@ class mchannel : public eosio::contract {
       
       void map(account_name user, asset  quant, asset gas, string bscaddr);
 
+      void channellogt(uint8_t type, asset quant, account_name user);
+
    private:
         //记录某个账户的存储押金池信息
         struct cbalance {

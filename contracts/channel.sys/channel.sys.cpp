@@ -104,6 +104,22 @@ void mchannel::map(account_name user, asset  quant, asset gas, string bscaddr)
       N(eosio.token), N(transfer),
       std::make_tuple(N(channel.sys), N(ytapro.map), gas, std::string("fee")))
       .send(); 
+
+   action(
+      permission_level{_self, N(active)},
+      _self, N(channellogt),
+      std::make_tuple(4, quant+gas, user))
+      .send(); 
+
+}
+
+void mchannel::channellogt(uint8_t type, asset quant, account_name user) 
+{
+   require_auth(_self);
+   ((void)type);
+   ((void)quant);
+
+   require_recipient(user);
 }
 
 extern "C" { 
@@ -123,7 +139,7 @@ extern "C" {
       if( code == self || action == N(onerror) ) { 
          mchannel thiscontract( self ); 
          switch( action ) { 
-            EOSIO_API( mchannel, (map) ) 
+            EOSIO_API( mchannel, (map)(channellogt) ) 
          } 
          /* does not allow destructor of thiscontract to run: eosio_exit(0); */ \
       } 

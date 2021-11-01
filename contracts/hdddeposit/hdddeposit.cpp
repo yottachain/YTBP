@@ -211,7 +211,23 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
        std::make_tuple(N(store.sys), N(channel.sys), quant, memo))
        .send(); //需要注意这里memo的格式
 
+   action(
+      permission_level{_self, N(active)},
+      _self, N(channellogt),
+      std::make_tuple(3, quant, user))
+      .send(); 
+
 }
+
+void hdddeposit::channellogt(uint8_t type, asset quant, account_name user) 
+{
+   require_auth(_self);
+   ((void)type);
+   ((void)quant);
+
+   require_recipient(user);
+}
+
 
 void hdddeposit::depstore(account_name user, asset quant) {
     require_auth(user);
@@ -271,4 +287,4 @@ void hdddeposit::undepstore(account_name user, asset quant) {
 
 #include "mdeposit.cpp"
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellogt))

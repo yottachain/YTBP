@@ -36,6 +36,8 @@ class hdddeposit : public eosio::contract {
 
         void updatevote(name user);
 
+        void channellogt(uint8_t type, asset quant, account_name user);
+
         
         inline asset get_deposit( account_name user )const;
         inline asset get_depositfree( account_name user )const;
