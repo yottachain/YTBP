@@ -230,7 +230,6 @@ private:
     uint64_t  task_space = 0;                 //当前需要满足的存储空间(以G为单位)
     uint64_t  last_day_inc_space = 0;         //上一次的空间增长量(以G为单位)
     uint64_t  last_month_inc_space = 0;       //上一次的空间增长量(以G为单位)
-    uint64_t  random_seed_ext;                //扩展的随机数种子
     int64_t   total_issue = 0;                //当前总增发的激励token  
     int64_t   total_destory = 0;              //当前总销毁的激励token
     int64_t   cur_issue = 0;                  //当次增发的激励token
@@ -239,6 +238,8 @@ private:
     int64_t   cur_reward2 = 0;                //当次每一笔存储激励token  
     int64_t   cur_reward1gas = 0;             //当次每一笔容量激励发放的gas消耗
     int64_t   cur_reward2gas = 0;             //当次每一笔存储激励发放的gas消耗  
+    uint64_t  random_seed_ext1;               //扩展的随机数种子1
+    uint64_t  random_seed_ext2;               //扩展的随机数种子2
     uint32_t  reward_day = 0;                 //新经济开启的天数
     uint32_t  reward_month = 0;               //新经济开启的月数
     uint32_t  last_reward_slot = 0;           //最后一次发激励的区块时间槽
@@ -249,16 +250,16 @@ private:
     uint8_t   reward_type = 0;                //激励类型 0-容量激励 1-存储激励
     bool      is_started = false;             //新经济模型是否已经开启
   };
-  typedef eosio::singleton<N(newmparam1), newmparam> gnewmparam_singleton;
+  typedef eosio::singleton<N(newmparama), newmparam> gnewmparam_singleton;
 
-  struct couterstate
+  struct counterstat
   {
     uint64_t  total_space = 0;      //当前全网注册总空间(以G为单位)
     uint64_t  reserved1 = 0;
     uint64_t  reserved2 = 0;
     uint64_t  reserved3 = 0;
   };
-  typedef eosio::singleton<N(couterstate1), couterstate> gcouterstate_singleton;
+  typedef eosio::singleton<N(counterstat1), counterstat> gcounterstate_singleton;
 
   struct hdd_global_param
   {

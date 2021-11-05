@@ -520,7 +520,7 @@ void hddpool::fixownspace(name owner, uint64_t space)
 {
    eosio_assert(false, "not support now!");
    require_auth( N(hddpooladmin) );
-
+/*
    userhdd_index userhdd(_self, owner.value);
    auto userhdd_itr = userhdd.find(owner.value);
    eosio_assert(userhdd_itr != userhdd.end(), "no owner exists in userhdd table");
@@ -532,7 +532,21 @@ void hddpool::fixownspace(name owner, uint64_t space)
          row.hdd_per_cycle_profit = (int64_t)(((double)space / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
       else
          row.hdd_per_cycle_profit = 0;
-   });
+   });   
+*/
+
+   counterstat _gcounterstate;
+   gcounterstate_singleton _gcounter(_self, _self);
+
+   if(_gcounter.exists())
+      _gcounterstate = _gcounter.get();
+   else 
+      _gcounterstate = counterstat{};
+
+   _gcounterstate.total_space = space;
+
+   _gcounter.set(_gcounterstate,_self);
+
 }
 
 void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name caller)
@@ -1873,12 +1887,14 @@ uint64_t hddpool::get_newmodel_start_time() {
 }
 
 void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
-   gcouterstate_singleton _gcounter(_self, _self);
-   if(!_gcounter.exists())
-      return;
+   gcounterstate_singleton _gcounter(_self, _self);
+   counterstat _gcounterstate;
 
-   couterstate _gcounterstate;
-   _gcounterstate = _gcounter.get();
+   if(_gcounter.exists())
+      _gcounterstate = _gcounter.get();
+   else 
+      _gcounterstate = counterstat{};
+
    uint64_t delta_gb = space_delta >> 16;
    if(is_increase) {
       _gcounterstate.total_space += delta_gb;
@@ -1888,12 +1904,13 @@ void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
       } else {
          _gcounterstate.total_space = 0;
       }
-   }    
+   }
+   _gcounter.set(_gcounterstate,_self); 
 }
 
 void hddpool::startnewm() {
    require_auth( N(hddpooladmin) );
-   /*
+   
    newmparam  _gstate;
    gnewmparam_singleton _gnewmparam( _self, _self);
 
@@ -1905,12 +1922,12 @@ void hddpool::startnewm() {
    _gnewmparam.set(_gstate,_self);
 
    return;
-   */
+   /*
    
-   gcouterstate_singleton _gcounter(_self, _self);
+   gcounterstate_singleton _gcounter(_self, _self);
    eosio_assert(_gcounter.exists(),"can not start new model");
 
-   couterstate _gcounterstate;
+   counterstat _gcounterstate;
    _gcounterstate = _gcounter.get();    
 
 
@@ -1951,7 +1968,7 @@ void hddpool::startnewm() {
    _gstate.task_space = _gstate.start_space + _gstate.last_day_inc_space;
 
    _gstate.is_started = true;
-   _gnewmparam.set(_gstate,_self);
+   _gnewmparam.set(_gstate,_self);*/
    
 }
 
@@ -1967,11 +1984,11 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
    if(!_gstate.is_started)
       return false;
 
-   gcouterstate_singleton _gcounter(_self, _self);
+   gcounterstate_singleton _gcounter(_self, _self);
    if(!_gcounter.exists())
       return false;
 
-   couterstate _gcounterstate;
+   counterstat _gcounterstate;
    _gcounterstate = _gcounter.get();    
 
    _gstate.last_reward_slot = slot;
@@ -2219,7 +2236,6 @@ void hddpool::onrewardt(uint32_t slot) {
    _gnewmparam.set(_gstate,_self);
    //-------------   ------------
 
-   
    int64_t reward = 20000;
    int64_t reward_gas = 10000;
    /*
@@ -2231,7 +2247,8 @@ void hddpool::onrewardt(uint32_t slot) {
       return;
    */   
 
-   uint64_t random = ((uint32_t)tapos_block_prefix())*((uint16_t)tapos_block_num());
+   uint64_t random = ((uint64_t)tapos_block_prefix())*((uint64_t)tapos_block_num())*((uint64_t)tapos_block_num());
+   //print("random - ", tapos_block_prefix(), ",", tapos_block_num(), ",",  random, " | ");
 
    if(reward_type == 0)
       rewardproc1(random, slot, reward, reward_gas);
@@ -2268,7 +2285,8 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_
       return;
    max_range = itmax->range;
 
-   uint64_t sel_range = random % max_range;
+   uint64_t sel_range = (random % max_range) + 1;
+   //sel_range = 1;
    uint64_t low = 1;
    uint64_t high = max_count;
    uint64_t sel_minerid = 0;
@@ -2292,7 +2310,11 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_
          return;   
    }
 
+   //print("1 - " ,  high , " - " , low );
+
    if(sel_minerid == 0) {
+      if(low == 1)
+         high = 1;
       auto it = _mscore1.find(high);
       if(it == _mscore1.end())
          return;
@@ -2343,7 +2365,8 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_
       return;
    max_range = itmax->range;
 
-   uint64_t sel_range = random % max_range;
+   uint64_t sel_range = (random % max_range) + 1;
+   //sel_range = 1;
    uint64_t low = 1;
    uint64_t high = max_count;
    uint64_t sel_minerid = 0;
@@ -2369,7 +2392,11 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_
             
    }
 
+   //print("2 - " ,  high , " - " , low );
+
    if(sel_minerid == 0) {
+      if(low == 1)
+         high = 1;
       auto it = _mscore2.find(high);
       if(it == _mscore2.end())
          return;
@@ -2417,6 +2444,15 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
    
    name owner = it->owner;
    require_recipient(owner);
+/*
+   std::string memo;
+   memo = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid);
+   action(
+      permission_level{N(fund.sys), active_permission},
+      token_account, N(transfer),
+      std::make_tuple(N(fund.sys), N(channel.sys), quant, memo))
+      .send(); //需要注意这里memo的格式
+*/   
 
 }
 
