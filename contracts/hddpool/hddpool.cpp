@@ -520,7 +520,7 @@ void hddpool::fixownspace(name owner, uint64_t space)
 {
    eosio_assert(false, "not support now!");
    require_auth( N(hddpooladmin) );
-/*
+
    userhdd_index userhdd(_self, owner.value);
    auto userhdd_itr = userhdd.find(owner.value);
    eosio_assert(userhdd_itr != userhdd.end(), "no owner exists in userhdd table");
@@ -533,8 +533,8 @@ void hddpool::fixownspace(name owner, uint64_t space)
       else
          row.hdd_per_cycle_profit = 0;
    });   
-*/
 
+/*
    counterstat _gcounterstate;
    gcounterstate_singleton _gcounter(_self, _self);
 
@@ -546,7 +546,7 @@ void hddpool::fixownspace(name owner, uint64_t space)
    _gcounterstate.total_space = space;
 
    _gcounter.set(_gcounterstate,_self);
-
+*/
 }
 
 void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name caller)
