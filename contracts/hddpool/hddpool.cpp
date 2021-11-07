@@ -2021,7 +2021,7 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
       _gstate.reward_day = reward_day;
 
       //判断当天容量新增是否满足目标
-      bool is_destory = true;
+      bool is_destory = false;
       if(_gcounterstate.total_space < _gstate.task_space)
          is_destory = true;
 
