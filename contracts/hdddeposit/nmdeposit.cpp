@@ -201,24 +201,6 @@ void hdddeposit::delminer(uint64_t minerid) {
     _mdeposit.erase( miner );
 }
 
-void hdddeposit::setrate(int64_t rate) {
-    //require_auth(_self);
-    require_auth(N(hddpooladmin));
-
-    grate_singleton _rate(_self, _self);
-    deposit_rate    _rateState;
-
-   if (_rate.exists())
-      _rateState = _rate.get();
-   else
-      _rateState = deposit_rate{};
-
-    _rateState.rate = rate;
-
-    _rate.set(_rateState, _self);
-
-}
-
 void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     require_auth(new_depacc);
 

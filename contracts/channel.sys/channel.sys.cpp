@@ -54,18 +54,19 @@ void mchannel::transfercore( account_name from,
       }
    } else if(trans_type == 4) {
       eosio_assert(from == N(ytapro.map), "invalid from user");
-      /*
+      
       action(
           permission_level{N(channel.sys), N(active)},
           N(hdddeposit12), N(paydeppool2),
          std::make_tuple(user, quantity))
-         .send();*/
-      
+         .send();
+      /*
     action(
        permission_level{N(channel.sys), N(active)},
        N(eosio.token), N(transfer),
        std::make_tuple(N(channel.sys), user, quantity, std::string("paydeppool2")))
        .send();
+       */
 
 
    } else {

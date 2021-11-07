@@ -207,24 +207,6 @@ void hdddeposit::delminer(uint64_t minerid) {
   
 }
 
-void hdddeposit::setrate(int64_t rate) {
-    //require_auth(_self);
-    require_auth(N(hddpooladmin));
-
-    grate_singleton _rate(_self, _self);
-    deposit_rate    _rateState;
-
-   if (_rate.exists())
-      _rateState = _rate.get();
-   else
-      _rateState = deposit_rate{};
-
-    _rateState.rate = rate;
-
-    _rate.set(_rateState, _self);
-
-}
-
 void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     require_auth(new_depacc);
 
@@ -283,6 +265,8 @@ void hdddeposit::updatevote(name user)
 }
 
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+    require_auth(bpacc);
+    return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");

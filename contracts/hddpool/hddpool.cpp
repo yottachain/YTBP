@@ -27,6 +27,13 @@ const uint64_t milliseconds_in_one_year = milliseconds_in_one_day * 365;
 const uint64_t fee_cycle = milliseconds_in_one_day; //计费周期毫秒为单位)
 
 const uint64_t microseconds_in_one_day = minutes_in_one_day * 60 * 1000000;
+const uint64_t days_in_one_month = 30;
+
+//for testing purpose
+//const uint64_t microseconds_in_one_day = 1 * 60 * 1000000;
+//const uint64_t days_in_one_month = 2;
+
+
 const uint64_t hddm_latest_stop_time = 1640793600000000ll; //hddm最晚停止时间(2021-12-30 00:00:00)
 const uint32_t blocks_per_day        = 2 * 24 * 3600;
 
@@ -1486,12 +1493,14 @@ void hddpool::calc_deposit_rate() {
    _grate_state.rate = rate;
    _grate.set(_grate_state,_self);
 
-   //int64_t rate2 = rate/100;
-   //action(
-   //    permission_level{N(hddpooladmin), active_permission},
-   //    hdd_deposit, N(setrate),
-   //    std::make_tuple(rate2))
-   //    .send(); 
+   int64_t rate2 = rate/100;
+   action(
+       permission_level{N(hddpooladmin), active_permission},
+       hdd_deposit, N(setrate),
+       std::make_tuple(rate2))
+       .send(); 
+   
+   //print("rate--",rate,"--",rate2);
 }
 
 
@@ -1911,6 +1920,7 @@ void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
 void hddpool::startnewm() {
    require_auth( N(hddpooladmin) );
    
+   
    newmparam  _gstate;
    gnewmparam_singleton _gnewmparam( _self, _self);
 
@@ -1922,14 +1932,13 @@ void hddpool::startnewm() {
    _gnewmparam.set(_gstate,_self);
 
    return;
-   /*
    
+   /*
    gcounterstate_singleton _gcounter(_self, _self);
    eosio_assert(_gcounter.exists(),"can not start new model");
 
    counterstat _gcounterstate;
    _gcounterstate = _gcounter.get();    
-
 
    newmparam  _gstate;
    gnewmparam_singleton _gnewmparam( _self, _self);
@@ -1939,7 +1948,7 @@ void hddpool::startnewm() {
    else 
       _gstate = newmparam{};
    
-   eosio_assert(_gstate.is_started == false, "new model already started");
+   //eosio_assert(_gstate.is_started == false, "new model already started");
 
    uint64_t ct = current_time();   
 
@@ -1957,9 +1966,18 @@ void hddpool::startnewm() {
    _gstate.total_issue = reward_issue;
    _gstate.cur_issue = reward_issue;
    //此处需要增发相应数量的token
-   int64_t real_reward = reward_issue / (int64_t)(((double)blocks_per_day / _gstate.span_reward_slot) + 0.5);         
+   asset quant_issue{_gstate.cur_issue,CORE_SYMBOL};
+   action(
+      permission_level{N(eosio), active_permission},
+      token_account, N(issue),
+      std::make_tuple(N(fund.sys), quant_issue, std::string("issue tokens for reward")))
+      .send(); //需要注意这里memo的格式
+   
+   int64_t real_reward = reward_issue / (int64_t)(((double)blocks_per_day / (2 * _gstate.span_reward_slot)) + 0.5);         
    int64_t real_reward1 = (int64_t)(real_reward * 0.8);
    int64_t real_reward2 = real_reward - real_reward1;
+   _gstate.cur_reward1 = real_reward1;
+   _gstate.cur_reward2 = real_reward2;
    _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);
    _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
 
@@ -1968,7 +1986,8 @@ void hddpool::startnewm() {
    _gstate.task_space = _gstate.start_space + _gstate.last_day_inc_space;
 
    _gstate.is_started = true;
-   _gnewmparam.set(_gstate,_self);*/
+   _gnewmparam.set(_gstate,_self);
+   */
    
 }
 
@@ -2002,35 +2021,52 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
       _gstate.reward_day = reward_day;
 
       //判断当天容量新增是否满足目标
-      bool is_destory = false;
+      bool is_destory = true;
       if(_gcounterstate.total_space < _gstate.task_space)
          is_destory = true;
 
-      uint32_t reward_month = reward_day/30;
+      uint32_t reward_month = ((reward_day-1)/days_in_one_month)+1;
       if(_gstate.reward_month < reward_month){
          _gstate.reward_month = reward_month;
          //每当到一个新的月份的时候，需要计算每天的容量增长量
+         //_gstate.last_month_inc_space = _gstate.last_month_inc_space;
+         //_gstate.last_day_inc_space = _gstate.last_month_inc_space/30;
       }
       _gstate.task_space += _gstate.last_day_inc_space;
 
       int64_t reward_issue = (int64_t) (((double)1.0 - std::pow(2,(double)(-1.0)*((double)reward_day/2880))) * 20000000000000);
       int64_t cur_issue = reward_issue - _gstate.total_issue;
-      if(reward_issue > _gstate.total_issue && cur_issue <= 481294288) { // _gstate.cur_issue 判断 _gstate.cur_issue > 0  并且小于第一天的增发量
-         // issue _gstate.cur_issue amount token
+      if(reward_issue > _gstate.total_issue && cur_issue <= 4812942883) { // _gstate.cur_issue 判断 _gstate.cur_issue > 0  并且小于第一天的增发量
          _gstate.cur_issue = cur_issue;
+         // issue _gstate.cur_issue amount token
+         asset quant_issue{cur_issue,CORE_SYMBOL};
+         action(
+            permission_level{N(eosio), active_permission},
+            token_account, N(issue),
+            std::make_tuple(N(fund.sys), quant_issue, std::string("issue tokens for reward")))
+            .send(); //需要注意这里memo的格式
+
          _gstate.total_issue = reward_issue;
          _gstate.cur_destory = 0;
          if(is_destory){
             _gstate.cur_destory = (int64_t)(cur_issue * 0.7);
+            _gstate.total_destory += _gstate.cur_destory;
             // ---- transfer to eosio.null for destory
+            asset quant_destory{_gstate.cur_destory,CORE_SYMBOL};
+            action(
+               permission_level{N(fund.sys), active_permission},
+               token_account, N(transfer),
+               std::make_tuple(N(fund.sys), N(eosio.null), quant_destory, std::string("destory reward tokens")))
+               .send(); //需要注意这里memo的格式
+
          }
          int64_t real_rewardtotal = cur_issue - _gstate.cur_destory;
          _gstate.span_reward_slot = _gstate.new_span_reward_slot;
-         int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / _gstate.span_reward_slot) + 0.5);         
+         int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / (2*_gstate.span_reward_slot)) + 0.5);         
          int64_t real_reward1 = (int64_t)(real_reward * 0.8);
          int64_t real_reward2 = real_reward - real_reward1;
          _gstate.cur_reward1 = real_reward1;
-         _gstate.cur_reward1 = real_reward2;
+         _gstate.cur_reward2 = real_reward2;
          _gstate.cur_reward1gas = (int64_t)(real_reward1 * 0.1);
          _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
 
@@ -2065,7 +2101,7 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
    }
 
    _gnewmparam.set(_gstate,_self);
-   return true;
+   return bret;
 }
 
 void hddpool::onbuild(uint32_t slot) {
@@ -2216,9 +2252,12 @@ void hddpool::onbuild(uint32_t slot) {
 
 void hddpool::onrewardt(uint32_t slot) {
    require_auth( _self );
-
-   //-------------   ------------
    uint8_t reward_type = 0;   
+   int64_t reward = 0;
+   int64_t reward_gas = 0;
+
+   
+   //-------------   ------------
    gnewmparam_singleton _gnewmparam( _self, _self);
    if(!_gnewmparam.exists())
       return;
@@ -2234,12 +2273,13 @@ void hddpool::onrewardt(uint32_t slot) {
       _gstate.reward_type = 0;    
    
    _gnewmparam.set(_gstate,_self);
-   //-------------   ------------
 
-   int64_t reward = 20000;
-   int64_t reward_gas = 10000;
+   reward = 20000;
+   reward_gas = 10000;
+   //-------------   ------------
+   
+   
    /*
-   uint8_t reward_type = 0;
    if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
       return;
 
@@ -2445,15 +2485,22 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
    name owner = it->owner;
    require_recipient(owner);
 /*
-   std::string memo;
-   memo = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid);
+   std::string memo1;
+   memo1 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid) + ":gas";
+   action(
+      permission_level{owner, active_permission},
+      token_account, N(transfer),
+      std::make_tuple(owner, N(gas.sys), gas, memo1))
+      .send(); //需要注意这里memo的格式
+
+   std::string memo2;
+   memo2 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid);
    action(
       permission_level{N(fund.sys), active_permission},
       token_account, N(transfer),
-      std::make_tuple(N(fund.sys), N(channel.sys), quant, memo))
-      .send(); //需要注意这里memo的格式
-*/   
-
+      std::make_tuple(N(fund.sys), N(channel.sys), quant, memo2))
+      .send(); //需要注意这里memo的格式     
+*/      
 }
 
 EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
