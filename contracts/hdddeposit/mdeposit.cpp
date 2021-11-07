@@ -81,6 +81,7 @@ void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
 }
 
 void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant) {
+    eosio_assert(false, "not support now.");
     require_auth(user); // need hdd official account to sign this action.
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");

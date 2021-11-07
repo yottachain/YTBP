@@ -1254,7 +1254,7 @@ void hddpool::mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bo
 
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
 {
-   //eosio_assert(false, "not support now!");
+   eosio_assert(false, "not support now!");
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
