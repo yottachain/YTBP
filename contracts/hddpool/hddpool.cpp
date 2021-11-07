@@ -1948,7 +1948,7 @@ void hddpool::startnewm() {
    else 
       _gstate = newmparam{};
    
-   //eosio_assert(_gstate.is_started == false, "new model already started");
+   eosio_assert(_gstate.is_started == false, "new model already started");
 
    uint64_t ct = current_time();   
 
