@@ -282,6 +282,8 @@ void hdddeposit::updatevote(name user)
 }
 
 void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
+    require_auth(bpacc);
+    return;    
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");

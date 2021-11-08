@@ -109,7 +109,7 @@ void mchannel::map(account_name user, asset  quant, asset gas, string bscaddr)
    action(
       permission_level{_self, N(active)},
       _self, N(channellog),
-      std::make_tuple(4, quant+gas, user))
+      std::make_tuple((uint8_t)4, quant+gas, user))
       .send(); 
 
 }

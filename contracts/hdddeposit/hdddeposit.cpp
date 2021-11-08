@@ -198,10 +198,11 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
        std::make_tuple(N(store.sys), N(channel.sys), quant, memo))
        .send(); //需要注意这里memo的格式
 
+
    action(
       permission_level{_self, N(active)},
       _self, N(channellog),
-      std::make_tuple(3, quant, user))
+      std::make_tuple((uint8_t)3, quant, user))
       .send(); 
 
 }
@@ -291,6 +292,6 @@ void hdddeposit::setrate(int64_t rate) {
 }
 
 
-#include "mdeposit.cpp"
+#include "nmdeposit.cpp"
 
 EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
