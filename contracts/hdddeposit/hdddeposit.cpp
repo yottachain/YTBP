@@ -292,6 +292,6 @@ void hdddeposit::setrate(int64_t rate) {
 }
 
 
-#include "nmdeposit.cpp"
+#include "mdeposit.cpp"
 
 EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
