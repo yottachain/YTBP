@@ -20,6 +20,9 @@
 const account_name hdd_deposit_account = N(hdddeposit12);
 const account_name hdd_lock_account = N(hddlock12345);
 const account_name hdd_pool_account = N(hddpool12345);
+const account_name hdd_fund_account = N(fund.sys);
+const account_name hdd_channel_account = N(channel.sys);
+
 //##YTA-Change  end:  
 
 #include <cmath>
@@ -462,7 +465,7 @@ namespace eosiosystem {
 //##YTA-Change  start:
    void system_contract::check_yta_account(const account_name user) {
 
-      if(user == hdd_pool_account || user == hdd_deposit_account || user == hdd_lock_account) {
+      if(user == hdd_pool_account || user == hdd_deposit_account || user == hdd_lock_account || user == hdd_fund_account || user == hdd_channel_account) {
          eosio_assert(1 == 2, "can not delegatebe and buy ram for this user");
       }
    }
