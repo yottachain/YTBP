@@ -60,17 +60,9 @@ void mchannel::transfercore( account_name from,
           N(hdddeposit12), N(paydeppool2),
          std::make_tuple(user, quantity))
          .send();
-      /*
-    action(
-       permission_level{N(channel.sys), N(active)},
-       N(eosio.token), N(transfer),
-       std::make_tuple(N(channel.sys), user, quantity, std::string("paydeppool2")))
-       .send();
-       */
-
 
    } else {
-      //eosio_assert(false, "invalid memo type");
+      eosio_assert(false, "invalid memo type");
    }
 }
 
