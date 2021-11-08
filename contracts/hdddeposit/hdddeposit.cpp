@@ -125,22 +125,9 @@ void hdddeposit::paydeppool2(account_name user, asset quant) {
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant" );
 
-    //check if user has enough YTA balance for deposit
-    auto balance   = eosio::token(N(eosio.token)).get_balance( user , quant.symbol.name() );
-    asset real_balance = balance;
-    depositpool_table _deposit(_self, user);
-    auto it = _deposit.find( user );    
-    if ( it != _deposit.end() ) {
-        real_balance.amount -= it->deposit_total.amount;
-    }
+    //insert or update accdeposit table
     depositpool2_table _deposit2(_self, user);
     auto it2 = _deposit2.find( user );    
-    if ( it2 != _deposit2.end() ) {
-        real_balance.amount -= it2->deposit_total.amount;
-    }
-    eosio_assert( real_balance.amount >= quant.amount, "user balance not enough." );
-
-    //insert or update accdeposit table
     if ( it2 == _deposit2.end() ) {
         //_deposit.emplace( _self, [&]( auto& a ){
         _deposit2.emplace( payer, [&]( auto& a ){
@@ -213,13 +200,13 @@ void hdddeposit::unpaydeppool2(account_name user, asset quant) {
 
    action(
       permission_level{_self, N(active)},
-      _self, N(channellogt),
+      _self, N(channellog),
       std::make_tuple(3, quant, user))
       .send(); 
 
 }
 
-void hdddeposit::channellogt(uint8_t type, asset quant, account_name user) 
+void hdddeposit::channellog(uint8_t type, asset quant, account_name user) 
 {
    require_auth(_self);
    ((void)type);
@@ -306,4 +293,4 @@ void hdddeposit::setrate(int64_t rate) {
 
 #include "mdeposit.cpp"
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellogt))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))

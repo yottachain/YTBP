@@ -48,6 +48,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 }
 
 void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
+    eosio_assert(false, "not support now.");
     //require_auth(N(hddpooladmin));
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
@@ -56,12 +57,6 @@ void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
     minerdeposit_table _mdeposit(_self, _self);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
     require_auth(miner.account_name);
-
-    _mdeposit.modify( miner, 0, [&]( auto& a ) {
-        a.deposit += quant;
-        if(a.deposit.amount > a.dep_total.amount)
-            a.dep_total.amount = a.deposit.amount; 
-    });
 
     if(miner.miner_type == 0) {
         depositpool_table _deposit(_self, miner.account_name);
@@ -77,6 +72,13 @@ void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
                 a.deposit_free = a.deposit_total;
         });
 
+        _mdeposit.modify( miner, 0, [&]( auto& a ) {
+            a.deposit += quant;
+            a.miner_type = 1;
+            if(a.deposit.amount > a.dep_total.amount)
+                a.dep_total.amount = a.deposit.amount; 
+        });
+
         eosio_assert( acc2.deposit_free.amount >= miner.deposit.amount, "free deposit not enough." );
 
         _deposit2.modify( acc2, 0, [&]( auto& a ) {
@@ -87,6 +89,13 @@ void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
         depositpool2_table _deposit2(_self, miner.account_name);
         const auto& acc2 = _deposit2.get( miner.account_name.value, "no deposit pool2 record for this user.");
         eosio_assert( acc2.deposit_free.amount >= quant.amount, "free deposit not enough." );
+
+        _mdeposit.modify( miner, 0, [&]( auto& a ) {
+            a.deposit += quant;
+            a.miner_type = 1;
+            if(a.deposit.amount > a.dep_total.amount)
+                a.dep_total.amount = a.deposit.amount; 
+        });
 
         _deposit2.modify( acc2, 0, [&]( auto& a ) {
             a.deposit_free -= quant;
@@ -202,6 +211,7 @@ void hdddeposit::delminer(uint64_t minerid) {
 }
 
 void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
+    eosio_assert(false, "not support now.");
     require_auth(new_depacc);
 
     minerdeposit_table _mdeposit(_self, _self);
@@ -244,6 +254,7 @@ void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
     _mdeposit.modify( miner, 0, [&]( auto& a ) {
         a.account_name = new_depacc;
         a.deposit = a.dep_total;
+        a.miner_type = 1;
     });
 
     _deposit2_new.modify( acc2_new, 0, [&]( auto& a ) {
