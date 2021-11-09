@@ -154,7 +154,7 @@
             ]
         },
         {
-            "name": "unpaydeppool2",
+            "name": "undeppool2",
             "base": "",
             "fields": [
                 {
@@ -359,8 +359,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "unpaydeppool2",
-            "type": "unpaydeppool2",
+            "name": "undeppool2",
+            "type": "undeppool2",
             "ricardian_contract": ""
         },
         {

@@ -20,7 +20,7 @@ class hdddeposit : public eosio::contract {
         void unpaydeppool(account_name user, asset quant);
 
         void paydeppool2(account_name user, asset quant);
-        void unpaydeppool2(account_name user, asset quant);
+        void undeppool2(account_name user, asset quant);
 
         void depstore(account_name user, asset quant);
         void undepstore(account_name user, asset quant);

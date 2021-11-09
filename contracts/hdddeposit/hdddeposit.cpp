@@ -153,7 +153,7 @@ void hdddeposit::paydeppool2(account_name user, asset quant) {
     }    
 }
 
-void hdddeposit::unpaydeppool2(account_name user, asset quant) {
+void hdddeposit::undeppool2(account_name user, asset quant) {
     require_auth(user);
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
@@ -294,4 +294,4 @@ void hdddeposit::setrate(int64_t rate) {
 
 #include "mdeposit.cpp"
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(unpaydeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(undeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
