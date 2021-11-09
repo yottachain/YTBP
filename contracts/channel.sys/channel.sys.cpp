@@ -66,7 +66,7 @@ void mchannel::transfercore( account_name from,
    }
 }
 
-void mchannel::map(account_name user, asset  quant, asset gas, string bscaddr)
+void mchannel::mapc(account_name user, asset  quant, asset gas, string bscaddr)
 {
    require_auth(user);
 
@@ -132,7 +132,7 @@ extern "C" {
       if( code == self || action == N(onerror) ) { 
          mchannel thiscontract( self ); 
          switch( action ) { 
-            EOSIO_API( mchannel, (map)(channellog) ) 
+            EOSIO_API( mchannel, (mapc)(channellog) ) 
          } 
          /* does not allow destructor of thiscontract to run: eosio_exit(0); */ \
       } 

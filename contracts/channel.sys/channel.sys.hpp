@@ -26,7 +26,7 @@ class mchannel : public eosio::contract {
                      asset        quantity,
                      string       memo );      
       
-      void map(account_name user, asset  quant, asset gas, string bscaddr);
+      void mapc(account_name user, asset  quant, asset gas, string bscaddr);
 
       void channellog(uint8_t type, asset quant, account_name user);
 

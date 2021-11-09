@@ -20,7 +20,7 @@
          ]
       },
       {
-         "name": "map",
+         "name": "mapc",
          "base": "",
          "fields": [
             {
@@ -62,8 +62,8 @@
   ],
   "actions": [
       {
-         "name": "map",
-         "type": "map",
+         "name": "mapc",
+         "type": "mapc",
          "ricardian_contract": ""
       },
       {
