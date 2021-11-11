@@ -2284,7 +2284,7 @@ void hddpool::onrewardt(uint32_t slot) {
 
    reward = 10000;
    reward_gas = 10000;
-   //reward_type = 0;
+   reward_type = 0;
    //-------------   ------------
    
    
@@ -2379,11 +2379,7 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_
 
    if(sel_minerid != 0) 
    {
-      //内联action调用
-      action(
-         permission_level{_self, N(active)},
-         _self, N(rewardlogt),
-         std::make_tuple(sel_minerid, (uint8_t)1, reward, reward_gas, slot) ).send(); 
+      rewardlog(sel_minerid,(uint8_t)1, reward, reward_gas, slot);
    }
 }
 
@@ -2461,33 +2457,30 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_
    
    if(sel_minerid != 0) 
    {
-      //内联action调用
-      action(
-         permission_level{_self, N(active)},
-         _self, N(rewardlogt),
-         std::make_tuple(sel_minerid, (uint8_t)2, reward, reward_gas, slot) ).send(); 
+      rewardlog(sel_minerid,(uint8_t)2, reward, reward_gas, slot);
    }
 
 }
 
 
-void hddpool::rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot) {
+void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot) {
    require_auth( _self );
    asset reward_t{reward,CORE_SYMBOL};
    asset reward_gas_t{reward_gas,CORE_SYMBOL};
 
-   
+/*   
    eosio::transaction out;
    out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payrewardt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
-   /*
+   */
+   
 
       action(
          permission_level{_self, N(active)},
          _self, N(payrewardt),
          std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) ).send(); 
-   */      
+         
 
 }
 
@@ -2498,6 +2491,7 @@ void hddpool::payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas)
    eosio_assert(it != _miner.end(), "invalid mimerid");
    
    name owner = it->owner;
+   /*
    asset fee = mchannel::getfeebalance(owner);
    if(fee.amount >= gas.amount) {
       action(
@@ -2510,8 +2504,13 @@ void hddpool::payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas)
          permission_level{_self, N(active)},
          _self, N(channelfailt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
+   }*/
 
-   }
+      action(
+         permission_level{_self, N(active)},
+         _self, N(channellogt),
+         std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
+
 }
 
 void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
@@ -2528,7 +2527,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
    require_auth( _self );
 
    require_recipient(owner);
-
+/*
    return;
 
    std::string memo1;
@@ -2538,6 +2537,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       N(channel.sys), N(subfee),
       std::make_tuple(owner, gas, memo1))
       .send(); //需要注意这里memo的格式
+*/      
 
    std::string memo2;
    memo2 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid);
@@ -2549,7 +2549,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
          
 }
 
-EOSIO_ABI(hddpool, (onbuild)(onrewardt)(rewardlogt)(payrewardt)(channellogt)(channelfailt)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
+EOSIO_ABI(hddpool, (onbuild)(onrewardt)(payrewardt)(channellogt)(channelfailt)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
                   (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

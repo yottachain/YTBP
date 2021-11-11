@@ -393,32 +393,6 @@
             ]
         },
         {
-            "name": "rewardlogt",
-            "base": "",
-            "fields": [
-                {
-                    "name": "minerid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "reward_type",
-                    "type": "uint8"
-                },
-                {
-                    "name": "reward",
-                    "type": "int64"
-                },
-                {
-                    "name": "reward_gas",
-                    "type": "int64"
-                },
-                {
-                    "name": "slot",
-                    "type": "uint32"
-                },
-            ]
-        },
-        {
             "name": "payrewardt",
             "base": "",
             "fields": [
@@ -1446,11 +1420,6 @@
         {
             "name": "onrewardt",
             "type": "onrewardt",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "rewardlogt",
-            "type": "rewardlogt",
             "ricardian_contract": ""
         },
         {

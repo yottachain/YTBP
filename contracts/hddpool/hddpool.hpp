@@ -83,7 +83,6 @@ public:
   void onbuild(uint32_t slot);
 
   void onrewardt(uint32_t slot);
-  void rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot);
   void payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas);
   void channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
   void channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
@@ -360,6 +359,8 @@ private:
   void del_miner2(uint64_t internal_id);
   void rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas);
   void rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas);
+  void rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot);
+
 
   uint64_t get_newmodel_start_time();
   bool  update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type);
