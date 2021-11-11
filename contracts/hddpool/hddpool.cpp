@@ -1920,7 +1920,7 @@ void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
 void hddpool::startnewm() {
    require_auth( N(hddpooladmin) );
    
-   
+   /*
    newmparam  _gstate;
    gnewmparam_singleton _gnewmparam( _self, _self);
 
@@ -1932,8 +1932,9 @@ void hddpool::startnewm() {
    _gnewmparam.set(_gstate,_self);
 
    return;
+   */
    
-   /*
+   
    gcounterstate_singleton _gcounter(_self, _self);
    eosio_assert(_gcounter.exists(),"can not start new model");
 
@@ -1982,12 +1983,13 @@ void hddpool::startnewm() {
    _gstate.cur_reward2gas = (int64_t)(real_reward2 * 0.1);
 
    _gstate.start_space = _gcounterstate.total_space;
-   _gstate.last_day_inc_space = 0;
+   _gstate.last_month_inc_space = 14365491; //13.7 P
+   _gstate.last_day_inc_space = (uint64_t)(_gstate.last_month_inc_space/30);
    _gstate.task_space = _gstate.start_space + _gstate.last_day_inc_space;
 
    _gstate.is_started = true;
    _gnewmparam.set(_gstate,_self);
-   */
+   
    
 }
 
@@ -2029,8 +2031,12 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
       if(_gstate.reward_month < reward_month){
          _gstate.reward_month = reward_month;
          //每当到一个新的月份的时候，需要计算每天的容量增长量
-         //_gstate.last_month_inc_space = _gstate.last_month_inc_space;
-         //_gstate.last_day_inc_space = _gstate.last_month_inc_space/30;
+         if(_gstate.last_month_inc_space < 104858) {
+            _gstate.last_month_inc_space = 0;
+         } else {
+            _gstate.last_month_inc_space = _gstate.last_month_inc_space - 104858; //减去0.1 P
+         } 
+         _gstate.last_day_inc_space = (uint64_t)(_gstate.last_month_inc_space/30);
       }
       _gstate.task_space += _gstate.last_day_inc_space;
 
