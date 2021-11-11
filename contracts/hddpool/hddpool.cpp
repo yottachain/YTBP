@@ -10,6 +10,8 @@
 #include <eosio.token/eosio.token.hpp>
 #include <eosio.system/eosio.system.hpp>
 #include <hdddeposit/hdddeposit.hpp>
+#include <channel.sys/channel.sys.hpp>
+
 
 
 #include <cmath>
@@ -2262,7 +2264,7 @@ void hddpool::onrewardt(uint32_t slot) {
    int64_t reward = 0;
    int64_t reward_gas = 0;
 
-   
+
    //-------------   ------------
    gnewmparam_singleton _gnewmparam( _self, _self);
    if(!_gnewmparam.exists())
@@ -2280,8 +2282,9 @@ void hddpool::onrewardt(uint32_t slot) {
    
    _gnewmparam.set(_gstate,_self);
 
-   reward = 20000;
+   reward = 10000;
    reward_gas = 10000;
+   //reward_type = 0;
    //-------------   ------------
    
    
@@ -2475,28 +2478,65 @@ void hddpool::rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, 
 
    
    eosio::transaction out;
-   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(channellogt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payrewardt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
-   
+   /*
+
+      action(
+         permission_level{_self, N(active)},
+         _self, N(payrewardt),
+         std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) ).send(); 
+   */      
 
 }
 
-void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas) {
+void hddpool::payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas) {
    require_auth( _self );
    miner_table _miner(_self, _self);
    auto it = _miner.find(minerid); 
    eosio_assert(it != _miner.end(), "invalid mimerid");
    
    name owner = it->owner;
+   asset fee = mchannel::getfeebalance(owner);
+   if(fee.amount >= gas.amount) {
+      action(
+         permission_level{_self, N(active)},
+         _self, N(channellogt),
+         std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
+
+   } else {
+      action(
+         permission_level{_self, N(active)},
+         _self, N(channelfailt),
+         std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
+
+   }
+}
+
+void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
+   require_auth( _self );
+
    require_recipient(owner);
-/*
+   ((void)type);
+   ((void)quant);
+   ((void)minerid);
+   ((void)gas);
+}
+
+void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
+   require_auth( _self );
+
+   require_recipient(owner);
+
+   return;
+
    std::string memo1;
    memo1 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid) + ":gas";
    action(
-      permission_level{owner, active_permission},
-      token_account, N(transfer),
-      std::make_tuple(owner, N(gas.sys), gas, memo1))
+      permission_level{N(channel.sys), active_permission},
+      N(channel.sys), N(subfee),
+      std::make_tuple(owner, gas, memo1))
       .send(); //需要注意这里memo的格式
 
    std::string memo2;
@@ -2506,10 +2546,10 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       token_account, N(transfer),
       std::make_tuple(N(fund.sys), N(channel.sys), quant, memo2))
       .send(); //需要注意这里memo的格式     
-*/      
+         
 }
 
-EOSIO_ABI(hddpool, (getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
+EOSIO_ABI(hddpool, (onbuild)(onrewardt)(rewardlogt)(payrewardt)(channellogt)(channelfailt)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
-                  (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)(onbuild)(onrewardt)(rewardlogt)(channellogt)
+                  (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

@@ -42,6 +42,38 @@
          ]
       },
       {
+         "name": "feetoc",
+         "base": "",
+         "fields": [
+            {
+               "name": "user",
+               "type": "name"
+            },
+            {
+               "name": "quant",
+               "type": "asset"
+            }
+         ]
+      },
+      {
+         "name": "subfee",
+         "base": "",
+         "fields": [
+            {
+               "name": "user",
+               "type": "name"
+            },
+            {
+               "name": "quant",
+               "type": "asset"
+            },
+            {
+               "name": "memo",
+               "type": "string"
+            }            
+         ]
+      },
+      {
          "name": "channellog",
          "base": "",
          "fields": [
@@ -64,6 +96,16 @@
       {
          "name": "mapc",
          "type": "mapc",
+         "ricardian_contract": ""
+      },
+      {
+         "name": "feetoc",
+         "type": "feetoc",
+         "ricardian_contract": ""
+      },
+      {
+         "name": "subfee",
+         "type": "subfee",
          "ricardian_contract": ""
       },
       {

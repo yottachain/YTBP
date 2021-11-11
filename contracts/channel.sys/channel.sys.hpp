@@ -26,7 +26,11 @@ class mchannel : public eosio::contract {
                      asset        quantity,
                      string       memo );      
       
-      void mapc(account_name user, asset  quant, asset gas, string bscaddr);
+      void mapc(account_name user, asset quant, asset gas, string bscaddr);
+
+      void feetoc(account_name user, asset quant);
+
+      void subfee(account_name user, asset quant, string memo);
 
       void channellog(uint8_t type, asset quant, account_name user);
 
@@ -39,6 +43,17 @@ class mchannel : public eosio::contract {
         };        
         typedef multi_index<N(cbalances), cbalance> cbalances; 
 
+   public:
+      static asset getfeebalance(account_name user)
+      {
+         asset balance{0, CORE_SYMBOL};
+         cbalances bans(N(channel.sys), user);
+         auto it = bans.find(2);
+         if(it != bans.end()) {
+            return it->balance;
+         }
+         return balance;
+     }
 };
 
 

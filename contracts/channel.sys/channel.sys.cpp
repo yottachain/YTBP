@@ -61,7 +61,27 @@ void mchannel::transfercore( account_name from,
          std::make_tuple(user, quantity))
          .send();
 
-   } else {
+   } else if (trans_type == 5) {
+      eosio_assert(from == N(ytapro.map), "invalid from user");
+      cbalances bans(_self, user);
+      auto it = bans.find(2);
+      if(it != bans.end()) {
+         bans.modify( it, _self, [&]( auto& a ) {
+            a.balance +=  quantity;
+         });
+      } else {
+         bans.emplace( _self, [&]( auto& a ){
+            a.balance = quantity;
+            a.type = 2;
+         });
+      }
+      action(
+         permission_level{_self, N(active)},
+         _self, N(channellog),
+         std::make_tuple((uint8_t)5, quantity, user))
+         .send(); 
+
+   }else {
       eosio_assert(false, "invalid memo type");
    }
 }
@@ -106,6 +126,68 @@ void mchannel::mapc(account_name user, asset  quant, asset gas, string bscaddr)
 
 }
 
+void mchannel::feetoc(account_name user, asset quant)
+{
+   require_auth(user);
+   cbalances bans(_self, user);
+   auto itfee = bans.find(2);
+   eosio_assert(itfee != bans.end(), "no fee balance");
+   eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
+   eosio_assert(itfee->balance.amount >= quant.amount, "overdrawn fee");
+
+   bans.modify( itfee, _self, [&]( auto& a ) {
+      a.balance -= quant;
+   });   
+
+   auto itm = bans.find(1);
+   if(itm != bans.end()) {
+      bans.modify( itm, _self, [&]( auto& a ) {
+         a.balance +=  quant;
+      });
+   } else {
+      bans.emplace( _self, [&]( auto& a ){
+         a.balance = quant;
+         a.type = 1;
+      });
+   }
+
+   action(
+      permission_level{_self, N(active)},
+      _self, N(channellog),
+      std::make_tuple((uint8_t)6, quant, user))
+      .send(); 
+
+}
+
+void mchannel::subfee(account_name user, asset quant, string memo)
+{
+   require_auth(_self);
+   cbalances bans(_self, user);
+   auto it = bans.find(2);
+   eosio_assert(it != bans.end(), "no fee balance");
+   eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
+   eosio_assert(it->balance.amount >= quant.amount, "overdrawn fee");
+    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
+
+   bans.modify( it, _self, [&]( auto& a ) {
+      a.balance -= quant;
+   });   
+
+   cbalances bans_gas(_self, N(gas.sys));
+   auto itgas = bans_gas.find(1);
+   if(itgas != bans_gas.end()) {
+      bans_gas.modify( itgas, _self, [&]( auto& a ) {
+         a.balance +=  quant;
+      });
+   } else {
+      bans_gas.emplace( _self, [&]( auto& a ){
+         a.balance = quant;
+         a.type = 1;
+      });
+   }
+}
+
+
 void mchannel::channellog(uint8_t type, asset quant, account_name user) 
 {
    require_auth(_self);
@@ -132,7 +214,7 @@ extern "C" {
       if( code == self || action == N(onerror) ) { 
          mchannel thiscontract( self ); 
          switch( action ) { 
-            EOSIO_API( mchannel, (mapc)(channellog) ) 
+            EOSIO_API( mchannel, (mapc)(feetoc)(subfee)(channellog) ) 
          } 
          /* does not allow destructor of thiscontract to run: eosio_exit(0); */ \
       } 

@@ -419,6 +419,28 @@
             ]
         },
         {
+            "name": "payrewardt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },                
+                {
+                    "name": "gas",
+                    "type": "asset"
+                }             
+            ]
+        },
+        {
             "name": "channellogt",
             "base": "",
             "fields": [
@@ -437,6 +459,36 @@
                 {
                     "name": "gas",
                     "type": "asset"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                }             
+            ]
+        },
+        {
+            "name": "channelfailt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "type",
+                    "type": "uint8"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "minerid",
+                    "type": "uint64"
+                },                
+                {
+                    "name": "gas",
+                    "type": "asset"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
                 }             
             ]
         },
@@ -1387,13 +1439,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "onrewardt",
-            "type": "onrewardt",
+            "name": "onbuild",
+            "type": "onbuild",
             "ricardian_contract": ""
         },
         {
-            "name": "onbuild",
-            "type": "onbuild",
+            "name": "onrewardt",
+            "type": "onrewardt",
             "ricardian_contract": ""
         },
         {
@@ -1402,8 +1454,18 @@
             "ricardian_contract": ""
         },
         {
+            "name": "payrewardt",
+            "type": "payrewardt",
+            "ricardian_contract": ""
+        },
+        {
             "name": "channellogt",
             "type": "channellogt",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "channelfailt",
+            "type": "channelfailt",
             "ricardian_contract": ""
         },
         {

@@ -84,7 +84,9 @@ public:
 
   void onrewardt(uint32_t slot);
   void rewardlogt(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot);
-  void channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas);
+  void payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas);
+  void channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
+  void channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
  
 private:
   struct userhdd
