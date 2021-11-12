@@ -21,7 +21,7 @@ void mchannel::transfercore( account_name from,
    uint8_t trans_type = (uint8_t)atoi(trans_typestr.c_str());
    auto pos2 = memo.find_first_of(':',pos1+1);
    eosio_assert(pos2 != std::string::npos, "invalid memo");
-   auto namestr = memo.substr(pos1+1,pos2);
+   auto namestr = memo.substr(pos1+1,pos2-(pos1+1));
    account_name user = eosio::string_to_name(namestr.c_str());
 
    if(trans_type == 1 || trans_type == 2) {
