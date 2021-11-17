@@ -782,7 +782,8 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
    eosio_assert(it != _maccount.end(), "minerid not register");
 
    uint64_t space = it->space;
-   eosio_assert(it->hdd_per_cycle_profit > 0, "miner has no cycle profit");  
+   if(space > 0)
+      eosio_assert(it->hdd_per_cycle_profit > 0, "miner has no cycle profit");  
    uint64_t tmp_t = current_time();  
    uint64_t deadline_time = 0;
    _maccount.modify(it, _self, [&](auto &row) {
@@ -1256,7 +1257,7 @@ void hddpool::mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bo
 
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
 {
-   eosio_assert(false, "not support now!");
+   //eosio_assert(false, "not support now!");
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
@@ -1541,8 +1542,14 @@ void hddpool::setdrdratio(uint64_t ratio) {
 }
 
 void hddpool::setusdprice(uint64_t price, uint8_t acc_type) {
-   eosio_assert( acc_type >= 1, "invalid acc_type" );
-   require_auth( N(hddpooladmin) );
+   if(acc_type == 1) {
+      require_auth( N(hddpooladml1) );
+   }
+   else if(acc_type == 2) {
+      require_auth( N(hddpooladmin) );
+   } else {
+      require_auth( _self );
+   }
 
    eosio_assert( price > 0, "invalid price" );
 
@@ -1922,7 +1929,7 @@ void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
 void hddpool::startnewm() {
    require_auth( N(hddpooladmin) );
    
-   /*
+   
    newmparam  _gstate;
    gnewmparam_singleton _gnewmparam( _self, _self);
 
@@ -1934,9 +1941,9 @@ void hddpool::startnewm() {
    _gnewmparam.set(_gstate,_self);
 
    return;
-   */
    
    
+   /*
    gcounterstate_singleton _gcounter(_self, _self);
    eosio_assert(_gcounter.exists(),"can not start new model");
 
@@ -1991,7 +1998,7 @@ void hddpool::startnewm() {
 
    _gstate.is_started = true;
    _gnewmparam.set(_gstate,_self);
-   
+   */
    
 }
 
@@ -2284,7 +2291,7 @@ void hddpool::onrewardt(uint32_t slot) {
 
    reward = 10000;
    reward_gas = 10000;
-   reward_type = 0;
+   //reward_type = 0;
    //-------------   ------------
    
    
@@ -2468,19 +2475,19 @@ void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, i
    asset reward_t{reward,CORE_SYMBOL};
    asset reward_gas_t{reward_gas,CORE_SYMBOL};
 
-/*   
+   
    eosio::transaction out;
    out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payrewardt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
-   */
    
+   /*
 
       action(
          permission_level{_self, N(active)},
          _self, N(payrewardt),
          std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) ).send(); 
-         
+   */      
 
 }
 
@@ -2537,7 +2544,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       N(channel.sys), N(subfee),
       std::make_tuple(owner, gas, memo1))
       .send(); //需要注意这里memo的格式
-*/      
+      
 
    std::string memo2;
    memo2 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid);
@@ -2546,6 +2553,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       token_account, N(transfer),
       std::make_tuple(N(fund.sys), N(channel.sys), quant, memo2))
       .send(); //需要注意这里memo的格式     
+   */   
          
 }
 

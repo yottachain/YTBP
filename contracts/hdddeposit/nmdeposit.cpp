@@ -162,11 +162,21 @@ void hdddeposit::mforfeit(name user, uint64_t minerid, asset quant, std::string 
 
     }
 
-    action(
-       permission_level{user, active_permission},
-       token_account, N(transfer),
-       std::make_tuple(user, N(yottaforfeit), quatreal, memo))
-       .send();
+    if(miner.miner_type == 0) {
+        action(
+            permission_level{user, active_permission},
+            token_account, N(transfer),
+            std::make_tuple(user, N(yottaforfeit), quatreal, memo))
+        .send();
+    } else {
+        action(
+            permission_level{user, active_permission},
+            token_account, N(transfer),
+            std::make_tuple(user, N(forfeit.sys), quatreal, memo))
+        .send();
+    }
+
+
 }
 
 void hdddeposit::delminer(uint64_t minerid) {
