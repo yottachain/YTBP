@@ -104,9 +104,6 @@ void token::transfer( account_name from,
     stats statstable( _self, sym );
     const auto& st = statstable.get( sym );
 
-    require_recipient( from );
-    require_recipient( to );
-
     eosio_assert( quantity.is_valid(), "invalid quantity" );
     eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
     eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
@@ -114,9 +111,25 @@ void token::transfer( account_name from,
 
     //##YTA-Change  start:  
     if( quantity.symbol != CORE_SYMBOL || from == N(hddbasefound) || from == N(fund.sys))  // no need to consider hdd_deposit and hdd_lock issue  
+    {
+      require_recipient( from );
+      require_recipient( to );
       sub_balance( from, quantity );
+    }
     else
-      sub_balance_yta( from, quantity, to );
+    {
+         if( to == N(yottaforfeit) ||  to == N(forfeit.sys)) 
+         {
+            require_recipient( to );
+            sub_balance( from, quantity );
+         } 
+         else 
+         {
+            require_recipient( from );
+            require_recipient( to );
+            sub_balance_yta( from, quantity, to );
+         }
+    }
     //##YTA-Change  end:
 
     add_balance( to, quantity, from );
@@ -147,9 +160,7 @@ void token::sub_balance_yta( account_name owner, asset value , account_name to) 
    bool is_frozen = hddlock(hdd_lock_account).is_frozen(owner);  
 
    //todo : need consider lock_token situation
-   if( to == N(yottaforfeit)) { //缴纳罚金,锁仓币也可以缴纳罚金
-      eosio_assert( from.balance.amount >= value.amount, "overdrawn balance" );
-   } else if( to == N(eosio.stake) ) { //用来抵押带宽和CPU
+   if( to == N(eosio.stake) ) { //用来抵押带宽和CPU
       eosio_assert( !is_frozen, "user is frozen" );
       //forfeit can not use to delegatebw and vote
       auto deposit_and_forfeit = hdddeposit(hdd_deposit_account).get_deposit(owner);
