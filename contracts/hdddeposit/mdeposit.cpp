@@ -49,14 +49,13 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 }
 
 void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
-    //require_auth(N(hddpooladmin));
+    require_auth(N(hddpooladmin));
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant");
 
     minerdeposit_table _mdeposit(_self, _self);
     const auto& miner = _mdeposit.get( minerid, "no deposit record for this minerid.");
-    require_auth(miner.account_name);    
     depositpool_table _deposit(_self, miner.account_name);
     const auto& acc = _deposit.get( miner.account_name.value, "no deposit pool record for this user.");
 
@@ -81,7 +80,7 @@ void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
 }
 
 void hdddeposit::chgdeposit(name user, uint64_t minerid, bool is_increase, asset quant) {
-    eosio_assert(false, "not support now.");
+    //eosio_assert(false, "not support now.");
     require_auth(user); // need hdd official account to sign this action.
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");

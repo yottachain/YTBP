@@ -276,6 +276,7 @@ void hdddeposit::undepstore(account_name user, asset quant) {
 void hdddeposit::setrate(int64_t rate) {
     //require_auth(_self);
     require_auth(N(hddpooladmin));
+    return;
 
     grate_singleton _rate(_self, _self);
     deposit_rate    _rateState;
@@ -292,6 +293,6 @@ void hdddeposit::setrate(int64_t rate) {
 }
 
 
-#include "mdeposit.cpp"
+#include "nmdeposit.cpp"
 
 EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(undeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))

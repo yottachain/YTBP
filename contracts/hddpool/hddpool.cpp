@@ -1236,7 +1236,7 @@ void hddpool::mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bo
    }
 
    action(
-       permission_level{hdddeposit(hdd_deposit).get_miner_depacc(minerid), active_permission},
+       permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(incdeposit),
        std::make_tuple(minerid, need_amount))
        .send(); 
@@ -1881,10 +1881,13 @@ void hddpool::mrspace(uint64_t minerid, uint64_t real_space, name caller) {
    miner_table _miner( _self , _self );
    auto itminer = _miner.find(minerid); 
    eosio_assert(itminer != _miner.end(), "minerid not found");
-   eosio_assert(itminer->max_space > real_space, "real space must less then max_space");
-   eosio_assert((real_space & 65535) == 0, "invalid read_space");
+   eosio_assert((real_space & 65535) == 0, "invalid real_space");
    eosio_assert(real_space > 0, "invalid read_space");   
-   eosio_assert(real_space != itminer->real_space, "same real space");   
+   eosio_assert(real_space != itminer->real_space, "same real space");
+   if(itminer->real_space == 0) 
+   {
+      eosio_assert(itminer->max_space > real_space, "real space must less then max_space");
+   }
 
    _miner.modify(itminer, _self, [&](auto &row) {
       row.real_space = real_space;
@@ -2475,19 +2478,19 @@ void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, i
    asset reward_t{reward,CORE_SYMBOL};
    asset reward_gas_t{reward_gas,CORE_SYMBOL};
 
-   
+   /*
    eosio::transaction out;
    out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payrewardt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
+   */
    
-   /*
 
       action(
          permission_level{_self, N(active)},
          _self, N(payrewardt),
          std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) ).send(); 
-   */      
+         
 
 }
 
