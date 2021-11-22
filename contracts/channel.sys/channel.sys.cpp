@@ -1,5 +1,6 @@
 #include <eosiolib/action.hpp>
 #include "channel.sys.hpp"
+#include <hddpool/hddpool.hpp>
 
 using namespace eosio;
 
@@ -78,7 +79,7 @@ void mchannel::transfercore( account_name from,
       action(
          permission_level{_self, N(active)},
          _self, N(channellog),
-         std::make_tuple((uint8_t)5, quantity, user))
+         std::make_tuple((uint8_t)5, quantity, user, std::string("")))
          .send(); 
 
    }else {
@@ -92,6 +93,8 @@ void mchannel::mapc(account_name user, asset  quant, asset gas, string bscaddr)
 
    eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
    eosio_assert(gas.symbol == CORE_SYMBOL, "invalid gas symbol");
+   eosio_assert(user != N(node.sys), "invalid user");
+
 
    asset total_trans_asset = quant + gas;
 
@@ -121,7 +124,7 @@ void mchannel::mapc(account_name user, asset  quant, asset gas, string bscaddr)
    action(
       permission_level{_self, N(active)},
       _self, N(channellog),
-      std::make_tuple((uint8_t)4, quant+gas, user))
+      std::make_tuple((uint8_t)4, quant+gas, user, std::string("")))
       .send(); 
 
 }
@@ -154,7 +157,7 @@ void mchannel::feetoc(account_name user, asset quant)
    action(
       permission_level{_self, N(active)},
       _self, N(channellog),
-      std::make_tuple((uint8_t)6, quant, user))
+      std::make_tuple((uint8_t)6, quant, user, std::string("")))
       .send(); 
 
 }
@@ -167,7 +170,7 @@ void mchannel::subfee(account_name user, asset quant, string memo)
    eosio_assert(it != bans.end(), "no fee balance");
    eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
    eosio_assert(it->balance.amount >= quant.amount, "overdrawn fee");
-    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
+   eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
    bans.modify( it, _self, [&]( auto& a ) {
       a.balance -= quant;
@@ -187,12 +190,96 @@ void mchannel::subfee(account_name user, asset quant, string memo)
    }
 }
 
+void mchannel::splitgas()
+{
+   uint64_t yta_prirce = hddpool::get_yta_price();
+   uint64_t usd_price = hddpool::get_usd_price();
+   double  yta_usd_price = (double)yta_prirce/(double)usd_price;
+   uint64_t split_rate = (uint64_t)( (double)20 + 60*( (double)1/(yta_usd_price+(double)1) ) );
+   eosio_assert(split_rate >= 20 && split_rate <= 80, "invalid split action");
 
-void mchannel::channellog(uint8_t type, asset quant, account_name user) 
+
+   cbalances bans_gas(_self, N(gas.sys));
+   auto itgas = bans_gas.find(1);
+   eosio_assert(itgas != bans_gas.end(), "no gas");
+   int64_t amount = itgas->balance.amount;
+   if(amount <= 0 ) 
+      return;
+   
+   int64_t amount_node = (int64_t)((amount * split_rate)/100);
+   int64_t amount_null = amount - amount_node;
+   asset quant_node{amount_node, CORE_SYMBOL};
+   asset quant_null{amount_null, CORE_SYMBOL};
+
+   cbalances bans_node(_self, N(node.sys));
+   auto itnode = bans_node.find(1);
+   if(itnode != bans_node.end()) {
+      bans_node.modify( itnode, _self, [&]( auto& a ) {
+         a.balance +=  quant_node;
+      });
+   } else {
+      bans_node.emplace( _self, [&]( auto& a ){
+         a.balance = quant_node;
+         a.type = 1;
+      });
+   }
+
+   cbalances bans_null(_self, N(null.sys));
+   auto itnull = bans_null.find(1);
+   if(itgas != bans_null.end()) {
+      bans_null.modify( itnull, _self, [&]( auto& a ) {
+         a.balance +=  quant_null;
+      });
+   } else {
+      bans_null.emplace( _self, [&]( auto& a ){
+         a.balance = quant_null;
+         a.type = 1;
+      });
+   }
+
+}
+
+void mchannel::rewardnode(account_name user, asset quant, string memo)
+{
+   require_auth(N(node.sys));
+
+   cbalances nodebans(_self, N(node.sys));
+   auto itnode = nodebans.find(1);
+   eosio_assert(itnode != nodebans.end(), "no balance");
+
+   eosio_assert(itnode->balance.amount >= quant.amount, "overdrawn balance");
+   nodebans.modify( itnode, _self, [&]( auto& a ) {
+      a.balance -= quant;
+   });
+
+
+   cbalances bans(_self, user);
+   auto it = bans.find(1);
+   if(it != bans.end()) {
+      bans.modify( it, _self, [&]( auto& a ) {
+         a.balance +=  quant;
+      });
+   } else {
+      bans.emplace( _self, [&]( auto& a ){
+         a.balance = quant;
+         a.type = 1;
+      });
+   }
+
+   action(
+      permission_level{_self, N(active)},
+      _self, N(channellog),
+      std::make_tuple((uint8_t)7, quant, user, memo))
+      .send(); 
+
+}
+
+void mchannel::channellog(uint8_t type, asset quant, account_name user, string memo) 
 {
    require_auth(_self);
    ((void)type);
    ((void)quant);
+   eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
 
    require_recipient(user);
 }
@@ -214,7 +301,7 @@ extern "C" {
       if( code == self || action == N(onerror) ) { 
          mchannel thiscontract( self ); 
          switch( action ) { 
-            EOSIO_API( mchannel, (mapc)(feetoc)(subfee)(channellog) ) 
+            EOSIO_API( mchannel, (mapc)(feetoc)(subfee)(channellog)(rewardnode)(splitgas) ) 
          } 
          /* does not allow destructor of thiscontract to run: eosio_exit(0); */ \
       } 

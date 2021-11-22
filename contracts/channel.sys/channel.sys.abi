@@ -74,21 +74,48 @@
          ]
       },
       {
+         "name": "rewardnode",
+         "base": "",
+         "fields": [
+            {
+               "name": "user",
+               "type": "name"
+            },
+            {
+               "name": "quant",
+               "type": "asset"
+            },
+            {
+               "name": "memo",
+               "type": "string"
+            }            
+         ]
+      },
+      {
+         "name": "splitgas",
+         "base": "",
+         "fields": []
+      },      
+      {
          "name": "channellog",
          "base": "",
          "fields": [
-             {
-                 "name": "type",
-                 "type": "uint8"
-             },
-             {
-                 "name": "quant",
-                 "type": "asset"
-             },
-             {
-                 "name": "user",
-                 "type": "account_name"
-             }             
+            {
+               "name": "type",
+               "type": "uint8"
+            },
+            {
+               "name": "quant",
+               "type": "asset"
+            },
+            {
+               "name": "user",
+               "type": "account_name"
+            },
+            {
+               "name": "memo",
+               "type": "string"
+            }            
          ]
       }
   ],
@@ -106,6 +133,16 @@
       {
          "name": "subfee",
          "type": "subfee",
+         "ricardian_contract": ""
+      },
+      {
+         "name": "rewardnode",
+         "type": "rewardnode",
+         "ricardian_contract": ""
+      },
+      {
+         "name": "splitgas",
+         "type": "splitgas",
          "ricardian_contract": ""
       },
       {

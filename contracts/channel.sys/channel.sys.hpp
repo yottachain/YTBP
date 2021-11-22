@@ -32,7 +32,11 @@ class mchannel : public eosio::contract {
 
       void subfee(account_name user, asset quant, string memo);
 
-      void channellog(uint8_t type, asset quant, account_name user);
+      void rewardnode(account_name user, asset quant, string memo);
+
+      void splitgas();
+
+      void channellog(uint8_t type, asset quant, account_name user, string memo);
 
    private:
         //记录某个账户的存储押金池信息
