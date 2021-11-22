@@ -435,6 +435,28 @@ public:
     return 0xffffffff;
   }
 
+  static uint64_t get_yta_price()
+  {
+    gparams_singleton _gparams( N(hddpool12345), N(hddpool12345));
+    hdd_global_param  _gparmas_state;
+    if(_gparams.exists()){
+      _gparmas_state = _gparams.get();
+      return _gparmas_state.yta_price;
+    }
+    return 8000;
+  }
+
+  static uint64_t get_usd_price()
+  {
+    gusdprice_singleton _gusd( N(hddpool12345), N(hddpool12345));
+    usd_price  _gusd_state;
+    if(_gusd.exists()){
+      _gusd_state = _gusd.get();
+      return _gusd_state.usdprice;
+    }
+    return 64500;
+  }
+
 
 };
 
