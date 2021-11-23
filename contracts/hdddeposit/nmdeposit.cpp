@@ -1,6 +1,6 @@
 
 void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
-    require_auth(user);
+    require_auth(N(hddpooladmin));
 
     account_name payer = _self;
 

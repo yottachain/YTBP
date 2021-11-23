@@ -892,7 +892,7 @@ void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_
    //-------------------- sync end ------------------
 
    action(
-       permission_level{dep_acc, active_permission},
+       permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(paydeposit),
        std::make_tuple(dep_acc, minerid, dep_amount))
        .send(); 
@@ -1143,7 +1143,7 @@ void hddpool::regminer(uint64_t minerid,name adminacc, name dep_acc,name pool_id
    }
 
    action(
-       permission_level{dep_acc, active_permission},
+       permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(paydeposit),
        std::make_tuple(dep_acc, minerid, quant))
        .send(); 

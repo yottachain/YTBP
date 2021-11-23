@@ -205,6 +205,10 @@ void mchannel::splitgas()
    int64_t amount = itgas->balance.amount;
    if(amount <= 0 ) 
       return;
+   bans_gas.modify( itgas, _self, [&]( auto& a ) {
+      a.balance.amount =  0;
+   });
+
    
    int64_t amount_node = (int64_t)((amount * split_rate)/100);
    int64_t amount_null = amount - amount_node;
@@ -226,7 +230,7 @@ void mchannel::splitgas()
 
    cbalances bans_null(_self, N(null.sys));
    auto itnull = bans_null.find(1);
-   if(itgas != bans_null.end()) {
+   if(itnull != bans_null.end()) {
       bans_null.modify( itnull, _self, [&]( auto& a ) {
          a.balance +=  quant_null;
       });
