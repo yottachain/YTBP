@@ -1374,8 +1374,11 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
    maccount_index _maccount_old(_self, itminerinfo->owner.value);
    auto itmaccount_old = _maccount_old.find(minerid);
    eosio_assert(itmaccount_old != _maccount_old.end(), "minerid not register");
-   //@@@封禁矿机不能变更收益账户,没有被采购任何空间的矿机也不能变更
-   eosio_assert(itmaccount_old->hdd_per_cycle_profit > 0, "miner has no cycle profit.");  
+
+   ///eosio_assert(itmaccount_old->hdd_per_cycle_profit > 0, "miner has no cycle profit.");  
+   bool isChangeTotal = false;
+   if(itmaccount_old->hdd_per_cycle_profit > 0)
+      isChangeTotal = true;
 
    uint64_t space = itmaccount_old->space;
 
@@ -1384,7 +1387,8 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
 
    //结算旧owner账户当前的收益
    userhdd_index _userhdd_old(_self, itminerinfo->owner.value);
-   chg_owner_space(_userhdd_old, itminerinfo->owner, space, false, true, tmp_t, 0);
+   if(isChangeTotal)
+      chg_owner_space(_userhdd_old, itminerinfo->owner, space, false, true, tmp_t, 0);
 
    //结算新owner账户当前的收益
    userhdd_index _userhdd_new(_self, new_owneracc.value);
@@ -1394,7 +1398,8 @@ void hddpool::mchgowneracc(uint64_t minerid, name new_owneracc)
       new_user_hdd(_userhdd_new, new_owneracc, 0, _self);
       userhdd_new_itr = _userhdd_new.find(new_owneracc.value);
    }
-   chg_owner_space(_userhdd_new, new_owneracc, space, true, true, tmp_t, 0);
+   if(isChangeTotal)
+      chg_owner_space(_userhdd_new, new_owneracc, space, true, true, tmp_t, 0);
 
    maccount_index _maccount_new(_self, new_owneracc.value);
    auto itmaccount_new = _maccount_new.find(minerid);
