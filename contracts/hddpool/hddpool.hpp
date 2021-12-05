@@ -82,8 +82,8 @@ public:
 
   void onbuild(uint32_t slot);
 
-  void onrewardt(uint32_t slot);
-  void payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas);
+  void onreward(uint32_t slot);
+  void payreward(uint8_t type, asset quant, uint64_t minerid, asset gas);
   void channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
   void channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
  

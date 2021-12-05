@@ -1,5 +1,6 @@
 #include "eosio.system.hpp"
 #include <eosiolib/print.hpp>
+#include <eosiolib/transaction.hpp>
 #include <eosio.token/eosio.token.hpp>
 #include <hddpool/hddpool.hpp>
 
@@ -12,8 +13,8 @@ namespace eosiosystem {
    //const int64_t  min_activated_stake   = 5'000'0000;
    const int64_t  min_activated_stake   = 0;
    //##YTA-Change  end:
-   const uint32_t blocks_per_year       = 360*24*2*3600;   // half seconds per year
-   const uint32_t seconds_per_year      = 360*24*3600;
+   const uint32_t blocks_per_year       = 52*7*24*2*3600;   // half seconds per year
+   const uint32_t seconds_per_year      = 52*7*24*3600;
    const uint32_t blocks_per_day        = 2 * 24 * 3600;
    const uint32_t blocks_per_hour       = 2 * 3600;
    const uint64_t useconds_per_day      = 24 * 3600 * uint64_t(1000000);
@@ -25,7 +26,7 @@ namespace eosiosystem {
    const uint32_t YTA_SEO_BASE = 10'0000;
    const double YTA_PRECISION =10000.0000;
    const uint32_t yta_seo_year[12] = {
-            300, 300, 300, 300,
+            1000, 900, 300, 300,
             300, 300, 300, 300,
             300, 300, 300, 300
     };
@@ -36,6 +37,30 @@ namespace eosiosystem {
       require_auth(N(eosio));
 
       ((void)producer);
+/*
+         action(
+            permission_level{N(hddpool12345), N(active)},
+            N(hddpool12345), N(onreward),
+            std::make_tuple(timestamp.slot)).send();
+*/           
+      if( timestamp.slot >= hddpool::get_next_reward_slot() ) {
+         action(
+            permission_level{N(hddpool12345), N(active)},
+            N(hddpool12345), N(onreward),
+            std::make_tuple(timestamp.slot)).send();
+      }       
+      else      
+      {
+         if( timestamp.slot >= hddpool::get_next_build_slot() ) {            
+            action(
+               permission_level{N(hddpool12345), N(active)},
+               N(hddpool12345), N(onbuild),
+               std::make_tuple(timestamp.slot)).send();               
+         }
+    }
+    
+
+      return;
 
       //##YTA-Change  start:         
       /// only update block producers once every minute, block_timestamp is in half seconds
@@ -67,8 +92,17 @@ namespace eosiosystem {
          if( timestamp.slot >= hddpool::get_next_reward_slot() ) {
             action(
                permission_level{N(hddpool12345), N(active)},
-               N(hddpool12345), N(onrewardt),
-               std::make_tuple(timestamp.slot )).send();
+               N(hddpool12345), N(onreward),
+               std::make_tuple(timestamp.slot)).send();
+         } 
+         else 
+         {
+            if( timestamp.slot >= hddpool::get_next_build_slot() ) {
+               action(
+                  permission_level{N(hddpool12345), N(active)},
+                  N(hddpool12345), N(onbuild),
+                  std::make_tuple(timestamp.slot)).send();
+            }
          }
       }
    }
@@ -87,7 +121,7 @@ namespace eosiosystem {
 
    void system_contract::startreward( ) {
       require_auth(N(ytarewardusr));
-
+      
       eosio_assert( _gstate.last_pervote_bucket_fill == 0, "already start reward");
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;

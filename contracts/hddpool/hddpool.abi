@@ -373,7 +373,7 @@
             ]
         },
         {
-            "name": "onrewardt",
+            "name": "onreward",
             "base": "",
             "fields": [
                 {
@@ -393,7 +393,7 @@
             ]
         },
         {
-            "name": "payrewardt",
+            "name": "payreward",
             "base": "",
             "fields": [
                 {
@@ -1418,13 +1418,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "onrewardt",
-            "type": "onrewardt",
+            "name": "onreward",
+            "type": "onreward",
             "ricardian_contract": ""
         },
         {
-            "name": "payrewardt",
-            "type": "payrewardt",
+            "name": "payreward",
+            "type": "payreward",
             "ricardian_contract": ""
         },
         {

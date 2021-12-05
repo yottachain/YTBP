@@ -32,7 +32,8 @@ const uint64_t microseconds_in_one_day = minutes_in_one_day * 60 * 1000000;
 const uint64_t days_in_one_month = 30;
 
 //for testing purpose
-//const uint64_t microseconds_in_one_day = 1 * 60 * 1000000;
+//const uint64_t minutes_in_one_day2 = 1;
+//const uint64_t microseconds_in_one_day = minutes_in_one_day2 * 60 * 1000000;
 //const uint64_t days_in_one_month = 2;
 
 
@@ -2006,8 +2007,7 @@ void hddpool::startnewm() {
 
    _gstate.is_started = true;
    _gnewmparam.set(_gstate,_self);
-   */
-   
+*/   
 }
 
 bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type) {
@@ -2273,11 +2273,12 @@ void hddpool::onbuild(uint32_t slot) {
    _gmscore2ex.set(_gmscore2ex_state,_self);  
 }
 
-void hddpool::onrewardt(uint32_t slot) {
+void hddpool::onreward(uint32_t slot) {
    require_auth( _self );
    uint8_t reward_type = 0;   
    int64_t reward = 0;
    int64_t reward_gas = 0;
+
 
 
    //-------------   ------------
@@ -2301,15 +2302,15 @@ void hddpool::onrewardt(uint32_t slot) {
    reward_gas = 10000;
    //reward_type = 0;
    //-------------   ------------
+
    
-   
-   /*
+/*   
    if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
       return;
 
    if(reward == 0)
       return;
-   */   
+*/      
 
    uint64_t random = ((uint64_t)tapos_block_prefix())*((uint64_t)tapos_block_num())*((uint64_t)tapos_block_num());
    //print("random - ", tapos_block_prefix(), ",", tapos_block_num(), ",",  random, " | ");
@@ -2483,30 +2484,30 @@ void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, i
    asset reward_t{reward,CORE_SYMBOL};
    asset reward_gas_t{reward_gas,CORE_SYMBOL};
 
-   /*
+   
    eosio::transaction out;
-   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payrewardt), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payreward), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
-   */
    
+/*   
 
       action(
          permission_level{_self, N(active)},
-         _self, N(payrewardt),
+         _self, N(payreward),
          std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) ).send(); 
-         
+*/         
 
 }
 
-void hddpool::payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas) {
+void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) {
    require_auth( _self );
    miner_table _miner(_self, _self);
    auto it = _miner.find(minerid); 
    eosio_assert(it != _miner.end(), "invalid mimerid");
    
    name owner = it->owner;
-   /*
+   
    asset fee = mchannel::getfeebalance(owner);
    if(fee.amount >= gas.amount) {
       action(
@@ -2519,13 +2520,13 @@ void hddpool::payrewardt(uint8_t type, asset quant, uint64_t minerid, asset gas)
          permission_level{_self, N(active)},
          _self, N(channelfailt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
-   }*/
-
+   }
+/*
       action(
          permission_level{_self, N(active)},
          _self, N(channellogt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
-
+*/
 }
 
 void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
@@ -2542,8 +2543,8 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
    require_auth( _self );
 
    require_recipient(owner);
-/*
-   return;
+
+   //return;
 
    std::string memo1;
    memo1 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid) + ":gas";
@@ -2561,11 +2562,11 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       token_account, N(transfer),
       std::make_tuple(N(fund.sys), N(channel.sys), quant, memo2))
       .send(); //需要注意这里memo的格式     
-   */   
+      
          
 }
 
-EOSIO_ABI(hddpool, (onbuild)(onrewardt)(payrewardt)(channellogt)(channelfailt)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
+EOSIO_ABI(hddpool, (onbuild)(onreward)(payreward)(channellogt)(channelfailt)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
                   (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
