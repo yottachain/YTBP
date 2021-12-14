@@ -1453,17 +1453,19 @@ bool hddpool::is_bp_account(uint64_t uservalue)
 */
 
 void hddpool::check_bp_account(account_name bpacc, uint64_t id, bool isCheckId) {
-   require_auth(bpacc);
-   return;
+   //require_auth(bpacc);
+   //return;
     account_name shadow;
     uint64_t seq_num = eosiosystem::getProducerSeq(bpacc, shadow);
     //print("bpname ----", name{bpacc}, "\n");
     eosio_assert(seq_num > 0 && seq_num < 22, "invalidate bp account");
+    ((void)id);
+    ((void)isCheckId);
+    /*
     if(isCheckId) {
       eosio_assert( (id%21) == (seq_num-1), "can not access this id");
-    }
+    }*/
     require_auth(shadow);
-    //require_auth(bpacc);
 }
 
 void hddpool::calc_deposit_rate() {   
@@ -1502,13 +1504,14 @@ void hddpool::calc_deposit_rate() {
    _grate_state.rate = rate;
    _grate.set(_grate_state,_self);
 
+   /*
    int64_t rate2 = rate/100;
    action(
        permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(setrate),
        std::make_tuple(rate2))
        .send(); 
-   
+   */
    //print("rate--",rate,"--",rate2);
 }
 
@@ -2507,7 +2510,7 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
    eosio_assert(it != _miner.end(), "invalid mimerid");
    
    name owner = it->owner;
-   
+/*   
    asset fee = mchannel::getfeebalance(owner);
    if(fee.amount >= gas.amount) {
       action(
@@ -2521,12 +2524,13 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
          _self, N(channelfailt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
    }
-/*
+*/   
+
       action(
          permission_level{_self, N(active)},
          _self, N(channellogt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
-*/
+
 }
 
 void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
@@ -2544,8 +2548,8 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
 
    require_recipient(owner);
 
-   //return;
-
+   return;
+   /*
    std::string memo1;
    memo1 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid) + ":gas";
    action(
@@ -2561,7 +2565,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       permission_level{N(fund.sys), active_permission},
       token_account, N(transfer),
       std::make_tuple(N(fund.sys), N(channel.sys), quant, memo2))
-      .send(); //需要注意这里memo的格式     
+      .send(); //需要注意这里memo的格式  */   
       
          
 }
