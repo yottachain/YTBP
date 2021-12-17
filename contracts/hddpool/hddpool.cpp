@@ -36,8 +36,7 @@ const uint64_t days_in_one_month = 30;
 //const uint64_t microseconds_in_one_day = minutes_in_one_day2 * 60 * 1000000;
 //const uint64_t days_in_one_month = 2;
 
-
-const uint64_t hddm_latest_stop_time = 1640793600000000ll; //hddm最晚停止时间(2021-12-30 00:00:00)
+const uint64_t hddm_latest_stop_time = 1640002800000000ll; //hddm最晚停止时间(2021-12-20 20:20:00)
 const uint32_t blocks_per_day        = 2 * 24 * 3600;
 
 //const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
@@ -2228,7 +2227,10 @@ void hddpool::onbuild(uint32_t slot) {
                      //--------更新存储概率空间表---------
                      uint64_t space = itminer->space;
                      uint64_t space_gb = space >> 16;
-                     if(space_gb > 0){
+                     if(space_gb == 0)
+                        space_gb = 1;
+                     if(space_gb > 0)
+                     {
                          _gmscore2ex_state.prev_build_range2 += space_gb*3;
                         auto itmscore2 = _mscore2.find(_gmscore2ex_state.build_count2 + 1);
                         if(itmscore2 != _mscore2.end()) {

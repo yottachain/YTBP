@@ -302,4 +302,4 @@ void hdddeposit::check_bp_account(account_name bpacc, uint64_t id, bool isCheckI
       eosio_assert( (id%21) == (seq_num-1), "can not access this id");
     }*/
     require_auth(shadow);
-\}
+}
