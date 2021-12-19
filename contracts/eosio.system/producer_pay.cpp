@@ -26,7 +26,7 @@ namespace eosiosystem {
    const uint32_t YTA_SEO_BASE = 10'0000;
    const double YTA_PRECISION =10000.0000;
    const uint32_t yta_seo_year[12] = {
-            1000, 900, 300, 300,
+            1000, 300, 300, 300,
             300, 300, 300, 300,
             300, 300, 300, 300
     };
@@ -42,7 +42,8 @@ namespace eosiosystem {
             permission_level{N(hddpool12345), N(active)},
             N(hddpool12345), N(onreward),
             std::make_tuple(timestamp.slot)).send();
-*/           
+*/      
+/*     
       if( timestamp.slot >= hddpool::get_next_reward_slot() ) {
          action(
             permission_level{N(hddpool12345), N(active)},
@@ -61,7 +62,7 @@ namespace eosiosystem {
     
 
       return;
-
+*/
       //##YTA-Change  start:         
       /// only update block producers once every minute, block_timestamp is in half seconds
       //if( timestamp.slot - _gstate.last_producer_schedule_update.slot > 120 ) {

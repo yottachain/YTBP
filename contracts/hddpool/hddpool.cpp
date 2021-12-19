@@ -36,7 +36,7 @@ const uint64_t days_in_one_month = 30;
 //const uint64_t microseconds_in_one_day = minutes_in_one_day2 * 60 * 1000000;
 //const uint64_t days_in_one_month = 2;
 
-const uint64_t hddm_latest_stop_time = 1640002800000000ll; //hddm最晚停止时间(2021-12-20 20:20:00)
+const uint64_t hddm_latest_stop_time = 1639745400000000ll; //hddm最晚停止时间(2021-12-17 20:50:00)
 const uint32_t blocks_per_day        = 2 * 24 * 3600;
 
 //const uint32_t data_slice_size = 16 * 1024; // among 4k-32k,set it as 16k
@@ -1503,14 +1503,14 @@ void hddpool::calc_deposit_rate() {
    _grate_state.rate = rate;
    _grate.set(_grate_state,_self);
 
-   /*
+   
    int64_t rate2 = rate/100;
    action(
        permission_level{N(hddpooladmin), active_permission},
        hdd_deposit, N(setrate),
        std::make_tuple(rate2))
        .send(); 
-   */
+   
    //print("rate--",rate,"--",rate2);
 }
 
