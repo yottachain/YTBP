@@ -849,7 +849,7 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
 
 void hddpool::newminer(uint64_t minerid, name adminacc, name dep_acc, asset dep_amount)
 {
-   //eosio_assert(false, "function paused");
+   eosio_assert(false, "not support now.");
 
    require_auth(dep_acc);
 
@@ -963,7 +963,7 @@ void hddpool::chgpoolspace(name pool_id, bool is_increase, uint64_t delta_space)
 
 void hddpool::addm2pool(uint64_t minerid, name pool_id, name minerowner, uint64_t max_space) 
 {
-   //eosio_assert(false, "function paused");
+   eosio_assert(false, "not support now.");
 
    eosio_assert(is_account(minerowner), "minerowner invalidate");
 
@@ -1257,7 +1257,7 @@ void hddpool::mincdeposit(uint64_t minerid, uint64_t space, asset dep_amount, bo
 
 void hddpool::mchgspace(uint64_t minerid, uint64_t max_space)
 {
-   //eosio_assert(false, "not support now!");
+   eosio_assert(false, "not support now.");
 
    minerinfo_table _minerinfo( _self , _self );
    auto itminerinfo = _minerinfo.find(minerid);
