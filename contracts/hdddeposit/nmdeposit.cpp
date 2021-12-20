@@ -219,7 +219,6 @@ void hdddeposit::delminer(uint64_t minerid) {
 }
 
 void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
-    eosio_assert(false, "not support now.");
     require_auth(new_depacc);
 
     minerdeposit_table _mdeposit(_self, _self);
