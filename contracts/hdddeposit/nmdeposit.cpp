@@ -48,7 +48,7 @@ void hdddeposit::paydeposit(account_name user, uint64_t minerid, asset quant) {
 }
 
 void hdddeposit::incdeposit(uint64_t minerid, asset quant) {
-    eosio_assert(false, "not support now.");
+    //eosio_assert(false, "not support now.");
     require_auth(N(hddpooladmin));
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
@@ -220,7 +220,7 @@ void hdddeposit::delminer(uint64_t minerid) {
 }
 
 void hdddeposit::mchgdepacc(uint64_t minerid, name new_depacc) {
-    eosio_assert(false, "not support now.");
+    //eosio_assert(false, "not support now.");
     require_auth(new_depacc);
 
     minerdeposit_table _mdeposit(_self, _self);
