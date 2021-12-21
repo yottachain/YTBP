@@ -578,6 +578,7 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       eosio_assert(it->hdd_per_cycle_profit > 0, "miner is deactive");  
 
    //check space left -- (is it enough)  -- start ----------
+   eosio_assert(itminerinfo->max_space > 0, "invalid max space");
    eosio_assert(itminerinfo->space_left >= space, "exceed max space");
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
