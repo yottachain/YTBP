@@ -2201,7 +2201,7 @@ void hddpool::onbuild(uint32_t slot) {
           if(itminer2->minerid != 0) {
              auto itminer = _miner.find(itminer2->minerid);
              if(itminer != _miner.end()) {
-                if(itminer->status == 0) { //没有被封禁的矿机才能参与
+                if(itminer->status == 0 && itminer->max_space > 0) { //没有被封禁的矿机才能参与
 
                      //--------更新容量概率空间表---------
                      uint64_t realspace = itminer->max_space;
