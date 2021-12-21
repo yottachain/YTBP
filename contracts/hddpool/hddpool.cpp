@@ -560,27 +560,25 @@ void hddpool::fixownspace(name owner, uint64_t space)
 
 void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
-   eosio_assert(is_account(owner), "owner invalidate");
+   ((void)owner);
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
 
    eosio_assert((space & 65535) == 0, "invalid space");
 
    //eosio_assert(owner.value != N(hddpool12345), "owner can not addmprofit now.");  
+   minerinfo_table _minerinfo(_self, _self);
+   auto itminerinfo = _minerinfo.find(minerid);   
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
 
-   maccount_index _maccount(_self, owner.value);
+   maccount_index _maccount(_self, itminerinfo->owner.value);
    auto it = _maccount.find(minerid);
    eosio_assert(it != _maccount.end(), "minerid not register");
    if(it->space > 0)
       eosio_assert(it->hdd_per_cycle_profit > 0, "miner is deactive");  
 
    //check space left -- (is it enough)  -- start ----------
-   minerinfo_table _minerinfo(_self, _self);
-   auto itminerinfo = _minerinfo.find(minerid);   
-   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
-
    eosio_assert(itminerinfo->space_left >= space, "exceed max space");
-   eosio_assert(itminerinfo->owner == owner, "invalid owner");
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.space_left -= space;
@@ -602,8 +600,8 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
       row.hdd_per_cycle_profit = (int64_t)((double)(newspace / (double)one_gb) * ((double)fee_cycle / (double)milliseconds_in_one_year) * 100000000);
    });
 
-   userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, true, true, tmp_t, deadline_time);
+   userhdd_index _userhdd(_self, itminerinfo->owner.value);
+   chg_owner_space(_userhdd, itminerinfo->owner, space, true, true, tmp_t, deadline_time);
 
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
@@ -621,13 +619,18 @@ void hddpool::addmprofit(name owner, uint64_t minerid, uint64_t space, name call
 
 void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name caller)
 {
-   eosio_assert(is_account(owner), "owner invalidate");
+   ((void)owner);
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
 
    eosio_assert((space & 65535) == 0, "invalid space");
 
-   maccount_index _maccount(_self, owner.value);
+   minerinfo_table _minerinfo(_self, _self);
+   auto itminerinfo = _minerinfo.find(minerid);   
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
+
+
+   maccount_index _maccount(_self, itminerinfo->owner.value);
    auto it = _maccount.find(minerid);
    eosio_assert(it != _maccount.end(), "minerid not register");
 
@@ -639,12 +642,7 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
    }
    
    //check space left -- (is it enough)  -- start ----------
-   minerinfo_table _minerinfo(_self, _self);
-   auto itminerinfo = _minerinfo.find(minerid);   
-   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
-
    eosio_assert(itminerinfo->space_left + space <= itminerinfo->max_space, "exceed max space");
-   eosio_assert(itminerinfo->owner == owner, "invalid owner");
 
    _minerinfo.modify(itminerinfo, _self, [&](auto &row) {
       row.space_left += space;
@@ -671,8 +669,8 @@ void hddpool::submprofit(name owner, uint64_t minerid, uint64_t space, name call
    });
 
    if(mactive) {
-      userhdd_index _userhdd(_self, owner.value);
-      chg_owner_space(_userhdd, owner, space, false, mactive, tmp_t, deadline_time);
+      userhdd_index _userhdd(_self, itminerinfo->owner.value);
+      chg_owner_space(_userhdd, itminerinfo->owner, space, false, mactive, tmp_t, deadline_time);
    }
 
    //-------------------- sync start ------------------
@@ -771,13 +769,17 @@ void hddpool::delminer(uint64_t minerid, uint8_t acc_type, name caller)
 
 void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
 {
-   eosio_assert(is_account(owner), "owner invalidate");
+   ((void)owner);
    eosio_assert(is_account(caller), "caller not an account.");
 
    check_bp_account(caller.value, minerid, true);
 
+   minerinfo_table _minerinfo(_self, _self);
+   auto itminerinfo = _minerinfo.find(minerid);   
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
+
    //maccount_index _maccount(_self, _self);
-   maccount_index _maccount(_self, owner.value);
+   maccount_index _maccount(_self, itminerinfo->owner.value);
    auto it = _maccount.find(minerid);
    eosio_assert(it != _maccount.end(), "minerid not register");
 
@@ -795,8 +797,8 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
       row.hdd_per_cycle_profit = 0;
    });
 
-   userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, false, true, tmp_t, deadline_time);
+   userhdd_index _userhdd(_self, itminerinfo->owner.value);
+   chg_owner_space(_userhdd, itminerinfo->owner, space, false, true, tmp_t, deadline_time);
 
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
@@ -812,11 +814,15 @@ void hddpool::mdeactive(name owner, uint64_t minerid, name caller)
 
 void hddpool::mactive(name owner, uint64_t minerid, name caller)
 {
-   eosio_assert(is_account(owner), "owner invalidate");
+   ((void)owner);
    eosio_assert(is_account(caller), "caller not an account.");
    check_bp_account(caller.value, minerid, true);
 
-   maccount_index _maccount(_self, owner.value);
+   minerinfo_table _minerinfo(_self, _self);
+   auto itminerinfo = _minerinfo.find(minerid);   
+   eosio_assert(itminerinfo != _minerinfo.end(), "minerid not exist in minerinfo");
+
+   maccount_index _maccount(_self, itminerinfo->owner.value);
    auto it = _maccount.find(minerid);
    eosio_assert(it != _maccount.end(), "minerid not register");
    
@@ -832,8 +838,8 @@ void hddpool::mactive(name owner, uint64_t minerid, name caller)
       row.last_hdd_time = tmp_t;
    });
 
-   userhdd_index _userhdd(_self, owner.value);
-   chg_owner_space(_userhdd, owner, space, true, true, tmp_t, 0);
+   userhdd_index _userhdd(_self, itminerinfo->owner.value);
+   chg_owner_space(_userhdd, itminerinfo->owner, space, true, true, tmp_t, 0);
 
    //-------------------- sync start ------------------
    miner_table _miner( _self , _self );
