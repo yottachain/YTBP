@@ -231,12 +231,10 @@ void hdddeposit::depstore(account_name user, asset quant) {
         _deposit.emplace( payer, [&]( auto& a ){
             a.account_name = name{user};
             a.deposit_total = quant;
-            a.last_deposit_time = current_time();
         });
     } else  {
         _deposit.modify( it, 0, [&]( auto& a ) {
             a.deposit_total += quant;
-            a.last_deposit_time = current_time();
         });
     }
 
@@ -247,9 +245,8 @@ void hdddeposit::depstore(account_name user, asset quant) {
        .send();
 }
 
-
-void hdddeposit::undepstore(account_name user, asset quant) {
-    require_auth(N(hddpooladml1));
+void hdddeposit::depused(account_name user, asset quant, account_name caller) {
+    check_bp_account(caller,0,false);
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
     eosio_assert(quant.amount > 0, "must use positive quant" );
@@ -259,7 +256,24 @@ void hdddeposit::undepstore(account_name user, asset quant) {
     eosio_assert(it != _deposit.end(), "can not find deposit record");
 
     eosio_assert(it->deposit_total.amount >= quant.amount, "deposit not enough");
-    //eosio_assert(it->last_deposit_time + some_day <= current_time(), "can not return deposit now);
+
+    _deposit.modify( it, 0, [&]( auto& a ) {
+        a.deposit_used = quant;
+    });
+}
+
+
+void hdddeposit::undepstore(account_name user, asset quant) {
+    require_auth(N(user));
+
+    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
+    eosio_assert(quant.amount > 0, "must use positive quant" );
+
+    storedeposit_table _deposit(_self, user);
+    auto it = _deposit.find( user );
+    eosio_assert(it != _deposit.end(), "can not find deposit record");
+
+    eosio_assert((it->deposit_total.amount -  it->deposit_used.amount)>= quant.amount, "free deposit not enough");
 
     _deposit.modify( it, 0, [&]( auto& a ) {
         a.deposit_total -= quant;
@@ -295,4 +309,4 @@ void hdddeposit::setrate(int64_t rate) {
 
 #include "nmdeposit.cpp"
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(undeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(undeppool2)(depstore)(undepstore)(depused)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))

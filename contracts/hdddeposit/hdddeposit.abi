@@ -70,8 +70,8 @@
                     "type": "asset"
                 },
                 {
-                    "name": "last_deposit_time",
-                    "type": "uint64"
+                    "name": "deposit_used",
+                    "type": "asset"
                 }                
             ]
         },
@@ -178,6 +178,24 @@
                 {
                     "name": "quant",
                     "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "depused",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "account_name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "caller",
+                    "type": "account_name"
                 }
             ]
         },
@@ -374,6 +392,11 @@
             "ricardian_contract": ""
         },
         {
+            "name": "depused",
+            "type": "depused",
+            "ricardian_contract": ""
+        },
+        {
             "name": "paydeposit",
             "type": "paydeposit",
             "ricardian_contract": ""
@@ -435,7 +458,7 @@
             "key_types": []
         },
         {
-            "name": "storedeposit",
+            "name": "storedep",
             "type": "storedeposit",
             "index_type": "i64",
             "key_names": [],
