@@ -70,8 +70,16 @@
                     "type": "asset"
                 },
                 {
-                    "name": "deposit_used",
+                    "name": "reserved1",
                     "type": "asset"
+                },
+                {
+                    "name": "reserved2",
+                    "type": "uint64"
+                },
+                {
+                    "name": "reserved3",
+                    "type": "uint64"
                 }                
             ]
         },
@@ -182,24 +190,6 @@
             ]
         },
         {
-            "name": "depused",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "account_name"
-                },
-                {
-                    "name": "quant",
-                    "type": "asset"
-                },
-                {
-                    "name": "caller",
-                    "type": "account_name"
-                }
-            ]
-        },
-        {
             "name": "undepstore",
             "base": "",
             "fields": [
@@ -208,8 +198,8 @@
                     "type": "account_name"
                 },
                 {
-                    "name": "quant",
-                    "type": "asset"
+                    "name": "caller",
+                    "type": "account_name"
                 }
             ]
         },        
@@ -392,11 +382,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "depused",
-            "type": "depused",
-            "ricardian_contract": ""
-        },
-        {
             "name": "paydeposit",
             "type": "paydeposit",
             "ricardian_contract": ""
@@ -458,7 +443,7 @@
             "key_types": []
         },
         {
-            "name": "storedep",
+            "name": "depstore",
             "type": "storedeposit",
             "index_type": "i64",
             "key_names": [],

@@ -23,8 +23,7 @@ class hdddeposit : public eosio::contract {
         void undeppool2(account_name user, asset quant);
 
         void depstore(account_name user, asset quant);
-        void depused(account_name user, asset quant, account_name caller);
-        void undepstore(account_name user, asset quant);
+        void undepstore(account_name user, account_name caller);
 
         void paydeposit(account_name user, uint64_t minerid, asset quant);
         void incdeposit(uint64_t minerid, asset quant);
@@ -78,10 +77,12 @@ class hdddeposit : public eosio::contract {
         struct storedeposit {
             name        account_name;
             asset       deposit_total;
-            asset       deposit_used;
+            asset       reserved1;
+            uint64_t    reserved2;
+            uint64_t    reserved3;
             uint64_t    primary_key()const { return account_name.value; }
         };       
-        typedef multi_index<N(storedep), storedeposit> storedeposit_table; 
+        typedef multi_index<N(depstore), storedeposit> storedeposit_table; 
 
         //记录哪个账户为哪个矿机抵押了多少钱
         struct miner2dep {

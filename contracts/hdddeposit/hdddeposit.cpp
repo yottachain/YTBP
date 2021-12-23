@@ -221,13 +221,15 @@ void hdddeposit::depstore(account_name user, asset quant) {
     require_auth(user);
 
     eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert(quant.amount > 0, "must use positive quant" );
+    eosio_assert(quant.amount == 100000000, "invalid deposit amount" );
 
     storedeposit_table _deposit(_self, user);
     auto it = _deposit.find( user );
+    eosio_assert(it == _deposit.end(), "already deposit");
 
-    account_name payer = user;
-    if ( it == _deposit.end() ) {
+    account_name payer = _self;
+    if ( it == _deposit.end() ) 
+    {
         _deposit.emplace( payer, [&]( auto& a ){
             a.account_name = name{user};
             a.deposit_total = quant;
@@ -245,39 +247,17 @@ void hdddeposit::depstore(account_name user, asset quant) {
        .send();
 }
 
-void hdddeposit::depused(account_name user, asset quant, account_name caller) {
+
+void hdddeposit::undepstore(account_name user, account_name caller) {
     check_bp_account(caller,0,false);
 
-    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert(quant.amount > 0, "must use positive quant" );
-
     storedeposit_table _deposit(_self, user);
     auto it = _deposit.find( user );
     eosio_assert(it != _deposit.end(), "can not find deposit record");
 
-    eosio_assert(it->deposit_total.amount >= quant.amount, "deposit not enough");
+    asset quant = it->deposit_total;
 
-    _deposit.modify( it, 0, [&]( auto& a ) {
-        a.deposit_used = quant;
-    });
-}
-
-
-void hdddeposit::undepstore(account_name user, asset quant) {
-    require_auth(N(user));
-
-    eosio_assert(quant.symbol == CORE_SYMBOL, "must use core asset for hdd deposit.");
-    eosio_assert(quant.amount > 0, "must use positive quant" );
-
-    storedeposit_table _deposit(_self, user);
-    auto it = _deposit.find( user );
-    eosio_assert(it != _deposit.end(), "can not find deposit record");
-
-    eosio_assert((it->deposit_total.amount -  it->deposit_used.amount)>= quant.amount, "free deposit not enough");
-
-    _deposit.modify( it, 0, [&]( auto& a ) {
-        a.deposit_total -= quant;
-    });
+    _deposit.erase( it );
 
     action(
        permission_level{N(pool.sys), active_permission},
@@ -309,4 +289,4 @@ void hdddeposit::setrate(int64_t rate) {
 
 #include "nmdeposit.cpp"
 
-EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(undeppool2)(depstore)(undepstore)(depused)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
+EOSIO_ABI( hdddeposit, (paydeppool)(unpaydeppool)(paydeppool2)(undeppool2)(depstore)(undepstore)(paydeposit)(chgdeposit)(mforfeit)(delminer)(setrate)(mchgdepacc)(updatevote)(incdeposit)(channellog))
