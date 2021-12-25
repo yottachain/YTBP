@@ -94,6 +94,9 @@ void mchannel::mapc(account_name user, asset  quant, asset gas, string bscaddr)
    eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
    eosio_assert(gas.symbol == CORE_SYMBOL, "invalid gas symbol");
    eosio_assert(user != N(node.sys), "invalid user");
+   eosio_assert( quant.amount > 0, "must use positive quantity" );
+   eosio_assert( gas.amount > 0, "must use positive gas" );
+
 
 
    asset total_trans_asset = quant + gas;
@@ -136,6 +139,7 @@ void mchannel::feetoc(account_name user, asset quant)
    auto itfee = bans.find(2);
    eosio_assert(itfee != bans.end(), "no fee balance");
    eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
+   eosio_assert( quant.amount > 0, "must use positive quantity" );
    eosio_assert(itfee->balance.amount >= quant.amount, "overdrawn fee");
 
    bans.modify( itfee, _self, [&]( auto& a ) {
@@ -167,6 +171,7 @@ void mchannel::subfee(account_name user, asset quant, string memo)
    require_auth(_self);
    cbalances bans(_self, user);
    auto it = bans.find(2);
+   eosio_assert( quant.amount >= 0, "must use positive quantity" );
    eosio_assert(it != bans.end(), "no fee balance");
    eosio_assert(quant.symbol == CORE_SYMBOL, "invalid quant symbol");
    eosio_assert(it->balance.amount >= quant.amount, "overdrawn fee");
@@ -249,6 +254,8 @@ void mchannel::splitgas()
 void mchannel::rewardnode(account_name user, asset quant, string memo)
 {
    require_auth(N(node.sys));
+
+   eosio_assert( quant.amount > 0, "must use positive quantity" );
 
    cbalances nodebans(_self, N(node.sys));
    auto itnode = nodebans.find(1);
