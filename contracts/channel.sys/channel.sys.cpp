@@ -192,6 +192,8 @@ void mchannel::subfee(account_name user, asset quant, string memo)
 
 void mchannel::splitgas()
 {
+   require_auth(N(node.sys));
+
    uint64_t yta_prirce = hddpool::get_yta_price();
    uint64_t usd_price = hddpool::get_usd_price();
    double  yta_usd_price = (double)yta_prirce/(double)usd_price;
@@ -210,7 +212,8 @@ void mchannel::splitgas()
    });
 
    
-   int64_t amount_node = (int64_t)((amount * split_rate)/100);
+   int64_t amount_node = (int64_t)((amount * (int64_t)split_rate)/100);
+   eosio_assert(amount_node <= amount,"invalid split");
    int64_t amount_null = amount - amount_node;
    asset quant_node{amount_node, CORE_SYMBOL};
    asset quant_null{amount_null, CORE_SYMBOL};
