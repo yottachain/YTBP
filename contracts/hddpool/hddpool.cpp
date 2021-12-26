@@ -1944,7 +1944,7 @@ void hddpool::chg_total_space(uint64_t space_delta, bool is_increase) {
 void hddpool::startnewm() {
    require_auth( N(hddpooladmin) );
    
-   
+   /*
    newmparam  _gstate;
    gnewmparam_singleton _gnewmparam( _self, _self);
 
@@ -1956,9 +1956,9 @@ void hddpool::startnewm() {
    _gnewmparam.set(_gstate,_self);
 
    return;
+   */
    
    
-   /*
    gcounterstate_singleton _gcounter(_self, _self);
    eosio_assert(_gcounter.exists(),"can not start new model");
 
@@ -2013,7 +2013,7 @@ void hddpool::startnewm() {
 
    _gstate.is_started = true;
    _gnewmparam.set(_gstate,_self);
-*/   
+   
 }
 
 bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type) {
@@ -2289,7 +2289,7 @@ void hddpool::onreward(uint32_t slot) {
    int64_t reward_gas = 0;
 
 
-
+/*
    //-------------   ------------
    gnewmparam_singleton _gnewmparam( _self, _self);
    if(!_gnewmparam.exists())
@@ -2311,15 +2311,15 @@ void hddpool::onreward(uint32_t slot) {
    reward_gas = 10000;
    //reward_type = 0;
    //-------------   ------------
-
+*/
    
-/*   
+   
    if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
       return;
 
    if(reward == 0)
       return;
-*/      
+      
 
    uint64_t random = ((uint64_t)tapos_block_prefix())*((uint64_t)tapos_block_num())*((uint64_t)tapos_block_num());
    //print("random - ", tapos_block_prefix(), ",", tapos_block_num(), ",",  random, " | ");
@@ -2516,7 +2516,7 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
    eosio_assert(it != _miner.end(), "invalid mimerid");
    
    name owner = it->owner;
-/*   
+   
    asset fee = mchannel::getfeebalance(owner);
    if(fee.amount >= gas.amount) {
       action(
@@ -2530,13 +2530,13 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
          _self, N(channelfailt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
    }
-*/   
-
+   
+/*
       action(
          permission_level{_self, N(active)},
          _self, N(channellogt),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
-
+*/
 }
 
 void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
@@ -2554,8 +2554,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
 
    require_recipient(owner);
 
-   return;
-   /*
+   
    std::string memo1;
    memo1 = std::to_string(type) + ":" + owner.to_string() + ":" + std::to_string(minerid) + ":gas";
    action(
@@ -2571,7 +2570,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
       permission_level{N(fund.sys), active_permission},
       token_account, N(transfer),
       std::make_tuple(N(fund.sys), N(channel.sys), quant, memo2))
-      .send(); //需要注意这里memo的格式  */   
+      .send(); //需要注意这里memo的格式     
       
          
 }
