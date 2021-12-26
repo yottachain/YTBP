@@ -2521,13 +2521,13 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
    if(fee.amount >= gas.amount) {
       action(
          permission_level{_self, N(active)},
-         _self, N(channellogt),
+         _self, N(channellog),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
 
    } else {
       action(
          permission_level{_self, N(active)},
-         _self, N(channelfailt),
+         _self, N(channelfail),
          std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
    }
    
@@ -2539,7 +2539,7 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
 */
 }
 
-void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
+void hddpool::channelfail(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
    require_auth( _self );
 
    require_recipient(owner);
@@ -2549,7 +2549,7 @@ void hddpool::channelfailt(uint8_t type, asset quant, uint64_t minerid, asset ga
    ((void)gas);
 }
 
-void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
+void hddpool::channellog(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner) {
    require_auth( _self );
 
    require_recipient(owner);
@@ -2575,7 +2575,7 @@ void hddpool::channellogt(uint8_t type, asset quant, uint64_t minerid, asset gas
          
 }
 
-EOSIO_ABI(hddpool, (onbuild)(onreward)(payreward)(channellogt)(channelfailt)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
+EOSIO_ABI(hddpool, (onbuild)(onreward)(payreward)(channellog)(channelfail)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
                   (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))

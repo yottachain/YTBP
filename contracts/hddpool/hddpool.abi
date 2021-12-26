@@ -415,7 +415,7 @@
             ]
         },
         {
-            "name": "channellogt",
+            "name": "channellog",
             "base": "",
             "fields": [
                 {
@@ -441,7 +441,7 @@
             ]
         },
         {
-            "name": "channelfailt",
+            "name": "channelfail",
             "base": "",
             "fields": [
                 {
@@ -1428,13 +1428,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "channellogt",
-            "type": "channellogt",
+            "name": "channellog",
+            "type": "channellog",
             "ricardian_contract": ""
         },
         {
-            "name": "channelfailt",
-            "type": "channelfailt",
+            "name": "channelfail",
+            "type": "channelfail",
             "ricardian_contract": ""
         },
         {
