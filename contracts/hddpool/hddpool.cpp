@@ -1899,10 +1899,7 @@ void hddpool::mrspace(uint64_t minerid, uint64_t real_space, name caller) {
    eosio_assert((real_space & 65535) == 0, "invalid real_space");
    eosio_assert(real_space > 0, "invalid read_space");   
    eosio_assert(real_space != itminer->real_space, "same real space");
-   if(itminer->real_space == 0) 
-   {
-      eosio_assert(itminer->max_space > real_space, "real space must less then max_space");
-   }
+   eosio_assert(itminer->max_space >= real_space, "real space must less then max_space");
 
    _miner.modify(itminer, _self, [&](auto &row) {
       row.real_space = real_space;
