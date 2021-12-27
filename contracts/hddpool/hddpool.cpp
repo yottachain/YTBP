@@ -2025,8 +2025,13 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
    newmparam  _gstate;   
    _gstate = _gnewmparam.get();
 
-   if(!_gstate.is_started)
+
+   _gstate.last_reward_slot = slot;
+
+   if(!_gstate.is_started) {
+      _gnewmparam.set(_gstate,_self);
       return false;
+   }
 
    gcounterstate_singleton _gcounter(_self, _self);
    if(!_gcounter.exists())
@@ -2034,8 +2039,6 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
 
    counterstat _gcounterstate;
    _gcounterstate = _gcounter.get();    
-
-   _gstate.last_reward_slot = slot;
 
    uint64_t ct = current_time();   
 
