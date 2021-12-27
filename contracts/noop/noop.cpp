@@ -14,7 +14,7 @@ namespace eosio {
                          const std::string& /*type*/,
                          const std::string& /*data*/ )
          {
-            require_auth( from );
+            require_auth( from );//
          }
    };
 
