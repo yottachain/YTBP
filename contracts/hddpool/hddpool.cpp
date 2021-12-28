@@ -2206,7 +2206,7 @@ void hddpool::onbuild(uint32_t slot) {
 
                      //--------更新容量概率空间表---------
                      uint64_t realspace = itminer->max_space;
-                     if(itminer->real_space > 0)
+                     if(itminer->real_space > 0 && itminer->max_space>itminer->real_space )
                         realspace = itminer->real_space;
                      uint64_t realspace_gb = realspace >> 16;
                      if(realspace_gb > 0) {
