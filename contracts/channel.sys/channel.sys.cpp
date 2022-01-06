@@ -9,10 +9,10 @@ void mchannel::transfercore( account_name from,
                       asset        quantity,
                       string       memo )
 {
-   if(from == _self) 
+   if(to != _self) 
       return;
 
-   ((void)to);
+   //((void)to);
 
    eosio_assert(quantity.symbol == CORE_SYMBOL, "invalid symbol");
 
