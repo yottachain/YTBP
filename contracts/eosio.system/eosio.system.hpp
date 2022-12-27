@@ -77,9 +77,11 @@ namespace eosiosystem {
    };
 
    struct eosio_global_state3 {
-      bool    is_schedule = true;
+      bool     is_schedule = false;
+      uint8_t  min_l1 = 15;
+      uint8_t  max_l2 = 0;
 
-      EOSLIB_SERIALIZE( eosio_global_state3, (is_schedule) )
+      EOSLIB_SERIALIZE( eosio_global_state3, (is_schedule)(min_l1)(max_l2) )
    };
 
    //##YTA-Change  end:
@@ -189,7 +191,7 @@ namespace eosiosystem {
 
    //##YTA-Change  start:
    typedef eosio::singleton<N(globalext), eosio_global_state2> global_state2_singleton;
-   typedef eosio::singleton<N(globalext2), eosio_global_state3> global_state3_singleton;
+   typedef eosio::singleton<N(globalext3), eosio_global_state3> global_state3_singleton;
    typedef eosio::singleton<N(gcount), eosio_global_count> global_count_singleton;
    //##YTA-Change  end:
 
@@ -283,7 +285,7 @@ namespace eosiosystem {
 
          void changevotes( const account_name voter_name );  
 
-         void setautosche( bool auto_sche);
+         void setautosche( bool auto_sche, uint8_t min_l1, uint8_t max_l2 );
 //##YTA-Change  end:           
 
          void setram( uint64_t max_ram_size );

@@ -284,7 +284,9 @@
       "name": "eosio_global_state3",
       "base": "",
       "fields": [
-         {"name":"is_schedule",                "type":"bool"}
+         {"name":"is_schedule",                "type":"bool"},
+         {"name":"min_l1",                     "type":"uint8"},
+         {"name":"max_l2",                     "type":"uint8"}
       ]
     },
     {
@@ -384,6 +386,8 @@
       "base": "",
       "fields": [
         {"name":"auto_sche",     "type":"bool"}
+        {"name":"min_l1",        "type":"uint8"}
+        {"name":"max_l2",        "type":"uint8"}
       ]
     },{
       "name": "voter_info",
@@ -662,7 +666,7 @@
       "key_names" : [],
       "key_types" : []
     },{
-      "name": "globalext2",
+      "name": "globalext3",
       "type": "eosio_global_state3",
       "index_type": "i64",
       "key_names" : [],

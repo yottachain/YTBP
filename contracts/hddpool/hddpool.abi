@@ -393,7 +393,7 @@
             ]
         },
         {
-            "name": "payreward",
+            "name": "payrewardnew",
             "base": "",
             "fields": [
                 {
@@ -409,8 +409,8 @@
                     "type": "uint64"
                 },                
                 {
-                    "name": "gas",
-                    "type": "asset"
+                    "name": "is_destory",
+                    "type": "bool"
                 }             
             ]
         },
@@ -1423,8 +1423,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "payreward",
-            "type": "payreward",
+            "name": "payrewardnew",
+            "type": "payrewardnew",
             "ricardian_contract": ""
         },
         {

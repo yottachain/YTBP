@@ -243,7 +243,7 @@ void hdddeposit::depstore(account_name user, asset quant) {
     action(
        permission_level{user, active_permission},
        token_account, N(transfer),
-       std::make_tuple(user, N(pool.sys), quant, std::string("deopsit for data storeage")))
+       std::make_tuple(user, N(pool.sys), quant, std::string("deopsit for data storage")))
        .send();
 }
 
@@ -262,7 +262,7 @@ void hdddeposit::undepstore(account_name user, account_name caller) {
     action(
        permission_level{N(pool.sys), active_permission},
        token_account, N(transfer),
-       std::make_tuple(N(pool.sys), user, quant, std::string("return deopsit for data storeage")))
+       std::make_tuple(N(pool.sys), user, quant, std::string("return deopsit for data storage")))
        .send();
 
 }

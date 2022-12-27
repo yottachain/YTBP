@@ -83,7 +83,7 @@ public:
   void onbuild(uint32_t slot);
 
   void onreward(uint32_t slot);
-  void payreward(uint8_t type, asset quant, uint64_t minerid, asset gas);
+  void payrewardnew(uint8_t type, asset quant, uint64_t minerid, bool is_destory);
   void channellog(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
   void channelfail(uint8_t type, asset quant, uint64_t minerid, asset gas, name owner);
  
@@ -357,13 +357,13 @@ private:
 
   uint32_t insert_miner2(uint64_t minerid);
   void del_miner2(uint64_t internal_id);
-  void rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas);
-  void rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas);
-  void rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot);
+  void rewardproc1(uint64_t random, uint32_t slot, int64_t reward, bool is_reward_destory);
+  void rewardproc2(uint64_t random, uint32_t slot, int64_t reward, bool is_reward_destory);
+  void rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, bool is_reward_destory, uint32_t slot);
 
 
   uint64_t get_newmodel_start_time();
-  bool  update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type);
+  bool  update_newmodel_params(uint32_t slot, int64_t &reward, bool &is_reward_destory, uint8_t &reward_type);
 
 public:  
 

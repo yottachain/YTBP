@@ -103,6 +103,22 @@ class hdddeposit : public eosio::contract {
             int64_t rate = 100;
         };
         typedef eosio::singleton<N(gdepositrate), deposit_rate> grate_singleton;
+    
+    public:
+        static bool is_old_miner(uint64_t minerid)
+        {
+            minerdeposit_table _mdeposit(N(hdddeposit12), N(hdddeposit12));
+            auto miner = _mdeposit.find( minerid );
+            if(miner == _mdeposit.end())
+                return true;
+
+            if(miner->miner_type == 0)
+                return true;
+            
+            return false;
+        }
+
+
 };
 
 //these const functions will be called by eosio.token transfer action to check where a user has deposit

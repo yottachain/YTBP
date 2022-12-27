@@ -389,7 +389,7 @@ namespace eosiosystem {
 
    }
 
-   void system_contract::setautosche( bool auto_sche) {
+   void system_contract::setautosche(  bool auto_sche, uint8_t min_l1, uint8_t max_l2 ) {
 
       require_auth(N(ytaadminuser));
 
@@ -402,24 +402,31 @@ namespace eosiosystem {
       }
 
       _global_state3.is_schedule = auto_sche;
+      _global_state3.min_l1 = min_l1;
+      _global_state3.max_l2 = max_l2;
+
 
       _globalext2.set(_global_state3,_self);
 
    }
 
    void system_contract::update_elected_producers_yta( block_timestamp block_time ) {
- 
+      _gstate.last_producer_schedule_update = block_time;
+      
       global_state3_singleton _globalext2(_self, _self);
       eosio_global_state3     _global_state3;
       bool isSchedule = true;
+      uint8_t min_l1 = 15;
+      uint8_t max_l2 = 0;
       if (_globalext2.exists()) {
          _global_state3 = _globalext2.get();
-         isSchedule = _global_state3.is_schedule;
       }
+      isSchedule = _global_state3.is_schedule;
+      min_l1 = _global_state3.min_l1;
+      max_l2 = _global_state3.max_l2;
 
       if(!isSchedule)
-         return;
-         
+         return;                  
 
       all_prods_singleton _all_prods(_self, _self);
       all_prods_level     _all_prods_state;
@@ -429,8 +436,6 @@ namespace eosiosystem {
 
       _all_prods_state = _all_prods.get();
 
-      _gstate.last_producer_schedule_update = block_time;
-
       std::vector< std::pair<eosio::producer_key,uint16_t> > top_producers;
       top_producers.reserve(21);
 
@@ -438,14 +443,22 @@ namespace eosiosystem {
          top_producers.emplace_back( std::pair<eosio::producer_key,uint16_t>({{it->owner, it->producer_key}, it->location}) );
       }
 
-      if(top_producers.size() < 5)
-         return;
+      if(top_producers.size() < min_l1)
+         return;      
 
-      if ( top_producers.size() < _gstate.last_producer_schedule_size ) {
-         //if(top_producers.size() < 15)
-            return;
+      if( (max_l2 > 0) && (top_producers.size() < 21) ) {
+         uint32_t left = 21 - top_producers.size();
+         if(left > max_l2)
+            left = max_l2;
+
+         std::sort(_all_prods_state.prods_l2.begin(), _all_prods_state.prods_l2.end(), [&](yta_prod_info lhs, yta_prod_info rhs){return lhs.total_votes > rhs.total_votes;}); 
+         for( auto it =_all_prods_state.prods_l2.begin(); it != _all_prods_state.prods_l2.end(); it++ ) {
+            top_producers.emplace_back( std::pair<eosio::producer_key,uint16_t>({{it->owner, it->producer_key}, it->location}) );
+            left--;
+            if(left == 0)
+               break;
+         }
       }
-
       /// sort by producer name
       std::sort( top_producers.begin(), top_producers.end() );
 

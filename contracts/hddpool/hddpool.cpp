@@ -2016,8 +2016,10 @@ void hddpool::startnewm() {
    
 }
 
-bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &reward_gas, uint8_t &reward_type) {
+bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, bool &is_reward_destory, uint8_t &reward_type) {
    gnewmparam_singleton _gnewmparam( _self, _self);
+
+   is_reward_destory = false;
 
    if(!_gnewmparam.exists())
       return false;
@@ -2069,6 +2071,29 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
       int64_t reward_issue = (int64_t) (((double)1.0 - std::pow(2,(double)(-1.0)*((double)reward_day/2880))) * 20000000000000);
       int64_t cur_issue = reward_issue - _gstate.total_issue;
       if(reward_issue > _gstate.total_issue && cur_issue <= 4812942883) { // _gstate.cur_issue 判断 _gstate.cur_issue > 0  并且小于第一天的增发量
+
+         _gstate.cur_destory = 0;
+         if(is_destory){
+            _gstate.cur_destory = (int64_t)(cur_issue * 0.7);
+            int64_t real_destory = 0;
+            int64_t  min_amount = 1000000000;
+            auto fund_balance   = eosio::token(N(eosio.token)).get_balance( N(fund.sys) , asset(0,CORE_SYMBOL).symbol.name() );
+            
+            if(fund_balance.amount > min_amount) 
+               real_destory = fund_balance.amount - min_amount;
+
+            // ---- transfer to eosio.null for destory
+            if(real_destory > 0) {
+               _gstate.total_destory += real_destory;
+               asset quant_destory{real_destory,CORE_SYMBOL};
+               action(
+                  permission_level{N(fund.sys), active_permission},
+                  token_account, N(transfer),
+                  std::make_tuple(N(fund.sys), N(eosio.null), quant_destory, std::string("destory reward tokens")))
+                  .send(); //需要注意这里memo的格式
+            }
+         }
+
          _gstate.cur_issue = cur_issue;
          // issue _gstate.cur_issue amount token
          asset quant_issue{cur_issue,CORE_SYMBOL};
@@ -2079,19 +2104,7 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
             .send(); //需要注意这里memo的格式
 
          _gstate.total_issue = reward_issue;
-         _gstate.cur_destory = 0;
-         if(is_destory){
-            _gstate.cur_destory = (int64_t)(cur_issue * 0.7);
-            _gstate.total_destory += _gstate.cur_destory;
-            // ---- transfer to eosio.null for destory
-            asset quant_destory{_gstate.cur_destory,CORE_SYMBOL};
-            action(
-               permission_level{N(fund.sys), active_permission},
-               token_account, N(transfer),
-               std::make_tuple(N(fund.sys), N(eosio.null), quant_destory, std::string("destory reward tokens")))
-               .send(); //需要注意这里memo的格式
 
-         }
          int64_t real_rewardtotal = cur_issue - _gstate.cur_destory;
          _gstate.span_reward_slot = _gstate.new_span_reward_slot;
          int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / (2*_gstate.span_reward_slot)) + 0.5);         
@@ -2118,16 +2131,26 @@ bool hddpool::update_newmodel_params(uint32_t slot, int64_t &reward, int64_t &re
          _gstate.next_day_time += microseconds_in_one_day;   
    }
 
+   if(_gstate.cur_destory > 0)
+      is_reward_destory = true; 
+   else    
+      is_reward_destory = false;
+
    if(_gstate.reward_type == 0) {
       _gstate.reward_type = 1;
-      reward = _gstate.cur_reward1;
-      reward_gas = _gstate.cur_reward1gas;
+      int64_t real_rewardtotal = _gstate.cur_issue;
+      int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / (2*_gstate.span_reward_slot)) + 0.5);         
+      reward = (int64_t)(real_reward * 0.8);
+      //reward_gas = _gstate.cur_reward1gas;
       reward_type = 0;
 
    } else {
       _gstate.reward_type = 0;
       reward = _gstate.cur_reward2;
-      reward_gas = _gstate.cur_reward2gas;
+      int64_t real_rewardtotal = _gstate.cur_issue;
+      int64_t real_reward = real_rewardtotal / (int64_t)(((double)blocks_per_day / (2*_gstate.span_reward_slot)) + 0.5);         
+      reward = (int64_t)(real_reward * 0.2);
+      //reward_gas = _gstate.cur_reward2gas;
       reward_type = 1;
 
    }
@@ -2289,7 +2312,7 @@ void hddpool::onreward(uint32_t slot) {
    require_auth( _self );
    uint8_t reward_type = 0;   
    int64_t reward = 0;
-   int64_t reward_gas = 0;
+   bool is_reward_destory = true;
 
 
 /*
@@ -2317,7 +2340,7 @@ void hddpool::onreward(uint32_t slot) {
 */
    
    
-   if(!update_newmodel_params(slot, reward, reward_gas, reward_type))
+   if(!update_newmodel_params(slot, reward, is_reward_destory, reward_type))
       return;
 
    if(reward == 0)
@@ -2328,14 +2351,14 @@ void hddpool::onreward(uint32_t slot) {
    //print("random - ", tapos_block_prefix(), ",", tapos_block_num(), ",",  random, " | ");
 
    if(reward_type == 0)
-      rewardproc1(random, slot, reward, reward_gas);
+      rewardproc1(random, slot, reward, is_reward_destory);
    else   
-      rewardproc2(random, slot, reward, reward_gas);
+      rewardproc2(random, slot, reward, is_reward_destory);
    
 }
 
 //容量激励
-void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas) {
+void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, bool is_reward_destory) {
 
    gmscore2ex_singleton _gmscore2ex(_self, _self);
    if(!_gmscore2ex.exists())
@@ -2407,12 +2430,12 @@ void hddpool::rewardproc1(uint64_t random, uint32_t slot, int64_t reward, int64_
 
    if(sel_minerid != 0) 
    {
-      rewardlog(sel_minerid,(uint8_t)1, reward, reward_gas, slot);
+      rewardlog(sel_minerid,(uint8_t)1, reward, is_reward_destory, slot);
    }
 }
 
 //存储激励
-void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_t reward_gas) {
+void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, bool is_reward_destory) {
    gmscore2ex_singleton _gmscore2ex(_self, _self);
    if(!_gmscore2ex.exists())
       return;
@@ -2485,20 +2508,19 @@ void hddpool::rewardproc2(uint64_t random, uint32_t slot, int64_t reward, int64_
    
    if(sel_minerid != 0) 
    {
-      rewardlog(sel_minerid,(uint8_t)2, reward, reward_gas, slot);
+      rewardlog(sel_minerid,(uint8_t)2, reward, is_reward_destory, slot);
    }
 
 }
 
 
-void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, int64_t reward_gas, uint32_t slot) {
+void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, bool is_reward_destory, uint32_t slot) {
    require_auth( _self );
    asset reward_t{reward,CORE_SYMBOL};
-   asset reward_gas_t{reward_gas,CORE_SYMBOL};
 
-   
+   //minerid >= 36030
    eosio::transaction out;
-   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payreward), std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) );
+   out.actions.emplace_back( permission_level{ _self, N(active) }, _self, N(payrewardnew), std::make_tuple(reward_type, reward_t, minerid, is_reward_destory) );
    out.delay_sec = 1;
    out.send( (uint128_t(_self) << 64) | slot, _self, false );   
    
@@ -2506,17 +2528,28 @@ void hddpool::rewardlog(uint64_t minerid, uint8_t reward_type, int64_t reward, i
 
       action(
          permission_level{_self, N(active)},
-         _self, N(payreward),
-         std::make_tuple(reward_type, reward_t, minerid, reward_gas_t) ).send(); 
+         _self, N(payrewardnew),
+         std::make_tuple(reward_type, reward_t, minerid, is_reward_destory) ).send(); 
 */         
 
 }
 
-void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) {
+void hddpool::payrewardnew(uint8_t type, asset quant, uint64_t minerid, bool is_destory) {
    require_auth( _self );
    miner_table _miner(_self, _self);
    auto it = _miner.find(minerid); 
    eosio_assert(it != _miner.end(), "invalid mimerid");
+   int64_t reward_amount = quant.amount;
+   int64_t gas_amount = (int64_t)(reward_amount * 0.1);
+
+   if(hdddeposit::is_old_miner(minerid) && is_destory) 
+   //if(is_destory) 
+   {
+      reward_amount = (int64_t)(quant.amount * 0.8);
+      gas_amount = (int64_t)(reward_amount * 0.1);
+   }
+   asset reward{reward_amount,CORE_SYMBOL};
+   asset gas{gas_amount,CORE_SYMBOL};
    
    name owner = it->owner;
    
@@ -2525,13 +2558,13 @@ void hddpool::payreward(uint8_t type, asset quant, uint64_t minerid, asset gas) 
       action(
          permission_level{_self, N(active)},
          _self, N(channellog),
-         std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
+         std::make_tuple(type, reward, minerid, gas, owner) ).send(); 
 
    } else {
       action(
          permission_level{_self, N(active)},
          _self, N(channelfail),
-         std::make_tuple(type, quant, minerid, gas, owner) ).send(); 
+         std::make_tuple(type, reward, minerid, gas, owner) ).send(); 
    }
    
 /*
@@ -2578,7 +2611,7 @@ void hddpool::channellog(uint8_t type, asset quant, uint64_t minerid, asset gas,
          
 }
 
-EOSIO_ABI(hddpool, (onbuild)(onreward)(payreward)(channellog)(channelfail)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
+EOSIO_ABI(hddpool, (onbuild)(onreward)(payrewardnew)(channellog)(channelfail)(getbalance)(buyhdd)(transhdds)(sellhdd)(sethfee)(subbalance)(addhspace)(subhspace)(addmprofit)(delminer)
                   (calcmbalance)(delstrpool)(regstrpool)(chgpoolspace)(newminer)(addm2pool)(submprofit)(regminer)(mlevel)(mrspace)(startnewm)
                   (mchgspace)(mincdeposit)(mchgstrpool)(mchgadminacc)(mchgowneracc)(calcprofit)(fixownspace)(oldsync)
                   (mdeactive)(mactive)(sethddprice)(setusdprice)(setytaprice)(setdrratio)(setdrdratio)(addhddcnt))
